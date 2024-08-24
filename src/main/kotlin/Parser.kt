@@ -283,6 +283,7 @@ class Parser(private val lexer: Lexer) {
             parseBody(ret)
         else
             Log.error(lookahead.location, "Missing function body")
+        ret.endLocation = lookahead.location
         checkEnd(FUN)
     }
 

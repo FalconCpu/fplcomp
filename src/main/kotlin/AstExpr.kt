@@ -5,6 +5,11 @@ sealed class AstExpr(location: Location) : Ast(location) {
 
     abstract fun typeCheck(context:AstBlock)
 
+    open fun typeCheckLvalue(context: AstBlock) {
+        Log.error(location, "Not an lvalue")
+        type = ErrorType
+    }
+
     fun setTypeError(message:String) {
         Log.error(location, message)
         type = ErrorType
@@ -17,9 +22,4 @@ sealed class AstExpr(location: Location) : Ast(location) {
     open fun typeCheckAllowTypeName(context: AstBlock) {
         typeCheck(context)
     }
-
-    open fun checkIsLvalue() {
-        Log.error(location, "Not an lvalue")
-    }
-
 }

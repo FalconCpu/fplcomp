@@ -40,5 +40,7 @@ class AstStmtDeclaration (
 
         if (value != null)
             type.checkAssignCompatible(value.location, value.type)
+        else
+            currentPathContext = currentPathContext.addUninitializedVariable(symbol)
     }
 }

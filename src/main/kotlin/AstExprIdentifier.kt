@@ -31,13 +31,23 @@ class AstExprIdentifier (
     }
 
     override fun typeCheck(context:AstBlock) {
+        // Symbol has been used as an rvalue
         typeCheckAllowTypeName(context)
         if (symbol is SymbolTypeName)
             Log.error(location, "Got type name '$symbol' when expecting a value")
+        if (symbol in currentPathContext.uninitializedVariables)
+            Log.error(location, "Variable '$name' has not been initialized")
+        else if (symbol in currentPathContext.maybeUninitializedVariables)
+            Log.error(location, "Variable '$name' might not be initialized")
+
     }
 
 
-    override fun checkIsLvalue() {
+    override fun typeCheckLvalue(context: AstBlock) {
+        // Symbol has been used as an lvalue
+        symbol = predefinedSymbols.lookup(name) ?: context.lookup(name) ?: makeNewSymbol(context)
+        type = symbol.type
+
         when(val sym = symbol) {
             is SymbolField -> TODO()
 
@@ -46,14 +56,15 @@ class AstExprIdentifier (
                     Log.error(location, "Global variable $name is not mutable")
 
             is SymbolLocalVar ->
-                if (!sym.isMutable)
-                    Log.error(location, "Global variable $name is not mutable")
+                if (!sym.isMutable && sym !in currentPathContext.uninitializedVariables)
+                    Log.error(location, "Local variable $name is not mutable")
 
             is SymbolFunctionName,
             is SymbolLiteral,
             is SymbolTypeName -> Log.error(location, "Not an lvalue: $name")
         }
-    }
 
+        currentPathContext = currentPathContext.initializeVariable(symbol)
+    }
 
 }

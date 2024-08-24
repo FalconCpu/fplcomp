@@ -8,6 +8,7 @@ class AstBlockFunction (
     private val returnType: AstType?
 ) : AstBlock(location, parent) {
 
+    lateinit var endLocation : Location
     lateinit var symbol: SymbolFunctionName
     lateinit var retType: Type
 
@@ -40,8 +41,11 @@ class AstBlockFunction (
     }
 
     override fun typeCheck(context: AstBlock) {
+        currentPathContext = PathContext()
         for(statement in body)
             statement.typeCheck(this)
+        if (currentPathContext.isReachable && retType != UnitType)
+            Log.error(endLocation, "Function should return a value of type $retType")
     }
 
 }

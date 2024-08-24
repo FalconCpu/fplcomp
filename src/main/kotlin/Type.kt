@@ -3,7 +3,7 @@ package falcon
 sealed class Type (val name:String) {
     override fun toString() = name
 
-    fun isAssignCompatible(type: Type) : Boolean {
+    private fun isAssignCompatible(type: Type) : Boolean {
 
         if (this == type) return true
 
@@ -22,20 +22,20 @@ sealed class Type (val name:String) {
             Log.error(location, "Got type $type when expecting $this")
     }
 
-    fun getSize(): Int = when (this) {
-        CharType -> 1
-        UnitType -> 0
-        BoolType -> 4
-        is ArrayType -> 4
-        is ClassType -> 4
-        ErrorType -> 4
-        is FunctionType -> 4
-        IntType -> 4
-        NullType -> 4
-        is NullableType -> 4
-        RealType -> 4
-        StringType -> 4
-    }
+//    fun getSize(): Int = when (this) {
+//        CharType -> 1
+//        UnitType -> 0
+//        BoolType -> 4
+//        is ArrayType -> 4
+//        is ClassType -> 4
+//        ErrorType -> 4
+//        is FunctionType -> 4
+//        IntType -> 4
+//        NullType -> 4
+//        is NullableType -> 4
+//        RealType -> 4
+//        StringType -> 4
+//    }
 }
 
 // ---------------------------------------------------------------------

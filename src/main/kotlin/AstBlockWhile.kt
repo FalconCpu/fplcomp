@@ -23,11 +23,18 @@ class AstBlockWhile(
     }
 
     override fun typeCheck(context: AstBlock) {
+        trueBranchContext = currentPathContext
+        falseBranchContext = currentPathContext
         condition.typeCheck(context)
         BoolType.checkAssignCompatible(location, condition.type)
 
+        val endContext = falseBranchContext  // Save the context for the end of the loop
+        currentPathContext = trueBranchContext
+
         for(statement in body)
             statement.typeCheck(this)
+
+        currentPathContext = endContext
     }
 
 }

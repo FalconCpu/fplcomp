@@ -6,6 +6,8 @@ class AstIfClause(
     val condition: AstExpr?,
 ) : AstBlock(location, parent) {
 
+    lateinit var pathContextIn : PathContext
+
     override fun dump(sb: StringBuilder, indent: Int) {
         sb.append(". ".repeat(indent))
         sb.append("CLAUSE\n")
@@ -23,6 +25,7 @@ class AstIfClause(
     }
 
     override fun typeCheck(context:AstBlock) {
-        TODO("Not yet implemented")
+        for (statement in body)
+            statement.typeCheck(this)
     }
 }

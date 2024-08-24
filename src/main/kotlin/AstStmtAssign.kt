@@ -21,9 +21,8 @@ class AstStmtAssign(
     }
 
     override fun typeCheck(context:AstBlock) {
-        lhs.typeCheck(context)
+        lhs.typeCheckLvalue(context)
         rhs.typeCheck(context)
-        lhs.checkIsLvalue()
         lhs.type.checkAssignCompatible(rhs.location, rhs.type)
     }
 }

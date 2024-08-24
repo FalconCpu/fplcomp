@@ -78,7 +78,7 @@ class TypeCheck {
     @Test
     fun assignment() {
         val prog = """
-            fun count(a:Int)->Int
+            fun count(a:Int)
                 var sum = 0
                 var count =0
                 while count < a
@@ -87,7 +87,7 @@ class TypeCheck {
 
         val expected = """
             TOP
-            . FUNCTION count (Int)->Int
+            . FUNCTION count (Int)->Unit
             . . DECL LOCALVAR sum Int
             . . . INTLIT 0 Int
             . . DECL LOCALVAR count Int
