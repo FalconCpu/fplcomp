@@ -11,7 +11,8 @@ class AstTypeArray (
         type.dump(sb, indent + 1)
     }
 
-    override fun resolveType(context: TcBlock): Type {
-        TODO("Not yet implemented")
+    override fun resolveType(context: AstBlock): Type {
+        val elementType = type.resolveType(context)
+        return makeArrayType(elementType)
     }
 }

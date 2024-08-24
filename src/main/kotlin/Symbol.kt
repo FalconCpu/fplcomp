@@ -13,6 +13,7 @@ sealed class Symbol(
         is SymbolLocalVar -> "LOCALVAR $name $type"
         is SymbolTypeName -> "TYPENAME $name $type"
         is SymbolLiteral -> "LITERAL $name $type"
+        is SymbolField -> "FIELD $name $type"
     }
 }
 
@@ -47,4 +48,11 @@ class SymbolLiteral(
     name: String,
     type: Type,
     val value: Int
+) : Symbol(location, name, type)
+
+class SymbolField(
+    location: Location,
+    name: String,
+    type: Type,
+    val mutable : Boolean
 ) : Symbol(location, name, type)

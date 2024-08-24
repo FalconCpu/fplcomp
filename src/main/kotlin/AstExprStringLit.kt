@@ -10,8 +10,13 @@ class AstExprStringLit(
         sb.append("STRINGLIT $value\n")
     }
 
-    override fun typeCheckRvalue(symbolTable: SymbolTable): TcExpr {
-        return TcExprLiteral(location, StringType, StringValue(value))
+    override fun dumpWithType(sb: StringBuilder, indent: Int) {
+        sb.append(". ".repeat(indent))
+        sb.append("STRINGLIT $value $type\n")
+    }
+
+    override fun typeCheck(context:AstBlock) {
+        type = StringType
     }
 
 }

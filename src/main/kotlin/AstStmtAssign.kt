@@ -13,7 +13,17 @@ class AstStmtAssign(
         rhs.dump(sb, indent + 1)
     }
 
-    override fun typeCheck(context: TcBlock) {
-        TODO("Not yet implemented")
+    override fun dumpWithType(sb: StringBuilder, indent: Int) {
+        sb.append(". ".repeat(indent))
+        sb.append("ASSIGN\n")
+        lhs.dumpWithType(sb, indent + 1)
+        rhs.dumpWithType(sb, indent + 1)
+    }
+
+    override fun typeCheck(context:AstBlock) {
+        lhs.typeCheck(context)
+        rhs.typeCheck(context)
+        lhs.checkIsLvalue()
+        lhs.type.checkAssignCompatible(rhs.location, rhs.type)
     }
 }

@@ -35,7 +35,6 @@ sealed class Type (val name:String) {
         is NullableType -> 4
         RealType -> 4
         StringType -> 4
-        PointerType -> 4
     }
 }
 
@@ -51,9 +50,6 @@ object IntType : Type("Int")
 object RealType : Type("Real")
 object StringType : Type("String")
 object ErrorType : Type("Error")
-object PointerType : Type("Pointer")  // Only used in the backend - user code never sees this
-
-
 
 // ---------------------------------------------------------------------
 //                           Arrays
@@ -93,15 +89,15 @@ fun makeFunctionType(paramTypes: List<Type>, retType: Type): FunctionType {
 //                           Class Types
 // ---------------------------------------------------------------------
 
-class ClassType(name: String) : Type(name) {
+class ClassType(name: String, val definition:AstBlockClass) : Type(name) {
     //lateinit var function: Function
     var structSize = 0
 }
 
 val allClassTypes = mutableListOf<ClassType>()
 
-fun makeClassType(name: String): ClassType {
-    val new = ClassType(name)
+fun makeClassType(name: String, definition: AstBlockClass): ClassType {
+    val new = ClassType(name, definition)
     allClassTypes.add(new)
     return new
 }
@@ -142,8 +138,8 @@ fun makeTypeError(location: Location, message:String): Type {
 
 val predefinedSymbols = createPredefinedSymbols()
 
-private fun createPredefinedSymbols(): SymbolTable {
-    val symbolTable = SymbolTable(null)
+private fun createPredefinedSymbols(): AstBlockTop {
+    val symbolTable = AstBlockTop()
     for (type in listOf(NullType, UnitType, BoolType, CharType, IntType, RealType, StringType)) {
         val sym = SymbolTypeName(nullLocation, type.name, type)
         symbolTable.add(sym)

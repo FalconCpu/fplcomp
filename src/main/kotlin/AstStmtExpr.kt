@@ -11,8 +11,16 @@ class AstStmtExpr(
         expr.dump(sb, indent + 1)
     }
 
-    override fun typeCheck(context: TcBlock) {
-        TODO("Not yet implemented")
+    override fun dumpWithType(sb: StringBuilder, indent: Int) {
+        sb.append(". ".repeat(indent))
+        sb.append("EXPR\n")
+        expr.dumpWithType(sb, indent + 1)
+    }
+
+    override fun typeCheck(context: AstBlock) {
+        expr.typeCheck(context)
+        if (expr !is AstExprFuncCall)
+            Log.warning(location, "Expression has no effect")
     }
 
 }

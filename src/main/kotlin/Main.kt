@@ -25,11 +25,12 @@ fun compile(files:List<Lexer>, stopAt: StopAt) : String {
         return top.dump()
 
     // Typecheck
-    val tcTop = top.typeCheck()
+    top.identifyFunctions(top)
+    top.typeCheck()
     if (Log.anyError())
         return Log.dump()
     if (stopAt == StopAt.TYPECHECK)
-        return tcTop.dump()
+        return top.dumpWithType()
 
     TODO()
 }

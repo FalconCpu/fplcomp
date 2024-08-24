@@ -13,7 +13,14 @@ class AstStmtIf(
             clause.dump(sb, indent + 1)
     }
 
-    override fun typeCheck(context: TcBlock) {
+    override fun dumpWithType(sb: StringBuilder, indent: Int) {
+        sb.append(". ".repeat(indent))
+        sb.append("IF\n")
+        for (clause in clauses)
+            clause.dumpWithType(sb, indent + 1)
+    }
+
+    override fun typeCheck(context: AstBlock) {
         TODO("Not yet implemented")
     }
 

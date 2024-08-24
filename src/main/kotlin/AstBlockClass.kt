@@ -7,11 +7,13 @@ class AstBlockClass(
     private val parameters: List<AstParameter>
 ) : AstBlock(location, parent) {
 
-    private val type = ClassType(name)
+    lateinit var params : List<Symbol>
+    private val type = makeClassType(name, this)
     private val symbol = SymbolTypeName(location, name, type)
 
+
     init {
-        parent.symbolTable.add(symbol)
+        parent.add(symbol)
     }
 
     override fun dump(sb: StringBuilder, indent: Int) {
@@ -23,7 +25,24 @@ class AstBlockClass(
             stmt.dump(sb, indent + 1)
     }
 
-    override fun typeCheck(context: TcBlock) {
-        TODO("Not yet implemented")
+    override fun dumpWithType(sb: StringBuilder, indent: Int) {
+        sb.append(". ".repeat(indent))
+        sb.append("CLASS $name\n")
+        for (parameter in parameters)
+            parameter.dumpWithType(sb, indent + 1)
+        for (stmt in body)
+            stmt.dumpWithType(sb, indent + 1)
     }
+
+    override fun identifyFunctions(context: AstBlock) {
+        params = parameters.map { it.resolveParameter(context) }
+        params.forEach { add(it) }
+    }
+
+    override fun typeCheck(context: AstBlock) {
+        for(statement in body)
+            statement.typeCheck(this)
+    }
+
+
 }

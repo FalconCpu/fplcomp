@@ -116,9 +116,8 @@ class ParserTest {
             . val a
             . . INTLIT 10
             . val b
-            . . MEMBERACCESS
+            . . MEMBERACCESS x
             . . . IDENTIFIER a
-            . . . IDENTIFIER x
 
         """.trimIndent()
 

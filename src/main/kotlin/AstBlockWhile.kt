@@ -14,8 +14,20 @@ class AstBlockWhile(
             stmt.dump(sb, indent + 1)
     }
 
-    override fun typeCheck(context: TcBlock) {
-        TODO("Not yet implemented")
+    override fun dumpWithType(sb: StringBuilder, indent: Int) {
+        sb.append(". ".repeat(indent))
+        sb.append("WHILE\n")
+        condition.dumpWithType(sb, indent + 1)
+        for (stmt in body)
+            stmt.dumpWithType(sb, indent + 1)
+    }
+
+    override fun typeCheck(context: AstBlock) {
+        condition.typeCheck(context)
+        BoolType.checkAssignCompatible(location, condition.type)
+
+        for(statement in body)
+            statement.typeCheck(this)
     }
 
 }

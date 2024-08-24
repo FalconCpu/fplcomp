@@ -6,6 +6,7 @@ class AstExprBinaryOp(
     private val lhs: AstExpr,
     private val rhs: AstExpr
 ) : AstExpr(location) {
+    private lateinit var opType: AluOp
 
     override fun dump(sb: StringBuilder, indent: Int) {
         sb.append(". ".repeat(indent))
@@ -14,15 +15,23 @@ class AstExprBinaryOp(
         rhs.dump(sb, indent + 1)
     }
 
-    override fun typeCheckRvalue(context: SymbolTable): TcExpr {
-        val lhs = lhs.typeCheckRvalue(context)
-        val rhs = rhs.typeCheckRvalue(context)
+    override fun dumpWithType(sb: StringBuilder, indent: Int) {
+        sb.append(". ".repeat(indent))
+        sb.append("BINARYOP $op $type\n")
+        lhs.dumpWithType(sb, indent + 1)
+        rhs.dumpWithType(sb, indent + 1)
+    }
+
+    override fun typeCheck(context: AstBlock) {
+        lhs.typeCheck(context)
+        rhs.typeCheck(context)
         if (lhs.type==ErrorType || rhs.type == ErrorType)
-            return TcExprError(location)
+            return setTypeError()
         val match = operatorTable.find { it.kind == op && it.lhsType == lhs.type && it.rhsType == rhs.type }
         if (match == null)
-            return TcExprError(location,"No operation defined for $lhs $op $rhs")
-        return TcExprBinop(location, match.resultType, match.op, lhs, rhs)
+            return setTypeError("No operation defined for $lhs $op $rhs")
+        type = match.resultType
+        opType = match.op
     }
 
 }

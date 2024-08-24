@@ -11,7 +11,7 @@ class AstTypeNullable (
         type.dump(sb, indent + 1)
     }
 
-    override fun resolveType(context: TcBlock): Type {
+    override fun resolveType(context: AstBlock): Type {
         TODO("Not yet implemented")
     }
 }

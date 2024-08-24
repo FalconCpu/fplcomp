@@ -81,7 +81,7 @@ class Parser(private val lexer: Lexer) {
     private fun parseMemberAccess(lhs:AstExpr): AstExpr {
         expect(DOT)
         val id = expect(ID)
-        return AstExprMemberAccess(lhs.location, lhs, AstExprIdentifier(id.location, id.text))
+        return AstExprMemberAccess(id.location, lhs, id.text)
     }
 
     private fun parseFuncCall(lhs: AstExpr): AstExpr {
@@ -302,7 +302,7 @@ class Parser(private val lexer: Lexer) {
 
     private fun parseReturn(block: AstBlock) {
         val op = expect(RETURN)
-        val expr = if (canTake(EOL)) null else parseExpression()
+        val expr = if (lookahead.kind==EOL) null else parseExpression()
         expectEol()
         block.add(AstStmtReturn(op.location, expr))
     }

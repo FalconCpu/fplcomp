@@ -10,8 +10,8 @@ class AstTypeId(
         sb.append("TYPEID $name\n")
     }
 
-    override fun resolveType(context: TcBlock): Type {
-        val symbol = predefinedSymbols.lookup(name) ?: context.symbolTable.lookup(name)
+    override fun resolveType(context: AstBlock): Type {
+        val symbol = predefinedSymbols.lookup(name) ?: context.lookup(name)
         if (symbol==null)
             return makeTypeError(location,"Undefined identifier: $name")
         if (symbol is SymbolTypeName)
