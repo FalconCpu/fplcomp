@@ -1,0 +1,4 @@
+package falcon
+
+class Symbol {
+}
