@@ -13,4 +13,8 @@ class AstExprMemberAccess (
         name.dump(sb, indent + 1)
     }
 
+    override fun typeCheckRvalue(symbolTable: SymbolTable): TcExpr {
+        TODO("Not yet implemented")
+    }
+
 }

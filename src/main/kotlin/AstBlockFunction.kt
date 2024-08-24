@@ -2,10 +2,11 @@ package falcon
 
 class AstBlockFunction (
     location: Location,
+    parent : AstBlock,
     private val name: String,
     private val args: List<AstParameter>,
     private val returnType: AstType?
-) : AstBlock(location) {
+) : AstBlock(location, parent) {
 
     override fun dump(sb: StringBuilder, indent: Int) {
         sb.append(". ".repeat(indent))
@@ -16,4 +17,9 @@ class AstBlockFunction (
         for (stmt in body)
             stmt.dump(sb, indent + 1)
     }
+
+    override fun typeCheck(context: TcBlock) {
+        TODO("Not yet implemented")
+    }
+
 }

@@ -9,4 +9,9 @@ class AstExprIntLit(
         sb.append(". ".repeat(indent))
         sb.append("INTLIT $value\n")
     }
+
+    override fun typeCheckRvalue(symbolTable: SymbolTable): TcExpr {
+        return TcExprLiteral(location, IntType, IntValue(value))
+    }
+
 }

@@ -18,4 +18,5 @@ package falcon
 sealed class Ast (val location: Location)
 {
     abstract fun dump(sb: StringBuilder, indent: Int)
+
 }

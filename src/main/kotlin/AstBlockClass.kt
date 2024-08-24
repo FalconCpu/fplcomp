@@ -2,9 +2,17 @@ package falcon
 
 class AstBlockClass(
     location: Location,
+    parent: AstBlock,
     private val name: String,
     private val parameters: List<AstParameter>
-) : AstBlock(location) {
+) : AstBlock(location, parent) {
+
+    private val type = ClassType(name)
+    private val symbol = SymbolTypeName(location, name, type)
+
+    init {
+        parent.symbolTable.add(symbol)
+    }
 
     override fun dump(sb: StringBuilder, indent: Int) {
         sb.append(". ".repeat(indent))
@@ -15,4 +23,7 @@ class AstBlockClass(
             stmt.dump(sb, indent + 1)
     }
 
+    override fun typeCheck(context: TcBlock) {
+        TODO("Not yet implemented")
+    }
 }

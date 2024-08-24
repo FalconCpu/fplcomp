@@ -10,4 +10,9 @@ class AstStmtExpr(
         sb.append("EXPR\n")
         expr.dump(sb, indent + 1)
     }
+
+    override fun typeCheck(context: TcBlock) {
+        TODO("Not yet implemented")
+    }
+
 }

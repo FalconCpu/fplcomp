@@ -14,4 +14,9 @@ class AstExprFuncCall (
             arg.dump(sb, indent + 1)
         }
     }
+
+    override fun typeCheckRvalue(symbolTable: SymbolTable): TcExpr {
+        TODO("Not yet implemented")
+    }
+
 }

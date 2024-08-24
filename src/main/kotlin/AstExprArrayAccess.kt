@@ -12,4 +12,8 @@ class AstExprArrayAccess(
         lhs.dump(sb, indent + 1)
         index.dump(sb, indent + 1)
     }
+
+    override fun typeCheckRvalue(symbolTable: SymbolTable): TcExpr {
+        TODO("Not yet implemented")
+    }
 }

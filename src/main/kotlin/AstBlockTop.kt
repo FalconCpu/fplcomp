@@ -1,6 +1,6 @@
 package falcon
 
-class AstBlockTop() : AstBlock(nullLocation) {
+class AstBlockTop() : AstBlock(nullLocation, null) {
 
     override fun dump(sb: StringBuilder, indent: Int) {
         sb.append(". ".repeat(indent))
@@ -14,4 +14,16 @@ class AstBlockTop() : AstBlock(nullLocation) {
         dump(sb, 0)
         return sb.toString()
     }
+
+    override fun typeCheck(context: TcBlock) {
+        TODO("Not yet implemented")
+    }
+
+    fun typeCheck() : TcTop {
+        val ret = TcTop(symbolTable)
+        for(statement in body)
+            statement.typeCheck(ret)
+        return ret
+    }
+
 }

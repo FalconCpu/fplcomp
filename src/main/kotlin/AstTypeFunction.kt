@@ -13,4 +13,8 @@ class AstTypeFunction(
             param.dump(sb, indent + 1)
         retType?.dump(sb, indent + 1)
     }
+
+    override fun resolveType(context: TcBlock): Type {
+        TODO("Not yet implemented")
+    }
 }

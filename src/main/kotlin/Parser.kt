@@ -276,7 +276,7 @@ class Parser(private val lexer: Lexer) {
         val retType = if (canTake(ARROW)) parseType() else null
         expectEol()
 
-        val ret = AstBlockFunction(id.location, id.text, args, retType)
+        val ret = AstBlockFunction(id.location, block, id.text, args, retType)
         block.add(ret)
 
         if (canTake(INDENT))
@@ -292,7 +292,7 @@ class Parser(private val lexer: Lexer) {
         val parameters = if (lookahead.kind==OPENB) parseParamList(true) else emptyList()
         expectEol()
 
-        val ret = AstBlockClass(id.location, id.text, parameters)
+        val ret = AstBlockClass(id.location, block, id.text, parameters)
         block.add(ret)
 
         if (canTake(INDENT))
@@ -311,7 +311,7 @@ class Parser(private val lexer: Lexer) {
         val op = expect(WHILE)
         val expr = parseExpression()
         expectEol()
-        val ret = AstBlockWhile(op.location, expr)
+        val ret = AstBlockWhile(op.location, block, expr)
         block.add(ret)
 
         if (canTake(INDENT))
@@ -333,23 +333,23 @@ class Parser(private val lexer: Lexer) {
         }
     }
 
-    private fun parseIndent() {
+    private fun parseIndent(block: AstBlock) {
         // Code to handle an unexpected indentation
         // Pretend it's a while loop,
         if (!followingError)
             Log.error(lookahead.location, "Unexpected indentation")
         expect(INDENT)
-        val dummy = AstBlockWhile(lookahead.location, AstExprIntLit(lookahead.location, 0))
+        val dummy = AstBlockWhile(lookahead.location, block, AstExprIntLit(lookahead.location, 0))
         parseBody(dummy)
         checkEnd(INDENT)
     }
 
-    private fun parseIfClause() : AstIfClause{
+    private fun parseIfClause(block: AstBlock) : AstIfClause{
         val location = lookahead.location
         canTake(ELSE)
         val expr = if (canTake(IF)) parseExpression() else null
         expectEol()
-        val ret = AstIfClause(location, expr)
+        val ret = AstIfClause(location, block, expr)
         if (canTake(INDENT))
             parseBody(ret)
         else
@@ -361,7 +361,7 @@ class Parser(private val lexer: Lexer) {
         val location = lookahead.location
         val clauses = mutableListOf<AstIfClause>()
         do {
-            clauses += parseIfClause()
+            clauses += parseIfClause(block)
         } while (lookahead.kind==ELSE)
 
         // check that any else clauses only occur ot the end
@@ -369,7 +369,7 @@ class Parser(private val lexer: Lexer) {
         if (elseClause!=null && elseClause != clauses.last())
             Log.error(elseClause.location, "Else clause must be at the end")
 
-        block.add(AstBlockIf(location, clauses))
+        block.add(AstStmtIf(location, block, clauses))
     }
 
 
@@ -385,7 +385,7 @@ class Parser(private val lexer: Lexer) {
                 IF -> parseIf(block)
                 CLASS -> parseClass(block)
                 EOF -> {}
-                INDENT -> parseIndent()
+                INDENT -> parseIndent(block)
                 else -> throw ParseError(lookahead.location, "Got '${lookahead}' when expecting statement")
             }
 
