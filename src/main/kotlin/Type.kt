@@ -134,10 +134,8 @@ class NullableType(val base: Type) : Type("$base?")
 
 val allNullableTypes = mutableListOf<NullableType>()
 
-fun makeNullableType(location: Location, base: Type): Type {
+fun makeNullableType(base: Type): Type {
     if (base is NullableType || base is ErrorType) return base
-    if (base is IntType || base is RealType || base is BoolType || base is CharType)
-        return makeTypeError(location, "Cannot make nullable type of primitive type $base")
 
     return allNullableTypes.find { it.base == base } ?: run {
         val new = NullableType(base)

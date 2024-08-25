@@ -14,8 +14,9 @@ class AstTypeFunction(
         retType?.dump(sb, indent + 1)
     }
 
-
     override fun resolveType(context: AstBlock): Type {
-        TODO("Not yet implemented")
+        val paramTypes = params.map { it.resolveType(context) }
+        val retType = retType?.resolveType(context) ?: UnitType
+        return makeFunctionType(paramTypes, retType)
     }
 }

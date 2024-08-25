@@ -59,7 +59,7 @@ class AstClass(
             val superclassParams = superClass.definition.constructorParameters.map { it.type }
             checkArgs(superclassParams, astSuperClass.args)
 
-            // copy all the members from the super class into the current class
+            // blank the sumbol table and copy all the members from the super class into the current class
             symbolTable.clear()
             for(sym in superClass.definition.symbolTable.values)
                 add(sym)
@@ -77,6 +77,12 @@ class AstClass(
                 stmt.typeCheck(this)
             else if (stmt is AstBlock)
                 stmt.identifyFunctions(this)
+
+        // Local variables are only accessible in the constructor. Remove them from the symbol table to
+        // make sure they don't get used in other functions
+        val localVars = symbolTable.values.filterIsInstance<SymbolLocalVar>()
+        for (sym in localVars)
+            symbolTable.remove(sym.name)
     }
 
     private fun resolveSuperClass(context: AstBlock) : ClassType? {

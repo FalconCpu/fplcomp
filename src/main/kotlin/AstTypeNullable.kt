@@ -13,6 +13,9 @@ class AstTypeNullable (
 
     override fun resolveType(context: AstBlock): Type {
         val elementType = type.resolveType(context)
-        return makeNullableType(location, elementType)
+        if (elementType is IntType || elementType is RealType || elementType is BoolType || elementType is CharType)
+            return makeTypeError(location, "Cannot make nullable type of primitive type $elementType")
+
+        return makeNullableType(elementType)
     }
 }

@@ -40,7 +40,6 @@ class AstIdentifier (
             Log.error(location, "Variable '$name' has not been initialized")
         else if (symbol in currentPathContext.maybeUninitializedVariables)
             Log.error(location, "Variable '$name' might not be initialized")
-
     }
 
 
@@ -50,7 +49,9 @@ class AstIdentifier (
         type = symbol.type
 
         when(val sym = symbol) {
-            is SymbolField -> TODO()
+            is SymbolField ->
+                if (!sym.mutable)
+                    Log.error(location, "Global variable $name is not mutable")
 
             is SymbolGlobalVar ->
                 if (!sym.mutable)

@@ -74,12 +74,41 @@ class Parser(private val lexer: Lexer) {
         }
     }
 
+    private fun parseArrayConstructor() : AstExpr {
+        val tok = expect(ARRAY)
+        expect(LT)
+        val astType = parseType()
+        expect(GT)
+        expect(OPENB)
+        val size = parseExpression()
+        expect(CLOSEB)
+        return AstArrayConstructor(tok.location, astType, size)
+    }
+
+    private fun parseOptGeneric() : AstType? {
+        if (canTake(LT)) {
+            val ret = parseType()
+            expect(GT)
+            return ret
+        } else
+            return null
+    }
+
+    private fun parseArrayOf() : AstExpr {
+        val tok = expect(ARRAYOF)
+        val astType = parseOptGeneric()
+        val elements = parseExpressionList()
+        return AstArrayOf(tok.location, astType, elements)
+    }
+
     private fun parsePrimaryExpression() : AstExpr {
         return when (lookahead.kind) {
             ID -> parseIdentifier()
             INTLIT -> parseIntLit()
             STRINGLIT -> parseStringLit()
             OPENB -> parseBracketExpression()
+            ARRAY -> parseArrayConstructor()
+            ARRAYOF -> parseArrayOf()
             else -> throw ParseError(lookahead.location, "Got '$lookahead' when expecting primary expression")
         }
     }
@@ -90,14 +119,19 @@ class Parser(private val lexer: Lexer) {
         return AstMemberAccess(id.location, lhs, id.text)
     }
 
-    private fun parseFuncCall(lhs: AstExpr): AstExpr {
+    private fun parseExpressionList(): List<AstExpr> {
         expect(OPENB)
-        val args = mutableListOf<AstExpr>()
+        val ret = mutableListOf<AstExpr>()
         if (lookahead.kind != CLOSEB)
             do {
-                args.add(parseExpression())
+                ret += parseExpression()
             } while (canTake(COMMA))
         expect(CLOSEB)
+        return ret
+    }
+
+    private fun parseFuncCall(lhs: AstExpr): AstExpr {
+        val args = parseExpressionList()
         return AstFuncCall(lhs.location, lhs, args)
     }
 
@@ -474,7 +508,22 @@ class Parser(private val lexer: Lexer) {
         block.add(ret)
     }
 
+    private fun parseRepeat(block: AstBlock) {
+        expect(REPEAT)
+        expectEol()
 
+        val ret = AstRepeat(lookahead.location, block)
+        block.add(ret)
+
+        if (canTake(INDENT))
+            parseBody(ret)
+        else
+            Log.error(lookahead.location, "Missing while body")
+
+        expect(UNTIL)
+        ret.condition = parseExpression()
+        expectEol()
+    }
 
     private fun parseStatement(block:AstBlock) {
         try {
@@ -488,6 +537,7 @@ class Parser(private val lexer: Lexer) {
                 IF -> parseIf(block)
                 CLASS -> parseClass(block, MethodKind.NONE)
                 ENUM -> parseEnum(block)
+                REPEAT -> parseRepeat(block)
                 EOF -> {}
                 INDENT -> parseIndent(block)
                 else -> throw ParseError(lookahead.location, "Got '${lookahead}' when expecting statement")

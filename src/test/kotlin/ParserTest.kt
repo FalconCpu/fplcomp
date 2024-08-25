@@ -721,6 +721,84 @@ class ParserTest {
         runTest(prog, expected)
     }
 
+    @Test
+    fun repeatTest() {
+        val prog = """
+            fun main()->Int
+                var i=0
+                repeat
+                    i=i+1
+                until i=10
+        """.trimIndent()
+
+        val expected = """  
+            TOP
+            . FUNCTION main
+            . . TYPEID Int
+            . . var i
+            . . . INTLIT 0
+            . . REPEAT
+            . . . EQ
+            . . . . IDENTIFIER i
+            . . . . INTLIT 10
+            . . . ASSIGN
+            . . . . IDENTIFIER i
+            . . . . BINARYOP +
+            . . . . . IDENTIFIER i
+            . . . . . INTLIT 1
+
+        """.trimIndent()
+
+        runTest(prog, expected)
+    }
+
+    @Test
+    fun arrayConstructor() {
+        val prog = """
+            fun main()->Int
+                val a = Array<Int>(10)
+        """.trimIndent()
+
+        val expected = """  
+            TOP
+            . FUNCTION main
+            . . TYPEID Int
+            . . val a
+            . . . ARRAYCONSTRUCTOR
+            . . . . TYPEID Int
+            . . . . INTLIT 10
+
+        """.trimIndent()
+
+        runTest(prog, expected)
+    }
+
+    @Test
+    fun arrayLiteral() {
+        val prog = """
+            fun main()->Array<Int>
+                return arrayOf(1,2,3)
+        """.trimIndent()
+
+        val expected = """  
+            TOP
+            . FUNCTION main
+            . . TYPEARRAY
+            . . . TYPEID Int
+            . . RETURN
+            . . . ARRAYOF
+            . . . . INTLIT 1
+            . . . . INTLIT 2
+            . . . . INTLIT 3
+
+        """.trimIndent()
+
+        runTest(prog, expected)
+    }
+
+
+
+
 
     fun emptyTest() {
         val prog = """

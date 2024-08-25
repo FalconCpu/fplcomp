@@ -70,15 +70,7 @@ class AstMemberAccess (
         symbol = lhsType.definition.lookupNoHierarchy(name)
             ?: return setTypeError("Class '$lhsType' has no field named '$name'")
 
-        when(symbol) {
-            is SymbolField,
-            is SymbolFunctionName,
-            is SymbolLiteral -> {}
-            is SymbolGlobalVar -> error("Internal error: Global variable $name inside class $lhsType")
-            is SymbolLocalVar -> Log.error(location,"Cannot access local variable $name inside class $lhsType")
-            is SymbolTypeName -> Log.error("Cannot access type name $name inside class $lhsType")
-            is SymbolMemberAccess -> error("Internal error: Member access inside class $lhsType")
-        }
+        check(symbol is SymbolField || symbol is SymbolFunctionName || symbol is SymbolLiteral)
         val smartCastSymbol = generateSmartCastSymbol()
 
         val smartCastType = if (smartCastSymbol != null)

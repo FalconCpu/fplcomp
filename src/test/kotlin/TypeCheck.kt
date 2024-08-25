@@ -479,11 +479,113 @@ class TypeCheck {
         """.trimIndent()
 
         val expected = """
-            test.txt 6.14:- Cannot access local variable age inside class Cat
+            test.txt 6.14:- Class 'Cat' has no field named 'age'
         """.trimIndent()
 
         runTest(prog, expected)
     }
+
+    @Test
+    fun fieldAccess() {
+        val prog = """
+            class Cat(val name:String, var age:Int)
+                fun timePasses()
+                    age = age+1
+                
+            fun main()->Int
+                val c = Cat("Fluffy", 2)
+                c.timePasses()                
+                return c.age
+        """.trimIndent()
+
+        val expected = """
+            TOP
+            . CLASS Cat
+            . . PARAMETER FIELD name String
+            . . PARAMETER FIELD age Int
+            . . FUNCTION timePasses ()->Unit
+            . . . ASSIGN
+            . . . . IDENTIFIER FIELD age Int
+            . . . . BINARYOP + Int
+            . . . . . IDENTIFIER FIELD age Int
+            . . . . . INTLIT 1 Int
+            . FUNCTION main ()->Int
+            . . DECL LOCALVAR c Cat
+            . . . CONSTRUCTOR Cat
+            . . . . IDENTIFIER TYPENAME Cat Cat
+            . . . . STRINGLIT Fluffy String
+            . . . . INTLIT 2 Int
+            . . EXPR
+            . . . FUNCCALL Unit
+            . . . . MEMBERACCESS timePasses ()->Unit
+            . . . . . IDENTIFIER LOCALVAR c Cat
+            . . RETURN
+            . . . MEMBERACCESS age Int
+            . . . . IDENTIFIER LOCALVAR c Cat
+
+        """.trimIndent()
+
+        runTest(prog, expected)
+    }
+
+    @Test
+    fun localVarAccessFromMemberFunc() {
+        val prog = """
+            class Cat(val name:String, age:Int)
+                fun timePasses()
+                    age = age+1         # error as age is not a field
+                
+            fun main()->Int
+                val c = Cat("Fluffy", 2)
+                c.timePasses()                
+                return c.age
+        """.trimIndent()
+
+        val expected = """
+            test.txt 3.9:- Undefined identifier: age
+            test.txt 8.14:- Class 'Cat' has no field named 'age'
+        """.trimIndent()
+
+        runTest(prog, expected)
+    }
+
+    @Test
+    fun localVarInConstructor() {
+        val prog = """
+            class Cat(val name:String, age:Int)
+                val days = age*365
+                
+            fun main()->Int
+                val c = Cat("Fluffy", 2)
+                return c.days
+        """.trimIndent()
+
+        val expected = """
+            TOP
+            . CLASS Cat
+            . . PARAMETER FIELD name String
+            . . PARAMETER LOCALVAR age Int
+            . . DECL FIELD days Int
+            . . . BINARYOP * Int
+            . . . . IDENTIFIER LOCALVAR age Int
+            . . . . INTLIT 365 Int
+            . FUNCTION main ()->Int
+            . . DECL LOCALVAR c Cat
+            . . . CONSTRUCTOR Cat
+            . . . . IDENTIFIER TYPENAME Cat Cat
+            . . . . STRINGLIT Fluffy String
+            . . . . INTLIT 2 Int
+            . . RETURN
+            . . . MEMBERACCESS days Int
+            . . . . IDENTIFIER LOCALVAR c Cat
+
+        """.trimIndent()
+
+        runTest(prog, expected)
+    }
+
+
+
 
     @Test
     fun notTest() {
@@ -861,6 +963,111 @@ class TypeCheck {
 
         runTest(prog, expected)
     }
+
+    @Test
+    fun repeatTest() {
+        val prog = """
+            fun main()->Int
+                var i=0
+                repeat
+                    i=i+1
+                until i=10
+                return i
+        """.trimIndent()
+
+        val expected = """  
+            TOP
+            . FUNCTION main ()->Int
+            . . DECL LOCALVAR i Int
+            . . . INTLIT 0 Int
+            . . REPEAT
+            . . . EQ Bool
+            . . . . IDENTIFIER LOCALVAR i Int
+            . . . . INTLIT 10 Int
+            . . . ASSIGN
+            . . . . IDENTIFIER LOCALVAR i Int
+            . . . . BINARYOP + Int
+            . . . . . IDENTIFIER LOCALVAR i Int
+            . . . . . INTLIT 1 Int
+            . . RETURN
+            . . . IDENTIFIER LOCALVAR i Int
+
+        """.trimIndent()
+
+        runTest(prog, expected)
+    }
+
+    @Test
+    fun arrayConstructor() {
+        val prog = """
+            fun main()->Array<Int>
+                return Array<Int>(10)
+        """.trimIndent()
+
+        val expected = """  
+            TOP
+            . FUNCTION main ()->Array<Int>
+            . . RETURN
+            . . . ARRAYCONSTRUCTOR Array<Int>
+            . . . . INTLIT 10 Int
+
+        """.trimIndent()
+
+        runTest(prog, expected)
+    }
+
+    @Test
+    fun arrayLiteral() {
+        val prog = """
+            fun main()->Array<Int>
+                return arrayOf(1,2,3)
+        """.trimIndent()
+
+        val expected = """  
+            TOP
+            . FUNCTION main ()->Array<Int>
+            . . RETURN
+            . . . ARRAYOF Array<Int>
+            . . . . INTLIT 1 Int
+            . . . . INTLIT 2 Int
+            . . . . INTLIT 3 Int
+
+        """.trimIndent()
+
+        runTest(prog, expected)
+    }
+
+    @Test
+    fun arrayLiteralTypeMismatch1() {
+        val prog = """
+            fun main()->Array<Int>
+                return arrayOf(1,2,"3")
+        """.trimIndent()
+
+        val expected = """  
+            test.txt 2.24:- Got type String when expecting Int
+        """.trimIndent()
+
+        runTest(prog, expected)
+    }
+
+    @Test
+    fun arrayLiteralTypeMismatch2() {
+        val prog = """
+            fun main()->Array<Int>
+                return arrayOf<String>(1,2,3)
+        """.trimIndent()
+
+        val expected = """  
+            test.txt 2.28:- Got type Int when expecting String
+            test.txt 2.30:- Got type Int when expecting String
+            test.txt 2.32:- Got type Int when expecting String
+            test.txt 2.5:- Got type Array<String> when expecting Array<Int>
+        """.trimIndent()
+
+        runTest(prog, expected)
+    }
+
 
 
 
