@@ -44,6 +44,7 @@ class SymbolFunctionName(
     location: Location,
     name: String,
     type: Type,
+    val astFunction : AstFunction
 ) : Symbol(location, name, type)
 
 class SymbolTypeName(

@@ -5,7 +5,9 @@ class AstFunction (
     parent : AstBlock,
     private val name: String,
     private val astParams: List<AstParameter>,
-    private val returnType: AstType?
+    private val returnType: AstType?,
+    val methodKind: MethodKind,
+    private val methodOf : AstClass?
 ) : AstBlock(location, parent) {
 
     lateinit var endLocation : Location
@@ -29,13 +31,30 @@ class AstFunction (
             stmt.dumpWithType(sb, indent + 1)
     }
 
+    private fun checkOverride(context: AstBlock, newSymbol: SymbolFunctionName) {
+        check(methodOf!=null)
+        val overridenSymbol = methodOf.lookupNoHierarchy(newSymbol.name) ?:
+            return Log.error(location, "No method to override")
+        if (overridenSymbol !is SymbolFunctionName)
+            return Log.error(location, "Cannot override non-function")
+        if (overridenSymbol.astFunction.methodKind == MethodKind.NONE)
+            return Log.error(location, "Cannot override closed method")
+        if (overridenSymbol.type != newSymbol.type)
+            return Log.error(location, "Type mismatch in overriding method. Got ${overridenSymbol.type} but expected ${newSymbol.type}")
+        context.replace(newSymbol)
+    }
 
     override fun identifyFunctions(context: AstBlock) {
         val params = astParams.map { it.resolveParameter(context) }
         retType = returnType?.resolveType(context) ?: UnitType
         val funcType = makeFunctionType(params.map{it.type}, retType)
-        symbol = SymbolFunctionName(location, name, funcType)
-        context.add(symbol)
+        symbol = SymbolFunctionName(location, name, funcType, this)
+
+        if (methodKind==MethodKind.OVERRIDE_METHOD)
+            checkOverride(context, symbol)
+        else
+            context.add(symbol)
+
         for(param in params)
             add(param)
     }
@@ -44,8 +63,14 @@ class AstFunction (
         currentPathContext = PathContext()
         for(statement in body)
             statement.typeCheck(this)
-        if (currentPathContext.isReachable && retType != UnitType)
+        if (currentPathContext.isReachable && retType != UnitType && methodKind!=MethodKind.ABSTRACT_METHOD)
             Log.error(endLocation, "Function should return a value of type $retType")
     }
+}
 
+enum class MethodKind {
+    NONE,
+    OPEN_METHOD,
+    OVERRIDE_METHOD,
+    ABSTRACT_METHOD
 }

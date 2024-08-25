@@ -48,8 +48,10 @@ class AstFuncCall (
             return setTypeError()
         if (lhs.type !is ClassType)
             return setTypeError("Cannot call constructor for type '${lhs.type}'")
+        if (lhs.type.definition.isAbstract)
+            Log.error(location, "Cannot call constructor for abstract class '${lhs.type}'")
 
-        val params = lhs.type.definition.params.map { it.type }
+        val params = lhs.type.definition.constructorParameters.map { it.type }
         checkArgs(params, args)
         type = lhs.type
         isConstructor = true
@@ -63,7 +65,7 @@ class AstFuncCall (
 
         if (funcType is ErrorType)
             return setTypeError()
-        if (func is AstIdentifier && func.symbol is SymbolTypeName)
+        if (func.isTypeName())
             return typeCheckConstructor(func.symbol as SymbolTypeName)
         if (funcType is FunctionType)
             return typeCheckFunctionCall(funcType)

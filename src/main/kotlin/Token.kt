@@ -33,10 +33,13 @@ enum class TokenKind (val text: String, val lineContinues : Boolean) {
     GT       (">", true),
     LTE      ("<=", true),
     GTE      (">=", true),
+    IS       ("is", true),
+    ISNOT    ("isnot", true),
     AND      ("and", true),
     NOT      ("not", true),
     OR       ("or", true),
     QMARK    ("?", false),
+    ELVIS    ("?:", true),
     ARROW    ("->", true),
     COLON    (":", true),
     SEMICOLON(";", false),
@@ -61,6 +64,10 @@ enum class TokenKind (val text: String, val lineContinues : Boolean) {
     UNTIL    ("until", false),
     RETURN   ("return", false),
     CLASS    ("class", false),
+    OVERRIDE ("override", false),
+    ABSTRACT ("abstract", false),
+    OPEN     ("open", false),
+    ENUM     ("enum", false),
     ERROR    ("<ERROR>", false);
 
     override fun toString() = text

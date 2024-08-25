@@ -2,7 +2,7 @@ package falcon
 
 class AstIdentifier (
     location: Location,
-    private val name: String
+    val name: String
 ) : AstExpr(location){
 
     lateinit var symbol: Symbol

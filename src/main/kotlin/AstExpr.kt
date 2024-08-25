@@ -1,5 +1,8 @@
 package falcon
 
+import kotlin.contracts.ExperimentalContracts
+import kotlin.contracts.contract
+
 sealed class AstExpr(location: Location) : Ast(location) {
     lateinit var type: Type
 
@@ -35,4 +38,14 @@ sealed class AstExpr(location: Location) : Ast(location) {
             is AstMemberAccess -> smartCastSymbol
             else -> null
         }
+
+    @OptIn(ExperimentalContracts::class)
+    fun isTypeName() : Boolean {
+        contract {
+            returns(true) implies (this@AstExpr is AstIdentifier)
+        }
+        return this is AstIdentifier && this.symbol is SymbolTypeName
+    }
+
+
 }

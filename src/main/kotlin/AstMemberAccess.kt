@@ -50,25 +50,23 @@ class AstMemberAccess (
         typeCheck(context)
     }
 
-    override fun typeCheck(context:AstBlock) {
-        lhs.typeCheck(context)
-        val lhsType = lhs.type
+    private fun accessEnum(lhsType:EnumType) {
+        symbol = lhsType.definition.lookupNoHierarchy(name)
+            ?: return setTypeError("Enum '$lhsType' has no field named '$name'")
+        type = symbol.type
+    }
 
-        if (lhsType is ErrorType)
-            return setTypeError()
-
-        // Special case for accessing size of array
-        if (lhsType is ArrayType && name=="size") {
+    private fun accessArray(lhsType:ArrayType) {
+        if (name=="size") {
             type = IntType
             symbol = sizeSymbol
             return
+        } else {
+            setTypeError("Cannot access field $name of array type $lhsType")
         }
+    }
 
-        if (lhsType is NullableType)
-            return setTypeError("Member access is not allowed on nullable type $lhsType")
-        if (lhsType !is ClassType)
-            return setTypeError("Cannot access field $name of non-class type $lhsType")
-
+    private fun accessClass(lhsType:ClassType) {
         symbol = lhsType.definition.lookupNoHierarchy(name)
             ?: return setTypeError("Class '$lhsType' has no field named '$name'")
 
@@ -90,6 +88,27 @@ class AstMemberAccess (
         this.smartCastSymbol = smartCastSymbol
     }
 
+
+    override fun typeCheck(context:AstBlock) {
+        lhs.typeCheckAllowTypeName(context)
+        val lhsType = lhs.type
+
+        return if (lhs.isTypeName()) {
+            when (lhsType) {
+                is ErrorType -> setTypeError()
+                is EnumType -> accessEnum(lhsType)
+                else -> setTypeError("Cannot access field $name of type $lhsType")
+            }
+        } else {
+            when (lhsType) {
+                is ErrorType -> setTypeError()
+                is ClassType -> accessClass(lhsType)
+                is NullableType -> setTypeError("Member access is not allowed on nullable type $lhsType")
+                is ArrayType -> accessArray(lhsType)
+                else -> setTypeError("Cannot access field $name of non-class type $lhsType")
+            }
+        }
+    }
 }
 
 private val sizeSymbol = SymbolField(nullLocation, "size", IntType, false)

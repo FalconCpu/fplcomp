@@ -3,16 +3,20 @@ package falcon
 sealed class Type (val name:String) {
     override fun toString() = name
 
-    private fun isAssignCompatible(type: Type) : Boolean {
+    /**
+     * Test to see if a value of type rhsType can be assigned to a variable of this type
+     */
+    fun isAssignCompatible(rhsType: Type) : Boolean {
 
-        if (this == type) return true
+        if (this == rhsType) return true
 
-        if (this is ErrorType || type is ErrorType) return true // Allow errors to propagate silently
+        if (this is ErrorType || rhsType is ErrorType) return true // Allow errors to propagate silently
 
-        if (this is NullableType && type is NullType) return true // Allow null to be assigned to T?
-        if (this is NullableType) return base.isAssignCompatible(type) // Allow T to be assigned to T?
+        if (this is NullableType && rhsType is NullType) return true // Allow null to be assigned to T?
 
-        // TODO - sub types of structs
+        if (this is NullableType) return base.isAssignCompatible(rhsType) // Allow T to be assigned to T?
+
+        if (this is ClassType && rhsType is ClassType) return rhsType.isSubTypeOf(this)
 
         return false
     }
@@ -20,6 +24,11 @@ sealed class Type (val name:String) {
     fun checkAssignCompatible(location: Location, type: Type) {
         if (!isAssignCompatible(type))
             Log.error(location, "Got type $type when expecting $this")
+    }
+
+    fun makeNonNull(): Type = when (this) {
+        is NullableType -> base
+        else -> this
     }
 
 //    fun getSize(): Int = when (this) {
@@ -89,18 +98,33 @@ fun makeFunctionType(paramTypes: List<Type>, retType: Type): FunctionType {
 //                           Class Types
 // ---------------------------------------------------------------------
 
-class ClassType(name: String, val definition:AstClass) : Type(name) {
-    //lateinit var function: Function
-    var structSize = 0
+class ClassType(name: String, val definition:AstClass, val superClass: ClassType?) : Type(name) {
+
+    fun isSubTypeOf(superclass: ClassType): Boolean {
+        if (this == superclass) return true
+        if (superClass == null) return false
+        return superClass.isSubTypeOf(superclass)
+    }
 }
 
 val allClassTypes = mutableListOf<ClassType>()
 
-fun makeClassType(name: String, definition: AstClass): ClassType {
-    val new = ClassType(name, definition)
+fun makeClassType(name: String, definition: AstClass, superClass: ClassType?): ClassType {
+    val new = ClassType(name, definition, superClass)
     allClassTypes.add(new)
     return new
 }
+
+// ---------------------------------------------------------------------
+//                           Enum Types
+// ---------------------------------------------------------------------
+
+class EnumType(name: String, val definition: AstEnum) : Type(name)
+
+fun makeEnumType(name: String, definition: AstEnum): EnumType {
+    return EnumType(name, definition)
+}
+
 
 // ---------------------------------------------------------------------
 //                           Nullable Types

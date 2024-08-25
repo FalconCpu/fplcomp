@@ -64,8 +64,14 @@ class Parser(private val lexer: Lexer) {
     private fun parseBracketExpression() : AstExpr {
         expect(OPENB)
         val expr = parseExpression()
-        expect(CLOSEB)
-        return expr
+        if (canTake(COLON)) {
+            val astType = parseType()
+            expect(CLOSEB)
+            return AstCast(expr.location, expr, astType)
+        } else {
+            expect(CLOSEB)
+            return expr
+        }
     }
 
     private fun parsePrimaryExpression() : AstExpr {
@@ -144,15 +150,26 @@ class Parser(private val lexer: Lexer) {
         return ret
     }
 
-    private fun parseComp() : AstExpr {
+    private fun parseElvis() : AstExpr {
         var ret = parseAdd()
-        if (lookahead.kind in listOf(EQ, NEQ, LT, GT, LTE, GTE)) {
+        while (lookahead.kind == ELVIS) {
             val op = nextToken()
             val rhs = parseAdd()
+            ret = AstElvis(op.location, ret, rhs)
+        }
+        return ret
+    }
+
+    private fun parseComp() : AstExpr {
+        var ret = parseElvis()
+        if (lookahead.kind in listOf(EQ, NEQ, LT, GT, LTE, GTE, IS, ISNOT)) {
+            val op = nextToken()
             ret = when (op.kind) {
-                EQ -> AstEquals(op.location, ret, rhs, true)
-                NEQ -> AstEquals(op.location, ret, rhs, false)
-                else -> AstCompare(op.location, op.kind, ret, rhs)
+                EQ -> AstEquals(op.location, ret, parseElvis(), true)
+                NEQ -> AstEquals(op.location, ret, parseElvis(), false)
+                IS -> AstIs(op.location, ret, parseType(), true)
+                ISNOT -> AstIs(op.location, ret, parseType(), false)
+                else -> AstCompare(op.location, op.kind, ret, parseElvis())
             }
         }
         return ret
@@ -179,9 +196,21 @@ class Parser(private val lexer: Lexer) {
         return ret
     }
 
+    private fun parseIfExpression() : AstExpr {
+        expect(IF)
+        val cond = parseExpression()
+        expect(THEN)
+        val thenExpr = parseExpression()
+        expect(ELSE)
+        val elseExpr = parseExpression()
+        return AstIfExpr(cond.location, cond, thenExpr, elseExpr)
+    }
+
     private fun parseExpression(): AstExpr {
-        val expr = parseOr()
-        return expr
+        return when (lookahead.kind) {
+            IF -> parseIfExpression()
+            else -> return parseOr()
+        }
     }
 
     private fun parseTypeId(): AstType {
@@ -279,17 +308,42 @@ class Parser(private val lexer: Lexer) {
         }
     }
 
-    private fun parseFunction(block: AstBlock) {
-        val op = expect(FUN)
+    private fun parseMethodKind(block:AstBlock) {
+        val kind = if (canTake(OPEN))   MethodKind.OPEN_METHOD
+        else if (canTake(OVERRIDE))     MethodKind.OVERRIDE_METHOD
+        else if (canTake(ABSTRACT))     MethodKind.ABSTRACT_METHOD
+        else                            MethodKind.NONE
+
+        return when (lookahead.kind) {
+            FUN -> parseFunction(block, kind)
+            CLASS -> parseClass(block, kind)
+            else -> throw ParseError(lookahead.location, "Expected function or class, got ${lookahead.kind}")
+        }
+    }
+
+    private fun parseFunction(block: AstBlock, methodKind: MethodKind) {
+        val methodOf = if (block is AstClass) block else null
+        if (methodOf==null && methodKind!= MethodKind.NONE)
+            Log.error(lookahead.location, "Cannot have method outside class")
+
+        val tok = expect(FUN)
         val id = expect(ID)
         val args = parseParamList(false)
         val retType = if (canTake(ARROW)) parseType() else null
         expectEol()
 
-        val ret = AstFunction(id.location, block, id.text, args, retType)
+        val ret = AstFunction(id.location, block, id.text, args, retType, methodKind, methodOf)
         block.add(ret)
 
-        if (canTake(INDENT))
+        if (methodKind==MethodKind.ABSTRACT_METHOD) {
+            if (methodOf!=null && !methodOf.isAbstract)
+                Log.error(tok.location, "Cannot have abstract method outside abstract class")
+            // Abstract methods are not allowed to have a body
+            if (canTake(INDENT)) {
+                Log.error(lookahead.location, "Abstract methods cannot have a body")
+                parseBody(ret)
+            }
+        } else if (canTake(INDENT))
             parseBody(ret)
         else
             Log.error(lookahead.location, "Missing function body")
@@ -297,13 +351,30 @@ class Parser(private val lexer: Lexer) {
         checkEnd(FUN)
     }
 
-    private fun parseClass(block: AstBlock) {
+    private fun parseSuperClass() : AstSuperClass {
+        val id = expect(ID)
+        val args = mutableListOf<AstExpr>()
+        expect(OPENB)
+        if (lookahead.kind!=CLOSEB)
+            do {
+                args += parseExpression()
+            } while (canTake(COMMA))
+        expect(CLOSEB)
+        return AstSuperClass(id.location, id.text, args)
+    }
+
+    private fun parseClass(block: AstBlock, methodKind: MethodKind) {
+        if (methodKind!=MethodKind.NONE && methodKind!=MethodKind.ABSTRACT_METHOD)
+            Log.error(lookahead.location, "$methodKind cannot be appleid to class")
+
         expect(CLASS)
         val id = expect(ID)
         val parameters = if (lookahead.kind==OPENB) parseParamList(true) else emptyList()
+        val superClass = if (canTake(COLON)) parseSuperClass() else null
         expectEol()
 
-        val ret = AstClass(id.location, block, id.text, parameters)
+        val isAbstract = methodKind == MethodKind.ABSTRACT_METHOD
+        val ret = AstClass(id.location, block, id.text, parameters, superClass, isAbstract)
         block.add(ret)
 
         if (canTake(INDENT))
@@ -383,18 +454,40 @@ class Parser(private val lexer: Lexer) {
         block.add(AstIf(location, block, clauses))
     }
 
+    private fun parseIdList() : List<AstIdentifier> {
+        val ret = mutableListOf<AstIdentifier>()
+        expect(OPENB)
+        if (lookahead.kind != CLOSEB)
+            do {
+                ret += parseIdentifier()
+            } while (canTake(COMMA))
+        expect(CLOSEB)
+        return ret
+    }
+
+    private fun parseEnum(block: AstBlock) {
+        expect(ENUM)
+        val id = expect(ID)
+        val values = parseIdList()
+        expectEol()
+        val ret = AstEnum(id.location, block, id.text, values)
+        block.add(ret)
+    }
+
 
 
     private fun parseStatement(block:AstBlock) {
         try {
             when (lookahead.kind) {
                 VAR, VAL -> parseDeclaration(block)
-                FUN -> parseFunction(block)
+                OPEN, OVERRIDE, ABSTRACT -> parseMethodKind(block)
+                FUN -> parseFunction(block, MethodKind.NONE)
                 RETURN -> parseReturn(block)
                 WHILE -> parseWhile(block)
                 ID, OPENB -> parseAssign(block)
                 IF -> parseIf(block)
-                CLASS -> parseClass(block)
+                CLASS -> parseClass(block, MethodKind.NONE)
+                ENUM -> parseEnum(block)
                 EOF -> {}
                 INDENT -> parseIndent(block)
                 else -> throw ParseError(lookahead.location, "Got '${lookahead}' when expecting statement")

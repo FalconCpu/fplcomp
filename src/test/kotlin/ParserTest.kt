@@ -565,6 +565,163 @@ class ParserTest {
         runTest(prog, expected)
     }
 
+    @Test
+    fun negTest() {
+        val prog = """
+            val a = -3
+        """.trimIndent()
+
+        val expected = """  
+            TOP
+            . val a
+            . . NEG
+            . . . INTLIT 3
+
+        """.trimIndent()
+
+        runTest(prog, expected)
+    }
+
+    @Test
+    fun elvisTest() {
+        val prog = """
+            class Cat(val name:String?, age:Int)
+            
+            fun getName(c:Cat)->String
+                return c.name ?: "Unknown"
+            
+        """.trimIndent()
+
+        val expected = """
+            TOP
+            . CLASS Cat
+            . . PARAMETER name val
+            . . . TYPENULLABLE
+            . . . . TYPEID String
+            . . PARAMETER age
+            . . . TYPEID Int
+            . FUNCTION getName
+            . . PARAMETER c
+            . . . TYPEID Cat
+            . . TYPEID String
+            . . RETURN
+            . . . ELVIS
+            . . . . MEMBERACCESS name
+            . . . . . IDENTIFIER c
+            . . . . STRINGLIT Unknown
+
+            """.trimIndent()
+
+        runTest(prog, expected)
+    }
+
+    @Test
+    fun ifExpressionTest() {
+        val prog = """
+            fun main(a:Int)->String
+                return if a=0 then "zero" else "not zero"
+        """.trimIndent()
+
+        val expected = """
+            TOP
+            . FUNCTION main
+            . . PARAMETER a
+            . . . TYPEID Int
+            . . TYPEID String
+            . . RETURN
+            . . . IF_EXPR
+            . . . . EQ
+            . . . . . IDENTIFIER a
+            . . . . . INTLIT 0
+            . . . . STRINGLIT zero
+            . . . . STRINGLIT not zero
+
+        """.trimIndent()
+
+        runTest(prog, expected)
+    }
+
+    @Test
+    fun notTest() {
+        val prog = """
+            fun main(a:Bool)->Bool
+                return not a
+        """.trimIndent()
+
+        val expected = """
+              TOP
+              . FUNCTION main
+              . . PARAMETER a
+              . . . TYPEID Bool
+              . . TYPEID Bool
+              . . RETURN
+              . . . NOT
+              . . . . IDENTIFIER a
+
+        """.trimIndent()
+
+        runTest(prog, expected)
+    }
+
+    @Test
+    fun castTest() {
+        val prog = """
+            class Cat(val name:String, var age:Int)
+            
+            fun main()->Int
+                val c = (123456:Cat)
+                return c.age
+        """.trimIndent()
+
+        val expected = """  
+            TOP
+            . CLASS Cat
+            . . PARAMETER name val
+            . . . TYPEID String
+            . . PARAMETER age var
+            . . . TYPEID Int
+            . FUNCTION main
+            . . TYPEID Int
+            . . val c
+            . . . CAST
+            . . . . INTLIT 123456
+            . . . . TYPEID Cat
+            . . RETURN
+            . . . MEMBERACCESS age
+            . . . . IDENTIFIER c
+
+        """.trimIndent()
+
+        runTest(prog, expected)
+    }
+
+    @Test
+    fun enumTest() {
+        val prog = """
+            enum Color (RED,GREEN,BLUE)
+            
+            fun main()->Color
+                return Color.RED
+        """.trimIndent()
+
+        val expected = """  
+            TOP
+            . ENUM Color
+            . . IDENTIFIER RED
+            . . IDENTIFIER GREEN
+            . . IDENTIFIER BLUE
+            . FUNCTION main
+            . . TYPEID Color
+            . . RETURN
+            . . . MEMBERACCESS RED
+            . . . . IDENTIFIER Color
+
+        """.trimIndent()
+
+        runTest(prog, expected)
+    }
+
+
     fun emptyTest() {
         val prog = """
         """.trimIndent()

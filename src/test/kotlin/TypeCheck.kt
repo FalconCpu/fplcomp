@@ -533,6 +533,41 @@ class TypeCheck {
     }
 
     @Test
+    fun negRealTest() {
+        val prog = """
+            fun main(a:Real)->Real
+                return -a
+        """.trimIndent()
+
+        val expected = """
+            TOP
+            . FUNCTION main (Real)->Real
+            . . RETURN
+            . . . NEG Real
+            . . . . IDENTIFIER LOCALVAR a Real
+
+        """.trimIndent()
+
+        runTest(prog, expected)
+    }
+
+
+    @Test
+    fun negStringTest() {
+        val prog = """
+            fun main(a:String)->String
+                return -a
+        """.trimIndent()
+
+        val expected = """
+            test.txt 2.12:- No operation defined for unary minus String
+        """.trimIndent()
+
+        runTest(prog, expected)
+    }
+
+
+    @Test
     fun badTypeAsValue() {
         val prog = """
             fun main()
@@ -564,6 +599,269 @@ class TypeCheck {
 
         runTest(prog, expected)
     }
+
+    @Test
+    fun elvisTest() {
+        val prog = """
+            class Cat(val name:String?, age:Int)
+            
+            fun getName(c:Cat)->String
+                return c.name ?: "Unknown"
+            
+        """.trimIndent()
+
+        val expected = """
+            TOP
+            . CLASS Cat
+            . . PARAMETER FIELD name String?
+            . . PARAMETER LOCALVAR age Int
+            . FUNCTION getName (Cat)->String
+            . . RETURN
+            . . . ELVIS String
+            . . . . MEMBERACCESS name String?
+            . . . . . IDENTIFIER LOCALVAR c Cat
+            . . . . STRINGLIT Unknown String
+
+        """.trimIndent()
+
+        runTest(prog, expected)
+    }
+
+    @Test
+    fun elvisNotNullableTest() {
+        val prog = """
+            class Cat(val name:String, age:Int)
+            
+            fun getName(c:Cat)->String
+                return c.name ?: "Unknown"
+            
+        """.trimIndent()
+
+        val expected = """
+            test.txt 4.19:- Not a nullable type for elvis operator: String
+        """.trimIndent()
+
+        runTest(prog, expected)
+    }
+
+    @Test
+    fun elvisBadType() {
+        val prog = """
+            class Cat(val name:String?, age:Int)
+            
+            fun getName(c:Cat)->String
+                return c.name ?: 54
+            
+        """.trimIndent()
+
+        val expected = """
+            test.txt 4.19:- Incompatible types for elvis operator String? and Int
+        """.trimIndent()
+
+        runTest(prog, expected)
+    }
+
+
+    @Test
+    fun ifExpressionTest() {
+        val prog = """
+            fun main(a:Int)->String
+                return if a=0 then "zero" else "not zero"
+        """.trimIndent()
+
+        val expected = """
+            TOP
+            . FUNCTION main (Int)->String
+            . . RETURN
+            . . . IF_EXPR String
+            . . . . EQ Bool
+            . . . . . IDENTIFIER LOCALVAR a Int
+            . . . . . INTLIT 0 Int
+            . . . . STRINGLIT zero String
+            . . . . STRINGLIT not zero String
+
+        """.trimIndent()
+
+        runTest(prog, expected)
+    }
+
+    @Test
+    fun stringCompare() {
+        val prog = """
+            fun main(a:String, b:String)->String
+                if a<b
+                    return "a is less than b"
+                else if a>b
+                    return "a is greater than b"
+                else
+                    return "a is equal to b"
+        """.trimIndent()
+
+        val expected = """
+            TOP
+            . FUNCTION main (String,String)->String
+            . . IF
+            . . . CLAUSE
+            . . . . COMPARE < Bool
+            . . . . . IDENTIFIER LOCALVAR a String
+            . . . . . IDENTIFIER LOCALVAR b String
+            . . . . RETURN
+            . . . . . STRINGLIT a is less than b String
+            . . . CLAUSE
+            . . . . COMPARE > Bool
+            . . . . . IDENTIFIER LOCALVAR a String
+            . . . . . IDENTIFIER LOCALVAR b String
+            . . . . RETURN
+            . . . . . STRINGLIT a is greater than b String
+            . . . CLAUSE
+            . . . . RETURN
+            . . . . . STRINGLIT a is equal to b String
+
+        """.trimIndent()
+
+        runTest(prog, expected)
+    }
+
+    @Test
+    fun stringCompareError() {
+        val prog = """
+            fun main(a:String, b:String)->String
+                if a<5
+                    return "a is less than b"
+                return "a is greater than b"
+        """.trimIndent()
+
+        val expected = """
+            test.txt 2.9:- No operation defined for String < Int
+        """.trimIndent()
+
+        runTest(prog, expected)
+    }
+
+    @Test
+    fun realCompare() {
+        val prog = """
+            fun main(a:Real, b:Real)->String
+                if a<b
+                    return "a is less than b"
+                else if a>b
+                    return "a is greater than b"
+                else
+                    return "a is equal to b"
+        """.trimIndent()
+
+        val expected = """
+            TOP
+            . FUNCTION main (Real,Real)->String
+            . . IF
+            . . . CLAUSE
+            . . . . COMPARE < Bool
+            . . . . . IDENTIFIER LOCALVAR a Real
+            . . . . . IDENTIFIER LOCALVAR b Real
+            . . . . RETURN
+            . . . . . STRINGLIT a is less than b String
+            . . . CLAUSE
+            . . . . COMPARE > Bool
+            . . . . . IDENTIFIER LOCALVAR a Real
+            . . . . . IDENTIFIER LOCALVAR b Real
+            . . . . RETURN
+            . . . . . STRINGLIT a is greater than b String
+            . . . CLAUSE
+            . . . . RETURN
+            . . . . . STRINGLIT a is equal to b String
+
+        """.trimIndent()
+
+        runTest(prog, expected)
+    }
+
+    @Test
+    fun andOrTest() {
+        val prog = """
+            fun main(a:Int, b:Int)->String
+                if a=1 and b=2 or a<0
+                    return "a is 1 and b is 2"
+                else
+                    return "a is not 1 and b is not 2"
+        """.trimIndent()
+
+        val expected = """
+            TOP
+            . FUNCTION main (Int,Int)->String
+            . . IF
+            . . . CLAUSE
+            . . . . OR Bool
+            . . . . . AND Bool
+            . . . . . . EQ Bool
+            . . . . . . . IDENTIFIER LOCALVAR a Int
+            . . . . . . . INTLIT 1 Int
+            . . . . . . EQ Bool
+            . . . . . . . IDENTIFIER LOCALVAR b Int
+            . . . . . . . INTLIT 2 Int
+            . . . . . COMPARE < Bool
+            . . . . . . IDENTIFIER LOCALVAR a Int
+            . . . . . . INTLIT 0 Int
+            . . . . RETURN
+            . . . . . STRINGLIT a is 1 and b is 2 String
+            . . . CLAUSE
+            . . . . RETURN
+            . . . . . STRINGLIT a is not 1 and b is not 2 String
+
+        """.trimIndent()
+
+        runTest(prog, expected)
+    }
+
+    @Test
+    fun castTest() {
+        val prog = """
+            class Cat(val name:String, var age:Int)
+            
+            fun main()->Int
+                val c = (123456:Cat)
+                return c.age
+        """.trimIndent()
+
+        val expected = """  
+            TOP
+            . CLASS Cat
+            . . PARAMETER FIELD name String
+            . . PARAMETER FIELD age Int
+            . FUNCTION main ()->Int
+            . . DECL LOCALVAR c Cat
+            . . . CAST Cat
+            . . . . INTLIT 123456 Int
+            . . RETURN
+            . . . MEMBERACCESS age Int
+            . . . . IDENTIFIER LOCALVAR c Cat
+
+        """.trimIndent()
+
+        runTest(prog, expected)
+    }
+
+    @Test
+    fun enumTest() {
+        val prog = """
+            enum Color (RED,GREEN,BLUE)
+            
+            fun main()->Color
+                return Color.RED
+        """.trimIndent()
+
+        val expected = """
+            TOP
+            . ENUM Color
+            . FUNCTION main ()->Color
+            . . RETURN
+            . . . MEMBERACCESS RED Color
+            . . . . IDENTIFIER TYPENAME Color Color
+
+        """.trimIndent()
+
+        runTest(prog, expected)
+    }
+
 
 
 

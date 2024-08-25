@@ -93,7 +93,9 @@ class Lexer (val fineName:String, val reader: Reader) {
         return if ((c == '<' && lookahead == '=') ||
             (c == '>' && lookahead == '=') ||
             (c == '!' && lookahead == '=') ||
-            (c == '-' && lookahead == '>'))
+            (c == '-' && lookahead == '>') ||
+            (c == '?' && lookahead == ':') ||
+            (c == '?' && lookahead == '.') )
             c.toString() + nextChar()
         else
             c.toString()

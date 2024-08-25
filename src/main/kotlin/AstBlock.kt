@@ -1,7 +1,7 @@
 package falcon
 
-sealed class AstBlock(location: Location, private val parent:AstBlock?) : AstStmt(location) {
-    private val symbolTable = mutableMapOf<String, Symbol>()
+sealed class AstBlock(location: Location, protected val parent:AstBlock?) : AstStmt(location) {
+    protected val symbolTable = mutableMapOf<String, Symbol>()
     protected val body = mutableListOf<AstStmt>()
 
 
@@ -12,7 +12,12 @@ sealed class AstBlock(location: Location, private val parent:AstBlock?) : AstStm
         this.symbolTable[symbol.name] = symbol
     }
 
-    fun lookup(name: String): Symbol? = this.symbolTable[name] ?: parent?.lookup(name)
+    fun replace(symbol: Symbol) {
+        check(this.symbolTable[symbol.name] != null)
+        this.symbolTable[symbol.name] = symbol
+    }
+
+    open fun lookup(name: String): Symbol? = this.symbolTable[name] ?: parent?.lookup(name)
 
     fun lookupNoHierarchy(name: String): Symbol? = this.symbolTable[name]
 

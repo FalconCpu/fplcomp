@@ -658,5 +658,35 @@ class PathContextTest {
         runTest(prog, expected)
     }
 
+    @Test
+    fun ifExpressionTest() {
+        val prog = """
+            class Cat(val name:String, val age:Int)
+
+            fun main(c:Cat?)->String
+                return if c!=null then c.name else "unknown"
+        """.trimIndent()
+
+        val expected = """
+            TOP
+            . CLASS Cat
+            . . PARAMETER FIELD name String
+            . . PARAMETER FIELD age Int
+            . FUNCTION main (Cat?)->String
+            . . RETURN
+            . . . IF_EXPR String
+            . . . . NEQ Bool
+            . . . . . IDENTIFIER LOCALVAR c Cat?
+            . . . . . IDENTIFIER LITERAL null Null
+            . . . . MEMBERACCESS name String
+            . . . . . IDENTIFIER LOCALVAR c Cat
+            . . . . STRINGLIT unknown String
+
+        """.trimIndent()
+
+        runTest(prog, expected)
+    }
+
+
 
 }
