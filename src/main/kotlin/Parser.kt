@@ -114,8 +114,14 @@ class Parser(private val lexer: Lexer) {
     }
 
     private fun parsePrefix(): AstExpr {
-        var ret = parsePostfix()
-        return ret
+        if (lookahead.kind==NOT) {
+            val op = nextToken()
+            return AstNot(op.location, parsePrefix())
+        } else if (lookahead.kind == MINUS) {
+            val op = nextToken()
+            return AstNeg(op.location, parsePrefix())
+        } else
+            return parsePostfix()
     }
 
     private fun parseMult() : AstExpr {
@@ -146,7 +152,7 @@ class Parser(private val lexer: Lexer) {
             ret = when (op.kind) {
                 EQ -> AstEquals(op.location, ret, rhs, true)
                 NEQ -> AstEquals(op.location, ret, rhs, false)
-                else -> AstBinop(op.location, op.kind, ret, rhs)
+                else -> AstCompare(op.location, op.kind, ret, rhs)
             }
         }
         return ret
@@ -157,7 +163,7 @@ class Parser(private val lexer: Lexer) {
         while(lookahead.kind==AND) {
             val op = nextToken()
             val rhs = parseComp()
-            ret = AstBinop(op.location, op.kind, ret, rhs)
+            ret = AstAnd(op.location, ret, rhs)
         }
         return ret
     }
@@ -168,7 +174,7 @@ class Parser(private val lexer: Lexer) {
         while(lookahead.kind==OR) {
             val op = nextToken()
             val rhs = parseComp()
-            ret = AstBinop(op.location, op.kind, ret, rhs)
+            ret = AstOr(op.location, ret, rhs)
         }
         return ret
     }

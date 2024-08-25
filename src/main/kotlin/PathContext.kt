@@ -55,8 +55,8 @@ data class PathContext (
             isReachable = isReachable
         )
 
-    fun addSmartCast(symbol: Symbol, type: Type) =
-        if (smartCasts[symbol]!=type)
+    fun addSmartCast(symbol: Symbol?, type: Type) =
+        if (symbol!=null && smartCasts[symbol]!=type)
             PathContext(
                 uninitializedVariables = uninitializedVariables,
                 maybeUninitializedVariables = maybeUninitializedVariables,

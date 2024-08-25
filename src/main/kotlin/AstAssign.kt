@@ -25,7 +25,7 @@ class AstAssign(
         rhs.typeCheck(context)
         lhs.type.checkAssignCompatible(rhs.location, rhs.type)
 
-        val lhsSym = if (lhs is AstIdentifier) lhs.symbol else null
+        val lhsSym = if (lhs is AstIdentifier) lhs.symbol else if (lhs is AstMemberAccess) lhs.smartCastSymbol else null
         if (lhsSym!=null) {
             if (lhsSym.type != rhs.type)
                 currentPathContext = currentPathContext.addSmartCast(lhsSym, rhs.type)

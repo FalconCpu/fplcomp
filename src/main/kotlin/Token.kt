@@ -34,6 +34,7 @@ enum class TokenKind (val text: String, val lineContinues : Boolean) {
     LTE      ("<=", true),
     GTE      (">=", true),
     AND      ("and", true),
+    NOT      ("not", true),
     OR       ("or", true),
     QMARK    ("?", false),
     ARROW    ("->", true),

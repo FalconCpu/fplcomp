@@ -8,6 +8,9 @@ class AstMemberAccess (
 
     lateinit var symbol : Symbol
 
+    // For the purpose of smart casting we represent a castable member access as a symbol
+    var smartCastSymbol : SymbolMemberAccess? = null    // A M
+
     override fun dump(sb: StringBuilder, indent: Int) {
         sb.append(". ".repeat(indent))
         sb.append("MEMBERACCESS $name\n")
@@ -18,6 +21,33 @@ class AstMemberAccess (
         sb.append(". ".repeat(indent))
         sb.append("MEMBERACCESS $name $type\n")
         lhs.dumpWithType(sb, indent + 1)
+    }
+
+    override fun isMutable(): Boolean = symbol.isMutable()
+
+    private fun generateSmartCastSymbol(): SymbolMemberAccess? {
+        // if this member access has either an immutable symbol or another member access as its lhs
+        // then we can potentially track this as a smart cast
+        val lhsSymbol =
+            if (lhs.isMutable())
+                null
+            else if (lhs is AstIdentifier)
+                lhs.symbol
+            else if (lhs is AstMemberAccess)
+                lhs.smartCastSymbol
+            else
+                null
+
+        val smartCastSymbol =
+            if (lhsSymbol != null)
+                SymbolMemberAccess(location, lhsSymbol, symbol)
+            else
+                null
+        return smartCastSymbol
+    }
+
+    override fun typeCheckLvalue(context: AstBlock) {
+        typeCheck(context)
     }
 
     override fun typeCheck(context:AstBlock) {
@@ -35,7 +65,7 @@ class AstMemberAccess (
         }
 
         if (lhsType is NullableType)
-            return setTypeError("Cannot access nullable type $lhsType")
+            return setTypeError("Member access is not allowed on nullable type $lhsType")
         if (lhsType !is ClassType)
             return setTypeError("Cannot access field $name of non-class type $lhsType")
 
@@ -49,11 +79,18 @@ class AstMemberAccess (
             is SymbolGlobalVar -> error("Internal error: Global variable $name inside class $lhsType")
             is SymbolLocalVar -> Log.error(location,"Cannot access local variable $name inside class $lhsType")
             is SymbolTypeName -> Log.error("Cannot access type name $name inside class $lhsType")
+            is SymbolMemberAccess -> error("Internal error: Member access inside class $lhsType")
         }
+        val smartCastSymbol = generateSmartCastSymbol()
 
-        type = symbol.type
+        val smartCastType = if (smartCastSymbol != null)
+            currentPathContext.smartCasts[smartCastSymbol] else null
+
+        type = smartCastType ?:  symbol.type
+        this.smartCastSymbol = smartCastSymbol
     }
 
 }
 
 private val sizeSymbol = SymbolField(nullLocation, "size", IntType, false)
+

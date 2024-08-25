@@ -17,6 +17,7 @@ class AstIdentifier (
         sb.append("IDENTIFIER ${symbol.description()} $type\n")
     }
 
+    override fun isMutable() = symbol.isMutable()
 
     private fun makeNewSymbol(symbolTable: AstBlock): Symbol {
         Log.error(location,"Undefined identifier: $name")
@@ -52,13 +53,14 @@ class AstIdentifier (
             is SymbolField -> TODO()
 
             is SymbolGlobalVar ->
-                if (!sym.isMutable)
+                if (!sym.mutable)
                     Log.error(location, "Global variable $name is not mutable")
 
             is SymbolLocalVar ->
-                if (!sym.isMutable && sym !in currentPathContext.uninitializedVariables)
+                if (!sym.mutable && sym !in currentPathContext.uninitializedVariables)
                     Log.error(location, "Local variable $name is not mutable")
 
+            is SymbolMemberAccess,
             is SymbolFunctionName,
             is SymbolLiteral,
             is SymbolTypeName -> Log.error(location, "Not an lvalue: $name")

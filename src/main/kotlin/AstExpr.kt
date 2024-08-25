@@ -10,6 +10,8 @@ sealed class AstExpr(location: Location) : Ast(location) {
         type = ErrorType
     }
 
+    open fun isMutable(): Boolean = false
+
     fun setTypeError(message:String) {
         Log.error(location, message)
         type = ErrorType
@@ -22,4 +24,15 @@ sealed class AstExpr(location: Location) : Ast(location) {
     open fun typeCheckAllowTypeName(context: AstBlock) {
         typeCheck(context)
     }
+
+    /**
+     * Return a symbol that represents this expression for smart casts.
+     * If there is no symbol, return null.
+     */
+    fun getSmartCastSymbol() =
+        when (this) {
+            is AstIdentifier -> symbol
+            is AstMemberAccess -> smartCastSymbol
+            else -> null
+        }
 }

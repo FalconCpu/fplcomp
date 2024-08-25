@@ -48,10 +48,4 @@ private val operatorTable = listOf(
     Operator(TokenKind.CARET,   IntType, IntType, AluOp.XOR_I, IntType),
 //    Operator(TokenKind.LEFT,    IntType, IntType, AluOp.SHL_I, IntType),
 //    Operator(TokenKind.RIGHT,   IntType, IntType, AluOp.SHR_I, IntType),
-    Operator(TokenKind.EQ,      IntType, IntType, AluOp.EQ_I,  BoolType),
-    Operator(TokenKind.NEQ,     IntType, IntType, AluOp.NE_I,  BoolType),
-    Operator(TokenKind.LT,      IntType, IntType, AluOp.LT_I,  BoolType),
-    Operator(TokenKind.GT,      IntType, IntType, AluOp.GT_I,  BoolType),
-    Operator(TokenKind.LTE,     IntType, IntType, AluOp.LE_I,  BoolType),
-    Operator(TokenKind.GTE,     IntType, IntType, AluOp.GE_I,  BoolType)
 )

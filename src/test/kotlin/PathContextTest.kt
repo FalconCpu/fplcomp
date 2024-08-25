@@ -263,7 +263,7 @@ class PathContextTest {
         """.trimIndent()
 
         val expected = """
-            test.txt 4.14:- Cannot access nullable type Cat?
+            test.txt 4.14:- Member access is not allowed on nullable type Cat?
         """.trimIndent()
 
         runTest(prog, expected)
@@ -434,7 +434,7 @@ class PathContextTest {
         """.trimIndent()
 
         val expected = """
-            test.txt 5.18:- Cannot access nullable type Cat?
+            test.txt 5.18:- Member access is not allowed on nullable type Cat?
         """.trimIndent()
 
         runTest(prog, expected)
@@ -456,7 +456,7 @@ class PathContextTest {
         """.trimIndent()
 
         val expected = """
-            test.txt 9.15:- Cannot access nullable type Cat?
+            test.txt 9.15:- Member access is not allowed on nullable type Cat?
         """.trimIndent()
 
         runTest(prog, expected)
@@ -496,6 +496,165 @@ class PathContextTest {
 
         """.trimIndent()
 
+        runTest(prog, expected)
+    }
+
+    @Test
+    fun andSmartCast() {
+        val prog = """
+            class Cat(val name:String, val age:Int)
+            
+            fun foo(c:Cat?, d:Int)->Int
+                if c!=null and d>0
+                    return c.age  # OK as c compared to non-null even with and
+                return 0
+        """.trimIndent()
+
+        val expected = """
+            TOP
+            . CLASS Cat
+            . . PARAMETER FIELD name String
+            . . PARAMETER FIELD age Int
+            . FUNCTION foo (Cat?,Int)->Int
+            . . IF
+            . . . CLAUSE
+            . . . . AND Bool
+            . . . . . NEQ Bool
+            . . . . . . IDENTIFIER LOCALVAR c Cat?
+            . . . . . . IDENTIFIER LITERAL null Null
+            . . . . . COMPARE > Bool
+            . . . . . . IDENTIFIER LOCALVAR d Int
+            . . . . . . INTLIT 0 Int
+            . . . . RETURN
+            . . . . . MEMBERACCESS age Int
+            . . . . . . IDENTIFIER LOCALVAR c Cat
+            . . RETURN
+            . . . INTLIT 0 Int
+
+        """.trimIndent()
+
+        runTest(prog, expected)
+    }
+
+    @Test
+    fun orSmartCast() {
+        val prog = """
+            class Cat(val name:String, val age:Int)
+            
+            fun foo(c:Cat?, d:Int)->Int
+                if c!=null or d>0
+                    return c.age  # Not ok as c could be null if d>0
+                return 0
+        """.trimIndent()
+
+        val expected = """
+            test.txt 5.18:- Member access is not allowed on nullable type Cat?
+        """.trimIndent()
+
+        runTest(prog, expected)
+    }
+
+    @Test
+    fun smartCastThroughMemberAccess() {
+        val prog = """
+            class LinkedListNode(val value:Int, val next:LinkedListNode?)
+            
+            fun nextValue(a:LinkedListNode)->Int
+                if a.next!=null
+                    return a.next.value    # this is OK as we have checked a.next is not null
+                else
+                    return 0
+        """.trimIndent()
+
+        val expected = """
+            TOP
+            . CLASS LinkedListNode
+            . . PARAMETER FIELD value Int
+            . . PARAMETER FIELD next LinkedListNode?
+            . FUNCTION nextValue (LinkedListNode)->Int
+            . . IF
+            . . . CLAUSE
+            . . . . NEQ Bool
+            . . . . . MEMBERACCESS next LinkedListNode?
+            . . . . . . IDENTIFIER LOCALVAR a LinkedListNode
+            . . . . . IDENTIFIER LITERAL null Null
+            . . . . RETURN
+            . . . . . MEMBERACCESS value Int
+            . . . . . . MEMBERACCESS next LinkedListNode
+            . . . . . . . IDENTIFIER LOCALVAR a LinkedListNode
+            . . . CLAUSE
+            . . . . RETURN
+            . . . . . INTLIT 0 Int
+
+        """.trimIndent()
+
+        runTest(prog, expected)
+    }
+
+    @Test
+    fun smartCastThroughMemberAccess2() {
+        val prog = """
+            class LinkedListNode(val value:Int, val next:LinkedListNode?)
+            
+            fun nextValue(a:LinkedListNode)->Int
+                return a.next.value    # this should give an error as a.next could be null
+        """.trimIndent()
+
+        val expected = """
+            test.txt 4.19:- Member access is not allowed on nullable type LinkedListNode?
+        """.trimIndent()
+
+        runTest(prog, expected)
+    }
+
+    @Test
+    fun smartCastThroughMemberAccess3() {
+        val prog = """
+            class LinkedListNode(val value:Int, val next:LinkedListNode?)
+            
+            fun nextValue(a:LinkedListNode)->Int
+                var x = a
+                if x.next!=null
+                    return x.next.value    # error as x is a var so we can't smart cast to LinkedListNode
+                else
+                    return 0
+        """.trimIndent()
+
+        val expected = """
+            test.txt 6.23:- Member access is not allowed on nullable type LinkedListNode?
+        """.trimIndent()
+        runTest(prog, expected)
+    }
+
+    @Test
+    fun smartCastThroughMemberAccess4() {
+        val prog = """
+            class LinkedListNode(val value:Int, val next:LinkedListNode?)
+            
+            fun nextValue(a:LinkedListNode)->Int
+                a.next = LinkedListNode(10, null)
+                return a.next.value
+        """.trimIndent()
+
+        val expected = """
+            TOP
+            . CLASS LinkedListNode
+            . . PARAMETER FIELD value Int
+            . . PARAMETER FIELD next LinkedListNode?
+            . FUNCTION nextValue (LinkedListNode)->Int
+            . . ASSIGN
+            . . . MEMBERACCESS next LinkedListNode?
+            . . . . IDENTIFIER LOCALVAR a LinkedListNode
+            . . . CONSTRUCTOR LinkedListNode
+            . . . . IDENTIFIER TYPENAME LinkedListNode LinkedListNode
+            . . . . INTLIT 10 Int
+            . . . . IDENTIFIER LITERAL null Null
+            . . RETURN
+            . . . MEMBERACCESS value Int
+            . . . . MEMBERACCESS next LinkedListNode
+            . . . . . IDENTIFIER LOCALVAR a LinkedListNode
+
+        """.trimIndent()
         runTest(prog, expected)
     }
 

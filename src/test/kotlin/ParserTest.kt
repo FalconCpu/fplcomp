@@ -276,7 +276,7 @@ class ParserTest {
             . . var x
             . . . INTLIT 0
             . . WHILE
-            . . . BINARYOP <
+            . . . COMPARE <
             . . . . IDENTIFIER x
             . . . . INTLIT 10
             . . . ASSIGN
@@ -322,12 +322,12 @@ class ParserTest {
             TOP
             . FUNCTION main
             . . WHILE
-            . . . BINARYOP or
-            . . . . BINARYOP and
-            . . . . . BINARYOP <
+            . . . OR
+            . . . . AND
+            . . . . . COMPARE <
             . . . . . . IDENTIFIER a
             . . . . . . IDENTIFIER b
-            . . . . . BINARYOP >
+            . . . . . COMPARE >
             . . . . . . IDENTIFIER c
             . . . . . . IDENTIFIER d
             . . . . NEQ
@@ -337,7 +337,7 @@ class ParserTest {
             . . . . FUNCCALL
             . . . . . IDENTIFIER doSomething
 
-            """.trimIndent()
+        """.trimIndent()
 
         runTest(prog, expected)
     }

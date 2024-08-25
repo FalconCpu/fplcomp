@@ -93,7 +93,7 @@ class TypeCheck {
             . . DECL LOCALVAR count Int
             . . . INTLIT 0 Int
             . . WHILE
-            . . . BINARYOP < Bool
+            . . . COMPARE < Bool
             . . . . IDENTIFIER LOCALVAR count Int
             . . . . IDENTIFIER LOCALVAR a Int
             . . . ASSIGN
@@ -189,7 +189,7 @@ class TypeCheck {
             . . DECL LOCALVAR count Int
             . . . INTLIT 0 Int
             . . WHILE
-            . . . BINARYOP < Bool
+            . . . COMPARE < Bool
             . . . . IDENTIFIER LOCALVAR count Int
             . . . . MEMBERACCESS size Int
             . . . . . IDENTIFIER LOCALVAR a Array<Int>
@@ -484,6 +484,87 @@ class TypeCheck {
 
         runTest(prog, expected)
     }
+
+    @Test
+    fun notTest() {
+        val prog = """
+            fun main(a:Bool)->Int
+                if not a
+                    return 1
+                else
+                    return 2
+        """.trimIndent()
+
+        val expected = """
+            TOP
+            . FUNCTION main (Bool)->Int
+            . . IF
+            . . . CLAUSE
+            . . . . NOT Bool
+            . . . . . IDENTIFIER LOCALVAR a Bool
+            . . . . RETURN
+            . . . . . INTLIT 1 Int
+            . . . CLAUSE
+            . . . . RETURN
+            . . . . . INTLIT 2 Int
+
+        """.trimIndent()
+
+        runTest(prog, expected)
+    }
+
+    @Test
+    fun negTest() {
+        val prog = """
+            fun main(a:Int)->Int
+                return -a
+        """.trimIndent()
+
+        val expected = """
+            TOP
+            . FUNCTION main (Int)->Int
+            . . RETURN
+            . . . NEG Int
+            . . . . IDENTIFIER LOCALVAR a Int
+
+            """.trimIndent()
+
+        runTest(prog, expected)
+    }
+
+    @Test
+    fun badTypeAsValue() {
+        val prog = """
+            fun main()
+                val x = Int
+
+        """.trimIndent()
+
+        val expected = """
+            test.txt 2.13:- Got type name 'Int' when expecting a value
+        """.trimIndent()
+
+        runTest(prog, expected)
+    }
+
+    @Test
+    fun compareBadType() {
+        val prog = """
+            fun main(x:Int) -> Int
+                if x = "hello"
+                    return 1
+                else    
+                    return 2
+
+        """.trimIndent()
+
+        val expected = """
+            test.txt 2.10:- Equality check of incompatible types: Int and String
+        """.trimIndent()
+
+        runTest(prog, expected)
+    }
+
 
 
     fun emptyTest() {
