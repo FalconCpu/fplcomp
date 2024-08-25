@@ -1,6 +1,6 @@
 package falcon
 
-class AstExprStringLit(
+class AstStringLiteral(
     location: Location,
     private val value: String
 ) : AstExpr(location) {

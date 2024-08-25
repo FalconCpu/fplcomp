@@ -1,6 +1,6 @@
 package falcon
 
-class AstExprBinaryOp(
+class AstBinop(
     location: Location,
     private val op: TokenKind,
     private val lhs: AstExpr,
@@ -29,7 +29,7 @@ class AstExprBinaryOp(
             return setTypeError()
         val match = operatorTable.find { it.kind == op && it.lhsType == lhs.type && it.rhsType == rhs.type }
         if (match == null)
-            return setTypeError("No operation defined for $lhs $op $rhs")
+            return setTypeError("No operation defined for ${lhs.type} $op ${rhs.type}")
         type = match.resultType
         opType = match.op
     }

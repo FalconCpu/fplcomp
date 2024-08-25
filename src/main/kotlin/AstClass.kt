@@ -1,6 +1,6 @@
 package falcon
 
-class AstBlockClass(
+class AstClass(
     location: Location,
     parent: AstBlock,
     private val name: String,

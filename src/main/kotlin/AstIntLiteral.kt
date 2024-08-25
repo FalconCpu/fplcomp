@@ -1,6 +1,6 @@
 package falcon
 
-class AstExprIntLit(
+class AstIntLiteral(
     location: Location,
     private val value: Int
 ) : AstExpr(location) {

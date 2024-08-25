@@ -1,6 +1,6 @@
 package falcon
 
-class AstStmtAssign(
+class AstAssign(
     location: Location,
     private val lhs: AstExpr,
     private val rhs: AstExpr
@@ -24,5 +24,13 @@ class AstStmtAssign(
         lhs.typeCheckLvalue(context)
         rhs.typeCheck(context)
         lhs.type.checkAssignCompatible(rhs.location, rhs.type)
+
+        val lhsSym = if (lhs is AstIdentifier) lhs.symbol else null
+        if (lhsSym!=null) {
+            if (lhsSym.type != rhs.type)
+                currentPathContext = currentPathContext.addSmartCast(lhsSym, rhs.type)
+            else
+                currentPathContext = currentPathContext.removeSmartcast(lhsSym)
+        }
     }
 }

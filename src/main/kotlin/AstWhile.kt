@@ -1,6 +1,6 @@
 package falcon
 
-class AstBlockWhile(
+class AstWhile(
     location: Location,
     parent: AstBlock,
     private val condition: AstExpr,

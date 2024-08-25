@@ -1,6 +1,6 @@
 package falcon
 
-class AstExprIdentifier (
+class AstIdentifier (
     location: Location,
     private val name: String
 ) : AstExpr(location){
@@ -14,7 +14,7 @@ class AstExprIdentifier (
 
     override fun dumpWithType(sb: StringBuilder, indent: Int) {
         sb.append(". ".repeat(indent))
-        sb.append("IDENTIFIER ${symbol.description()}\n")
+        sb.append("IDENTIFIER ${symbol.description()} $type\n")
     }
 
 
@@ -27,7 +27,7 @@ class AstExprIdentifier (
 
     override fun typeCheckAllowTypeName(context: AstBlock) {
         symbol = predefinedSymbols.lookup(name) ?: context.lookup(name) ?: makeNewSymbol(context)
-        type = symbol.type
+        type = currentPathContext.smartCasts[symbol] ?: symbol.type
     }
 
     override fun typeCheck(context:AstBlock) {

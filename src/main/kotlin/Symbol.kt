@@ -8,12 +8,12 @@ sealed class Symbol(
     override fun toString() = name
 
     fun description() = when(this) {
-        is SymbolFunctionName -> "FUNC $name $type"
-        is SymbolGlobalVar -> "GLOBALVAR $name $type"
-        is SymbolLocalVar -> "LOCALVAR $name $type"
-        is SymbolTypeName -> "TYPENAME $name $type"
-        is SymbolLiteral -> "LITERAL $name $type"
-        is SymbolField -> "FIELD $name $type"
+        is SymbolFunctionName -> "FUNC $name"
+        is SymbolGlobalVar -> "GLOBALVAR $name"
+        is SymbolLocalVar -> "LOCALVAR $name"
+        is SymbolTypeName -> "TYPENAME $name"
+        is SymbolLiteral -> "LITERAL $name"
+        is SymbolField -> "FIELD $name"
     }
 }
 

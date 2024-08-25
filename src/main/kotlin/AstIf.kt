@@ -1,6 +1,6 @@
 package falcon
 
-class AstStmtIf(
+class AstIf(
     location: Location,
     parent : AstBlock,
     private val clauses : List<AstIfClause>

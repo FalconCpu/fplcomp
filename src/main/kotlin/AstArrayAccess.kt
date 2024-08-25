@@ -1,9 +1,6 @@
 package falcon
 
-import org.w3c.dom.TypeInfo
-import javax.lang.model.element.TypeElement
-
-class AstExprArrayAccess(
+class AstArrayAccess(
     location: Location,
     private val lhs: AstExpr,
     private val index: AstExpr

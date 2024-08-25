@@ -42,23 +42,23 @@ class Parser(private val lexer: Lexer) {
         }
     }
 
-    private fun parseIdentifier() : AstExprIdentifier {
+    private fun parseIdentifier() : AstIdentifier {
         val id = expect(ID)
-        return AstExprIdentifier(id.location, id.text)
+        return AstIdentifier(id.location, id.text)
     }
 
-    private fun parseIntLit() : AstExprIntLit {
+    private fun parseIntLit() : AstIntLiteral {
         val lit = expect(INTLIT)
         try {
-            return AstExprIntLit(lit.location, lit.text.toInt())
+            return AstIntLiteral(lit.location, lit.text.toInt())
         } catch (e : NumberFormatException) {
             throw ParseError(lit.location, "Invalid integer literal: $lit")
         }
     }
 
-    private fun parseStringLit(): AstExprStringLit {
+    private fun parseStringLit(): AstStringLiteral {
         val lit = expect(STRINGLIT)
-        return AstExprStringLit(lit.location, lit.text)
+        return AstStringLiteral(lit.location, lit.text)
     }
 
     private fun parseBracketExpression() : AstExpr {
@@ -81,7 +81,7 @@ class Parser(private val lexer: Lexer) {
     private fun parseMemberAccess(lhs:AstExpr): AstExpr {
         expect(DOT)
         val id = expect(ID)
-        return AstExprMemberAccess(id.location, lhs, id.text)
+        return AstMemberAccess(id.location, lhs, id.text)
     }
 
     private fun parseFuncCall(lhs: AstExpr): AstExpr {
@@ -92,14 +92,14 @@ class Parser(private val lexer: Lexer) {
                 args.add(parseExpression())
             } while (canTake(COMMA))
         expect(CLOSEB)
-        return AstExprFuncCall(lhs.location, lhs, args)
+        return AstFuncCall(lhs.location, lhs, args)
     }
 
     private fun parseArrayAccess(lhs: AstExpr): AstExpr {
         expect(OPENSQ)
         val index = parseExpression()
         expect(CLOSESQ)
-        return AstExprArrayAccess(lhs.location, lhs, index)
+        return AstArrayAccess(lhs.location, lhs, index)
     }
 
     private fun parsePostfix() : AstExpr {
@@ -123,7 +123,7 @@ class Parser(private val lexer: Lexer) {
         while(lookahead.kind in listOf(STAR, SLASH, PERCENT, AMPERSAND)) {
             val op = nextToken()
             val rhs = parsePrefix()
-            ret = AstExprBinaryOp(op.location, op.kind, ret, rhs)
+            ret = AstBinop(op.location, op.kind, ret, rhs)
         }
         return ret
     }
@@ -133,7 +133,7 @@ class Parser(private val lexer: Lexer) {
         while(lookahead.kind in listOf(PLUS, MINUS, BAR, CARET)) {
             val op = nextToken()
             val rhs = parseMult()
-            ret = AstExprBinaryOp(op.location, op.kind, ret, rhs)
+            ret = AstBinop(op.location, op.kind, ret, rhs)
         }
         return ret
     }
@@ -143,7 +143,11 @@ class Parser(private val lexer: Lexer) {
         if (lookahead.kind in listOf(EQ, NEQ, LT, GT, LTE, GTE)) {
             val op = nextToken()
             val rhs = parseAdd()
-            ret = AstExprBinaryOp(op.location, op.kind, ret, rhs)
+            ret = when (op.kind) {
+                EQ -> AstEquals(op.location, ret, rhs, true)
+                NEQ -> AstEquals(op.location, ret, rhs, false)
+                else -> AstBinop(op.location, op.kind, ret, rhs)
+            }
         }
         return ret
     }
@@ -153,7 +157,7 @@ class Parser(private val lexer: Lexer) {
         while(lookahead.kind==AND) {
             val op = nextToken()
             val rhs = parseComp()
-            ret = AstExprBinaryOp(op.location, op.kind, ret, rhs)
+            ret = AstBinop(op.location, op.kind, ret, rhs)
         }
         return ret
     }
@@ -164,7 +168,7 @@ class Parser(private val lexer: Lexer) {
         while(lookahead.kind==OR) {
             val op = nextToken()
             val rhs = parseComp()
-            ret = AstExprBinaryOp(op.location, op.kind, ret, rhs)
+            ret = AstBinop(op.location, op.kind, ret, rhs)
         }
         return ret
     }
@@ -229,7 +233,7 @@ class Parser(private val lexer: Lexer) {
         val type = if (canTake(COLON)) parseType() else null
         val value = if (canTake(EQ)) parseExpression() else null
         expectEol()
-        block.add(AstStmtDeclaration(id.location, op.kind, id.text, type, value))
+        block.add(AstDeclaration(id.location, op.kind, id.text, type, value))
     }
 
     private fun parseBody(block: AstBlock) {
@@ -276,7 +280,7 @@ class Parser(private val lexer: Lexer) {
         val retType = if (canTake(ARROW)) parseType() else null
         expectEol()
 
-        val ret = AstBlockFunction(id.location, block, id.text, args, retType)
+        val ret = AstFunction(id.location, block, id.text, args, retType)
         block.add(ret)
 
         if (canTake(INDENT))
@@ -293,7 +297,7 @@ class Parser(private val lexer: Lexer) {
         val parameters = if (lookahead.kind==OPENB) parseParamList(true) else emptyList()
         expectEol()
 
-        val ret = AstBlockClass(id.location, block, id.text, parameters)
+        val ret = AstClass(id.location, block, id.text, parameters)
         block.add(ret)
 
         if (canTake(INDENT))
@@ -305,14 +309,14 @@ class Parser(private val lexer: Lexer) {
         val op = expect(RETURN)
         val expr = if (lookahead.kind==EOL) null else parseExpression()
         expectEol()
-        block.add(AstStmtReturn(op.location, expr))
+        block.add(AstReturn(op.location, expr))
     }
 
     private fun parseWhile(block: AstBlock) {
         val op = expect(WHILE)
         val expr = parseExpression()
         expectEol()
-        val ret = AstBlockWhile(op.location, block, expr)
+        val ret = AstWhile(op.location, block, expr)
         block.add(ret)
 
         if (canTake(INDENT))
@@ -327,10 +331,10 @@ class Parser(private val lexer: Lexer) {
         if (canTake(EQ)) {
             val rhs = parseExpression()
             expectEol()
-            block.add(AstStmtAssign(lhs.location, lhs, rhs))
+            block.add(AstAssign(lhs.location, lhs, rhs))
         } else {
             expectEol()
-            block.add(AstStmtExpr(lhs.location, lhs))
+            block.add(AstExprStmt(lhs.location, lhs))
         }
     }
 
@@ -340,7 +344,7 @@ class Parser(private val lexer: Lexer) {
         if (!followingError)
             Log.error(lookahead.location, "Unexpected indentation")
         expect(INDENT)
-        val dummy = AstBlockWhile(lookahead.location, block, AstExprIntLit(lookahead.location, 0))
+        val dummy = AstWhile(lookahead.location, block, AstIntLiteral(lookahead.location, 0))
         parseBody(dummy)
         checkEnd(INDENT)
     }
@@ -370,7 +374,7 @@ class Parser(private val lexer: Lexer) {
         if (elseClause!=null && elseClause != clauses.last())
             Log.error(elseClause.location, "Else clause must be at the end")
 
-        block.add(AstStmtIf(location, block, clauses))
+        block.add(AstIf(location, block, clauses))
     }
 
 
@@ -398,7 +402,7 @@ class Parser(private val lexer: Lexer) {
         }
     }
 
-    fun parseTop(top:AstBlockTop) {
+    fun parseTop(top:AstTop) {
         while (lookahead.kind != EOF) {
             parseStatement(top)
         }

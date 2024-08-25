@@ -26,10 +26,10 @@ sealed class AstBlock(location: Location, private val parent:AstBlock?) : AstStm
                 stmt.identifyFunctions(this)
     }
 
-    fun findEnclosingFunction(): AstBlockFunction? {
+    fun findEnclosingFunction(): AstFunction? {
         var current : AstBlock? = this
         while (current !=null) {
-            if (current is AstBlockFunction)
+            if (current is AstFunction)
                 return current
             current = current.parent
         }

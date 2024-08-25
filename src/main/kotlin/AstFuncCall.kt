@@ -1,6 +1,6 @@
 package falcon
 
-class AstExprFuncCall (
+class AstFuncCall (
     location: Location,
     private val func: AstExpr,
     private val args: List<AstExpr>
@@ -63,7 +63,7 @@ class AstExprFuncCall (
 
         if (funcType is ErrorType)
             return setTypeError()
-        if (func is AstExprIdentifier && func.symbol is SymbolTypeName)
+        if (func is AstIdentifier && func.symbol is SymbolTypeName)
             return typeCheckConstructor(func.symbol as SymbolTypeName)
         if (funcType is FunctionType)
             return typeCheckFunctionCall(funcType)

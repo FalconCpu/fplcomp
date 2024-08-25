@@ -430,8 +430,60 @@ class TypeCheck {
         runTest(prog, expected)
     }
 
+    @Test
+    fun globalVars() {
+        val prog = """
+            val x = 5
+            fun main()->Int
+                return x
+        """.trimIndent()
 
+        val expected = """
+            TOP
+            . DECL GLOBALVAR x Int
+            . . INTLIT 5 Int
+            . FUNCTION main ()->Int
+            . . RETURN
+            . . . IDENTIFIER GLOBALVAR x Int
 
+        """.trimIndent()
+
+        runTest(prog, expected)
+    }
+
+    @Test
+    fun globalVarsNotMutable() {
+        val prog = """
+            val x = 5
+            fun main()->Int
+                x = 6
+                return x
+        """.trimIndent()
+
+        val expected = """
+            test.txt 3.5:- Global variable x is not mutable
+        """.trimIndent()
+
+        runTest(prog, expected)
+    }
+
+    @Test
+    fun classLocalVariable() {
+        val prog = """
+            class Cat(val name:String, age:Int)
+                val old = age>10
+                
+            fun main()->Int
+                val c = Cat("Fluffy", 2)
+                return c.age              # error as age is not a field
+        """.trimIndent()
+
+        val expected = """
+            test.txt 6.14:- Cannot access local variable age inside class Cat
+        """.trimIndent()
+
+        runTest(prog, expected)
+    }
 
 
     fun emptyTest() {

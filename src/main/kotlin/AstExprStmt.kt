@@ -1,6 +1,6 @@
 package falcon
 
-class AstStmtExpr(
+class AstExprStmt(
     location: Location,
     private val expr: AstExpr
 ) : AstStmt(location) {
@@ -19,7 +19,7 @@ class AstStmtExpr(
 
     override fun typeCheck(context: AstBlock) {
         expr.typeCheck(context)
-        if (expr !is AstExprFuncCall)
+        if (expr !is AstFuncCall)
             Log.warning(location, "Expression has no effect")
     }
 

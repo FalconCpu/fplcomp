@@ -1,6 +1,6 @@
 package falcon
 
-class AstExprMemberAccess (
+class AstMemberAccess (
     location: Location,
     private val lhs: AstExpr,
     private val name: String
@@ -34,6 +34,8 @@ class AstExprMemberAccess (
             return
         }
 
+        if (lhsType is NullableType)
+            return setTypeError("Cannot access nullable type $lhsType")
         if (lhsType !is ClassType)
             return setTypeError("Cannot access field $name of non-class type $lhsType")
 
@@ -45,7 +47,7 @@ class AstExprMemberAccess (
             is SymbolFunctionName,
             is SymbolLiteral -> {}
             is SymbolGlobalVar -> error("Internal error: Global variable $name inside class $lhsType")
-            is SymbolLocalVar -> Log.error("Cannot access local variable $name inside class $lhsType")
+            is SymbolLocalVar -> Log.error(location,"Cannot access local variable $name inside class $lhsType")
             is SymbolTypeName -> Log.error("Cannot access type name $name inside class $lhsType")
         }
 

@@ -1,6 +1,6 @@
 package falcon
 
-class AstBlockTop() : AstBlock(nullLocation, null) {
+class AstTop() : AstBlock(nullLocation, null) {
 
     override fun dump(sb: StringBuilder, indent: Int) {
         sb.append(". ".repeat(indent))

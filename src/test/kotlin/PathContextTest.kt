@@ -150,7 +150,7 @@ class PathContextTest {
             . . DECL LOCALVAR x Int
             . . IF
             . . . CLAUSE
-            . . . . BINARYOP = Bool
+            . . . . EQ Bool
             . . . . . IDENTIFIER LOCALVAR a Int
             . . . . . INTLIT 0 Int
             . . . . ASSIGN
@@ -189,7 +189,7 @@ class PathContextTest {
             . . DECL LOCALVAR x Int
             . . IF
             . . . CLAUSE
-            . . . . BINARYOP = Bool
+            . . . . EQ Bool
             . . . . . IDENTIFIER LOCALVAR a Int
             . . . . . INTLIT 0 Int
             . . . . ASSIGN
@@ -239,7 +239,7 @@ class PathContextTest {
             . FUNCTION main (Int)->Int
             . . IF
             . . . CLAUSE
-            . . . . BINARYOP = Bool
+            . . . . EQ Bool
             . . . . . IDENTIFIER LOCALVAR a Int
             . . . . . INTLIT 0 Int
             . . . . RETURN
@@ -253,7 +253,251 @@ class PathContextTest {
         runTest(prog, expected)
     }
 
+    @Test
+    fun nullableType() {
+        val prog = """
+            class Cat(val name:String, val age:Int)
+            
+            fun foo(c:Cat?)->Int
+                return c.age    # Error as c may be null
+        """.trimIndent()
 
+        val expected = """
+            test.txt 4.14:- Cannot access nullable type Cat?
+        """.trimIndent()
+
+        runTest(prog, expected)
+    }
+
+
+    @Test
+    fun nullTypeAccess() {
+        val prog = """
+            class Cat(val name:String, val age:Int)
+            
+            fun foo(c:Cat?)->Int
+                if c!=null
+                    return c.age    # no error as c has been checked for null
+                else
+                    return 0
+        """.trimIndent()
+
+        val expected = """
+            TOP
+            . CLASS Cat
+            . . PARAMETER FIELD name String
+            . . PARAMETER FIELD age Int
+            . FUNCTION foo (Cat?)->Int
+            . . IF
+            . . . CLAUSE
+            . . . . NEQ Bool
+            . . . . . IDENTIFIER LOCALVAR c Cat?
+            . . . . . IDENTIFIER LITERAL null Null
+            . . . . RETURN
+            . . . . . MEMBERACCESS age Int
+            . . . . . . IDENTIFIER LOCALVAR c Cat
+            . . . CLAUSE
+            . . . . RETURN
+            . . . . . INTLIT 0 Int
+
+        """.trimIndent()
+
+        runTest(prog, expected)
+    }
+
+    @Test
+    fun nullTypeAccess2() {
+        val prog = """
+            class Cat(val name:String, val age:Int)
+            
+            fun foo(c:Cat?)->Int
+                if c=null
+                    return 0
+                return c.age    # no error as c has been checked for null
+        """.trimIndent()
+
+        val expected = """
+            TOP
+            . CLASS Cat
+            . . PARAMETER FIELD name String
+            . . PARAMETER FIELD age Int
+            . FUNCTION foo (Cat?)->Int
+            . . IF
+            . . . CLAUSE
+            . . . . EQ Bool
+            . . . . . IDENTIFIER LOCALVAR c Cat?
+            . . . . . IDENTIFIER LITERAL null Null
+            . . . . RETURN
+            . . . . . INTLIT 0 Int
+            . . RETURN
+            . . . MEMBERACCESS age Int
+            . . . . IDENTIFIER LOCALVAR c Cat
+
+        """.trimIndent()
+
+        runTest(prog, expected)
+    }
+
+    @Test
+    fun nullTypeAccess3() {
+        val prog = """
+            class Cat(val name:String, val age:Int)
+            
+            fun foo(c:Cat?)->Int
+                if null=c
+                    return 0
+                return c.age    # no error as c has been checked for null
+        """.trimIndent()
+
+        val expected = """
+            TOP
+            . CLASS Cat
+            . . PARAMETER FIELD name String
+            . . PARAMETER FIELD age Int
+            . FUNCTION foo (Cat?)->Int
+            . . IF
+            . . . CLAUSE
+            . . . . EQ Bool
+            . . . . . IDENTIFIER LITERAL null Null
+            . . . . . IDENTIFIER LOCALVAR c Cat?
+            . . . . RETURN
+            . . . . . INTLIT 0 Int
+            . . RETURN
+            . . . MEMBERACCESS age Int
+            . . . . IDENTIFIER LOCALVAR c Cat
+
+        """.trimIndent()
+
+        runTest(prog, expected)
+    }
+
+    @Test
+    fun nullTypeAccess4() {
+        val prog = """
+            class Cat(val name:String, val age:Int)
+            
+            fun foo(c:Cat?)->Int
+                if null!=c
+                    return 0    
+                return c.age    # error - c is guaranteed to be null
+        """.trimIndent()
+
+        val expected = """
+            test.txt 6.14:- Cannot access field age of non-class type Null
+        """.trimIndent()
+
+        runTest(prog, expected)
+    }
+
+    @Test
+    fun comparisonAccess1() {
+        val prog = """
+            class Cat(val name:String, val age:Int)
+            
+            fun foo(c:Cat?, d:Cat)->Int
+                if c=d
+                    return c.age  # OK as c compared to non-null d     
+                return 0
+        """.trimIndent()
+
+        val expected = """
+            TOP
+            . CLASS Cat
+            . . PARAMETER FIELD name String
+            . . PARAMETER FIELD age Int
+            . FUNCTION foo (Cat?,Cat)->Int
+            . . IF
+            . . . CLAUSE
+            . . . . EQ Bool
+            . . . . . IDENTIFIER LOCALVAR c Cat?
+            . . . . . IDENTIFIER LOCALVAR d Cat
+            . . . . RETURN
+            . . . . . MEMBERACCESS age Int
+            . . . . . . IDENTIFIER LOCALVAR c Cat
+            . . RETURN
+            . . . INTLIT 0 Int
+
+        """.trimIndent()
+
+        runTest(prog, expected)
+    }
+
+    @Test
+    fun comparisonAccess2() {
+        val prog = """
+            class Cat(val name:String, val age:Int)
+            
+            fun foo(c:Cat?, d:Cat?)->Int
+                if c=d
+                    return c.age  # Not ok as c and d could both be null     
+                return 0
+        """.trimIndent()
+
+        val expected = """
+            test.txt 5.18:- Cannot access nullable type Cat?
+        """.trimIndent()
+
+        runTest(prog, expected)
+    }
+
+    @Test
+    fun looseSmartcast() {
+        val prog = """
+            class Cat(val name:String, val age:Int)
+            
+            fun foo(c:Cat?, d:Cat?)->Int
+                var x = c
+                if x=null
+                    return 0
+                val y = x.name     # Ok as has been null checked
+                x = d
+                val z = x.name     # not OK as x has been mutated since null check
+                return 0
+        """.trimIndent()
+
+        val expected = """
+            test.txt 9.15:- Cannot access nullable type Cat?
+        """.trimIndent()
+
+        runTest(prog, expected)
+    }
+
+    @Test
+    fun assignSmartCast() {
+        val prog = """
+            class Cat(val name:String, val age:Int)
+            
+            fun foo()->Int
+                var c : Cat? = null
+                val d = 1
+                c = Cat("Fred", 10)
+                return c.age         # OK as c has been reassigned
+        """.trimIndent()
+
+        val expected = """
+            TOP
+            . CLASS Cat
+            . . PARAMETER FIELD name String
+            . . PARAMETER FIELD age Int
+            . FUNCTION foo ()->Int
+            . . DECL LOCALVAR c Cat?
+            . . . IDENTIFIER LITERAL null Null
+            . . DECL LOCALVAR d Int
+            . . . INTLIT 1 Int
+            . . ASSIGN
+            . . . IDENTIFIER LOCALVAR c Cat?
+            . . . CONSTRUCTOR Cat
+            . . . . IDENTIFIER TYPENAME Cat Cat
+            . . . . STRINGLIT Fred String
+            . . . . INTLIT 10 Int
+            . . RETURN
+            . . . MEMBERACCESS age Int
+            . . . . IDENTIFIER LOCALVAR c Cat
+
+        """.trimIndent()
+
+        runTest(prog, expected)
+    }
 
 
 }

@@ -1,6 +1,6 @@
 package falcon
 
-class AstStmtDeclaration (
+class AstDeclaration (
     location: Location,
     private val op : TokenKind,
     private val name: String,
@@ -19,7 +19,7 @@ class AstStmtDeclaration (
 
     override fun dumpWithType(sb: StringBuilder, indent: Int) {
         sb.append(". ".repeat(indent))
-        sb.append("DECL ${symbol.description()}\n")
+        sb.append("DECL ${symbol.description()} ${symbol.type}\n")
         value?.dumpWithType(sb, indent + 1)
     }
 
@@ -32,8 +32,8 @@ class AstStmtDeclaration (
         val mutable = (op == TokenKind.VAR)
 
         symbol = when (context) {
-            is AstBlockTop   -> SymbolGlobalVar(location, name, type, mutable)
-            is AstBlockClass -> SymbolField(location, name, type, mutable)
+            is AstTop   -> SymbolGlobalVar(location, name, type, mutable)
+            is AstClass -> SymbolField(location, name, type, mutable)
             else             -> SymbolLocalVar(location, name, type, mutable)
         }
         context.add(symbol)

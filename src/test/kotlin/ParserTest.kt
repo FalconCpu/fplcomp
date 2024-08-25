@@ -330,7 +330,7 @@ class ParserTest {
             . . . . . BINARYOP >
             . . . . . . IDENTIFIER c
             . . . . . . IDENTIFIER d
-            . . . . BINARYOP !=
+            . . . . NEQ
             . . . . . IDENTIFIER e
             . . . . . IDENTIFIER f
             . . . EXPR
@@ -440,13 +440,13 @@ class ParserTest {
             . . TYPEID String
             . . IF
             . . . CLAUSE
-            . . . . BINARYOP =
+            . . . . EQ
             . . . . . IDENTIFIER a
             . . . . . INTLIT 0
             . . . . RETURN
             . . . . . STRINGLIT zero
             . . . CLAUSE
-            . . . . BINARYOP =
+            . . . . EQ
             . . . . . IDENTIFIER a
             . . . . . INTLIT 1
             . . . . RETURN

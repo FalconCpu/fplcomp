@@ -12,6 +12,7 @@ class AstTypeNullable (
     }
 
     override fun resolveType(context: AstBlock): Type {
-        TODO("Not yet implemented")
+        val elementType = type.resolveType(context)
+        return makeNullableType(location, elementType)
     }
 }

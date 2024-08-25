@@ -89,14 +89,14 @@ fun makeFunctionType(paramTypes: List<Type>, retType: Type): FunctionType {
 //                           Class Types
 // ---------------------------------------------------------------------
 
-class ClassType(name: String, val definition:AstBlockClass) : Type(name) {
+class ClassType(name: String, val definition:AstClass) : Type(name) {
     //lateinit var function: Function
     var structSize = 0
 }
 
 val allClassTypes = mutableListOf<ClassType>()
 
-fun makeClassType(name: String, definition: AstBlockClass): ClassType {
+fun makeClassType(name: String, definition: AstClass): ClassType {
     val new = ClassType(name, definition)
     allClassTypes.add(new)
     return new
@@ -138,8 +138,8 @@ fun makeTypeError(location: Location, message:String): Type {
 
 val predefinedSymbols = createPredefinedSymbols()
 
-private fun createPredefinedSymbols(): AstBlockTop {
-    val symbolTable = AstBlockTop()
+private fun createPredefinedSymbols(): AstTop {
+    val symbolTable = AstTop()
     for (type in listOf(NullType, UnitType, BoolType, CharType, IntType, RealType, StringType)) {
         val sym = SymbolTypeName(nullLocation, type.name, type)
         symbolTable.add(sym)

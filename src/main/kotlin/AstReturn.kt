@@ -1,6 +1,6 @@
 package falcon
 
-class AstStmtReturn(
+class AstReturn(
     location: Location,
     private val value: AstExpr?
 ) : AstStmt(location) {

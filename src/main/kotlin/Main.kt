@@ -16,7 +16,7 @@ fun compile(files:List<Lexer>, stopAt: StopAt) : String {
     Log.initialize()
 
     // Parse
-    val top = AstBlockTop()
+    val top = AstTop()
     for(file in files)
         Parser(file).parseTop(top)
     if (Log.anyError())
