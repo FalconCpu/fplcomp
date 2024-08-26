@@ -1,10 +1,11 @@
-package falcon
+
+import frontend.Symbol
 
 sealed class Instr {
     var index = 0
 }
 
-class InstrMov(val dest:Symbol, val src:Symbol) : Instr() {
+class InstrMov(val dest: Symbol, val src:Symbol) : Instr() {
     override fun toString() = "MOV  $dest, $src"
 }
 

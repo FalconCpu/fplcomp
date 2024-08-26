@@ -1,5 +1,3 @@
-package falcon
-
 sealed class Value()
 
 class IntValue(val value: Int) : Value()  {

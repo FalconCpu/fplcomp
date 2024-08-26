@@ -1,6 +1,4 @@
-import falcon.Lexer
-import falcon.StopAt
-import falcon.compile
+import frontend.Lexer
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
 import java.io.StringReader

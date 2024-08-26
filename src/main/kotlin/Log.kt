@@ -1,4 +1,4 @@
-package falcon
+import frontend.Location
 
 object Log  {
     private val allMessages = mutableListOf<String>()

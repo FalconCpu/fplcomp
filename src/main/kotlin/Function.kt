@@ -1,4 +1,3 @@
-package falcon
 
 class Function {
 }

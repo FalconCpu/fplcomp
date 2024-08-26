@@ -1,9 +1,9 @@
-package falcon
-
+import frontend.Lexer
+import frontend.Token
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
 import java.io.StringReader
-import falcon.TokenKind.*
+import frontend.TokenKind.*
 
 class LexerTest {
 
