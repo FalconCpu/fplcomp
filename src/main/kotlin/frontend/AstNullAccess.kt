@@ -1,5 +1,7 @@
 package frontend
 
+import backend.Reg
+
 class AstNullAccess(
     location: Location,
     private val lhs: AstExpr,
@@ -38,4 +40,7 @@ class AstNullAccess(
         type = makeNullableType(symbol.type)
     }
 
+    override fun codeGenRvalue(): Reg {
+        TODO("Not yet implemented")
+    }
 }

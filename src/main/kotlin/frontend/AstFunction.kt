@@ -1,5 +1,7 @@
 package frontend
 
+import backend.*
+
 class AstFunction (
     location: Location,
     parent : AstBlock,
@@ -10,9 +12,16 @@ class AstFunction (
     private val methodOf : AstClass?
 ) : AstBlock(location, parent) {
 
+    lateinit var params : List<Symbol>
     lateinit var endLocation : Location
     lateinit var symbol: SymbolFunctionName
     lateinit var retType: Type
+    lateinit var endLabel: Label
+
+
+    val backendFunction = backend.Function(
+        if (parent is AstClass) "${parent.name}/$name" else name
+    )
 
     override fun dump(sb: StringBuilder, indent: Int) {
         sb.append(". ".repeat(indent))
@@ -45,7 +54,7 @@ class AstFunction (
     }
 
     override fun identifyFunctions(context: AstBlock) {
-        val params = astParams.map { it.resolveParameter(context) }
+        params = astParams.map { it.resolveParameter(context) }
         retType = returnType?.resolveType(context) ?: UnitType
         val funcType = makeFunctionType(params.map{it.type}, retType)
         symbol = SymbolFunctionName(location, name, funcType, this)
@@ -64,7 +73,26 @@ class AstFunction (
         for(statement in body)
             statement.typeCheck(this)
         if (currentPathContext.isReachable && retType != UnitType && methodKind!=MethodKind.ABSTRACT_METHOD)
-            Log.error(endLocation, "Function should return a value of type $retType")
+            Log.error(endLocation, "backend.Function should return a value of type $retType")
+    }
+
+    override fun codeGen() {
+        val oldCurrentFunction = currentFunction
+        currentFunction = backendFunction
+
+        currentFunction.add(InstrStart())
+        endLabel = currentFunction.newLabel()
+
+        for ((index,param) in params.withIndex())
+            currentFunction.instrMove( currentFunction.getReg(param), allMachineRegs[index+1])
+
+        for (statement in body)
+            statement.codeGen()
+
+        currentFunction.instrLabel(endLabel)
+        currentFunction.add(InstrEnd())
+
+        currentFunction = oldCurrentFunction
     }
 }
 

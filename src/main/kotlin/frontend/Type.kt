@@ -78,7 +78,7 @@ fun makeArrayType(elementType: Type): ArrayType {
 }
 
 // ---------------------------------------------------------------------
-//                           Function Types
+//                           backend.Function Types
 // ---------------------------------------------------------------------
 
 class FunctionType(val paramTypes: List<Type>, val retType: Type) :

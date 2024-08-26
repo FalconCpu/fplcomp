@@ -1,5 +1,7 @@
 package frontend
 
+import backend.Reg
+
 class AstEquals(
     location: Location,
     private val lhs: AstExpr,
@@ -80,4 +82,7 @@ class AstEquals(
 
     }
 
+    override fun codeGenRvalue(): Reg {
+        TODO("Not yet implemented")
+    }
 }

@@ -35,4 +35,8 @@ class AstEnum (
             add(sym)
         }
     }
+
+    override fun codeGen() {
+        TODO("Not yet implemented")
+    }
 }

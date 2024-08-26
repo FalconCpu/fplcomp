@@ -1,5 +1,7 @@
 package frontend
 
+import backend.Reg
+
 class AstCast(
     location: Location,
     private val expr: AstExpr,
@@ -22,6 +24,10 @@ class AstCast(
     override fun typeCheck(context: AstBlock) {
         expr.typeCheck(context)
         type = astType.resolveType(context)
+    }
+
+    override fun codeGenRvalue(): Reg {
+        TODO("Not yet implemented")
     }
 
 }

@@ -525,6 +525,16 @@ class Parser(private val lexer: Lexer) {
         expectEol()
     }
 
+    private fun parsePrint(block:AstBlock) {
+        val tok = nextToken()
+        val exprs = mutableListOf<AstExpr>()
+        do {
+            exprs += parseExpression()
+        } while (canTake(COMMA))
+        expectEol()
+        block.add(AstPrint(tok.location,exprs, tok.kind == PRINTLN))
+    }
+
     private fun parseStatement(block:AstBlock) {
         try {
             when (lookahead.kind) {
@@ -540,6 +550,7 @@ class Parser(private val lexer: Lexer) {
                 REPEAT -> parseRepeat(block)
                 EOF -> {}
                 INDENT -> parseIndent(block)
+                PRINT, PRINTLN -> parsePrint(block)
                 else -> throw ParseError(lookahead.location, "Got '${lookahead}' when expecting statement")
             }
 

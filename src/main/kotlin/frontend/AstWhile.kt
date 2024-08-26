@@ -37,4 +37,16 @@ class AstWhile(
         currentPathContext = endContext
     }
 
+    override fun codeGen() {
+        val labStart = currentFunction.newLabel()
+        val labCond = currentFunction.newLabel()
+        val labEnd = currentFunction.newLabel()
+        currentFunction.instrJump(labCond)
+        currentFunction.instrLabel(labStart)
+        for(stmt in body)
+            stmt.codeGen()
+        currentFunction.instrLabel(labCond)
+        condition.codeGenBool(labStart,labEnd)
+        currentFunction.instrLabel(labEnd)
+    }
 }

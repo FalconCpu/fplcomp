@@ -1,5 +1,9 @@
 package frontend
 
+import backend.AluOp
+import backend.Label
+import backend.Reg
+
 class AstCompare(
     location: Location,
     private val op: TokenKind,
@@ -39,4 +43,21 @@ class AstCompare(
         type = BoolType
     }
 
+    override fun codeGenRvalue(): Reg {
+        TODO("Not yet implemented")
+    }
+
+    override fun codeGenBool(trueLabel: Label, falseLabel: Label) {
+        val lhs = lhs.codeGenRvalue()
+        val rhs = rhs.codeGenRvalue()
+        val op = when (op) {
+            TokenKind.LT -> AluOp.LT_I
+            TokenKind.LTE -> AluOp.LE_I
+            TokenKind.GT -> AluOp.GT_I
+            TokenKind.GTE -> AluOp.GE_I
+            else -> error("Unknown operator")
+        }
+        currentFunction.instrBranch(op, lhs, rhs, trueLabel)
+        currentFunction.instrJump(falseLabel)
+    }
 }

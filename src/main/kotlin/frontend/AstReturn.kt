@@ -26,9 +26,12 @@ class AstReturn(
         currentPathContext = currentPathContext.setUnreachable()
 
         if (value==null && func.retType != UnitType)
-            return Log.error(location, "Function should return a value of type ${func.retType}")
+            return Log.error(location, "backend.Function should return a value of type ${func.retType}")
 
         func.retType.checkAssignCompatible(location, valueType)
     }
 
+    override fun codeGen() {
+        TODO("Not yet implemented")
+    }
 }

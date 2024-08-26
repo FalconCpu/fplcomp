@@ -1,5 +1,7 @@
 package frontend
 
+import backend.Reg
+
 class AstMemberAccess (
     location: Location,
     private val lhs: AstExpr,
@@ -100,6 +102,10 @@ class AstMemberAccess (
                 else -> setTypeError("Cannot access field $name of non-class type $lhsType")
             }
         }
+    }
+
+    override fun codeGenRvalue(): Reg {
+        TODO("Not yet implemented")
     }
 }
 

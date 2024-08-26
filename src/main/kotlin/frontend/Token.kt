@@ -69,6 +69,8 @@ enum class TokenKind (val text: String, val lineContinues : Boolean) {
     ABSTRACT ("abstract", false),
     OPEN     ("open", false),
     ENUM     ("enum", false),
+    PRINT    ("print", false),
+    PRINTLN  ("println", false),
     ERROR    ("<ERROR>", false);
 
     override fun toString() = text

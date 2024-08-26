@@ -1,5 +1,7 @@
 package frontend
 
+import backend.Reg
+
 class AstNeg(
     location: Location,
     private val expr: AstExpr
@@ -23,5 +25,9 @@ class AstNeg(
             RealType -> RealType
             else -> makeTypeError(location, "No operation defined for unary minus ${expr.type}")
         }
+    }
+
+    override fun codeGenRvalue(): Reg {
+        TODO("Not yet implemented")
     }
 }

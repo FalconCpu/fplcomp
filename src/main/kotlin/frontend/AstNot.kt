@@ -1,5 +1,7 @@
 package frontend
 
+import backend.Reg
+
 class AstNot(
     location: Location,
     private val expr: AstExpr
@@ -27,4 +29,7 @@ class AstNot(
         type = BoolType
     }
 
+    override fun codeGenRvalue(): Reg {
+        TODO("Not yet implemented")
+    }
 }

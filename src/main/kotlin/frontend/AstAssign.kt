@@ -33,4 +33,9 @@ class AstAssign(
                 currentPathContext = currentPathContext.removeSmartcast(lhsSym)
         }
     }
+
+    override fun codeGen() {
+        val rhs = rhs.codeGenRvalue()
+        lhs.codeGenLvalue(rhs)
+    }
 }

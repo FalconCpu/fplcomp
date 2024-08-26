@@ -1,5 +1,7 @@
 package frontend
 
+import backend.Reg
+
 class AstFuncCall (
     location: Location,
     private val func: AstExpr,
@@ -72,4 +74,7 @@ class AstFuncCall (
         return setTypeError("Got type '$funcType' when expecting a function")
     }
 
+    override fun codeGenRvalue(): Reg {
+        TODO("Not yet implemented")
+    }
 }

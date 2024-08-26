@@ -1,5 +1,7 @@
 package frontend
 
+import backend.Reg
+
 class AstIfExpr(
     location: Location,
     private val condition: AstExpr,
@@ -54,5 +56,9 @@ class AstIfExpr(
         // Restore the path context to a merged state
         currentPathContext =
             mergePathContext(listOf(afterTrueBranchContext, afterFalseBranchContext))
+    }
+
+    override fun codeGenRvalue(): Reg {
+        TODO("Not yet implemented")
     }
 }

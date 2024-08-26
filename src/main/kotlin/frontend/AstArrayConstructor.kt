@@ -1,5 +1,7 @@
 package frontend
 
+import backend.Reg
+
 class AstArrayConstructor (
     location: Location,
     private val astElementType: AstType,
@@ -24,6 +26,10 @@ class AstArrayConstructor (
         size.typeCheck(context)
         IntType.checkAssignCompatible (location, size.type)
         type = makeArrayType(elementType)
+    }
+
+    override fun codeGenRvalue(): Reg {
+        TODO("Not yet implemented")
     }
 
 }

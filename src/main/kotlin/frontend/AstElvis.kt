@@ -1,5 +1,7 @@
 package frontend
 
+import backend.Reg
+
 class AstElvis(
     location: Location,
     private val lhs: AstExpr,
@@ -36,4 +38,7 @@ class AstElvis(
         type = rhs.type
     }
 
+    override fun codeGenRvalue(): Reg {
+        TODO("Not yet implemented")
+    }
 }

@@ -1,3 +1,5 @@
+package backend
+
 sealed class Value()
 
 class IntValue(val value: Int) : Value()  {
@@ -5,12 +7,12 @@ class IntValue(val value: Int) : Value()  {
 }
 
 class StringValue(val value: String) : Value() {
-    override fun toString() = value
+    override fun toString() = "\"$value\""
 }
 
 class ArrayValue(val value: Array<Value>) : Value()
 
-object UndefinedValue : Value()
+// object UndefinedValue : Value()
 
 fun evaluate(op: AluOp, lhs: IntValue, rhs: IntValue): Value {
     val result = when (op) {
@@ -22,8 +24,9 @@ fun evaluate(op: AluOp, lhs: IntValue, rhs: IntValue): Value {
         AluOp.AND_I -> lhs.value and rhs.value
         AluOp.OR_I -> lhs.value or rhs.value
         AluOp.XOR_I -> lhs.value xor rhs.value
-        AluOp.SHL_I -> lhs.value shl rhs.value
-        AluOp.SHR_I -> lhs.value shr rhs.value
+        AluOp.LSL_I -> lhs.value shl rhs.value
+        AluOp.LSR_I -> lhs.value ushr rhs.value
+        AluOp.ASR_I -> lhs.value shr rhs.value
         AluOp.EQ_I,
         AluOp.NE_I,
         AluOp.LT_I,

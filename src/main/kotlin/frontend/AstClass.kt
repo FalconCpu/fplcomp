@@ -3,7 +3,7 @@ package frontend
 class AstClass(
     location: Location,
     parent: AstBlock,
-    private val name: String,
+    val name: String,
     private val parameters: List<AstParameter>,
     private val astSuperClass: AstSuperClass?,
     val isAbstract : Boolean
@@ -112,5 +112,9 @@ class AstClass(
                 .filter { it.astFunction.methodKind == MethodKind.ABSTRACT_METHOD }
                 .forEach { Log.error(it.location, "No override provided for abstract function '$it'") }
         }
+    }
+
+    override fun codeGen() {
+        TODO("Not yet implemented")
     }
 }

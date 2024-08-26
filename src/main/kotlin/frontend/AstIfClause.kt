@@ -28,4 +28,8 @@ class AstIfClause(
         for (statement in body)
             statement.typeCheck(this)
     }
+
+    override fun codeGen() {
+        TODO("Not yet implemented")
+    }
 }

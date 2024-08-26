@@ -16,6 +16,7 @@ enum class StopAt {
 
 fun compile(files:List<Lexer>, stopAt: StopAt) : String {
     Log.initialize()
+    backend.initialize()
 
     // Parse
     val top = AstTop()
@@ -33,6 +34,13 @@ fun compile(files:List<Lexer>, stopAt: StopAt) : String {
         return Log.dump()
     if (stopAt == StopAt.TYPECHECK)
         return top.dumpWithType()
+
+    // IRGen
+    top.codeGen()
+    if (Log.anyError())
+        return Log.dump()
+    if (stopAt == StopAt.IRGEN)
+        return backend.dumpAllFunctions()
 
     TODO()
 }

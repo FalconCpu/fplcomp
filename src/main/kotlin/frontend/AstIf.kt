@@ -52,4 +52,8 @@ class AstIf(
         currentPathContext = mergePathContext(mergeContexts)
 
     }
+
+    override fun codeGen() {
+        TODO("Not yet implemented")
+    }
 }

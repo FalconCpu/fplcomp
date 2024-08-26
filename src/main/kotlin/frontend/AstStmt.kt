@@ -4,4 +4,6 @@ sealed class AstStmt(location: Location) : Ast(location) {
 
     abstract fun typeCheck(context:AstBlock)
 
+    abstract fun codeGen()
+
 }

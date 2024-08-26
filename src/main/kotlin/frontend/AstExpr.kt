@@ -1,5 +1,7 @@
 package frontend
 
+import backend.Label
+import backend.Reg
 import kotlin.contracts.ExperimentalContracts
 import kotlin.contracts.contract
 
@@ -11,6 +13,16 @@ sealed class AstExpr(location: Location) : Ast(location) {
     open fun typeCheckLvalue(context: AstBlock) {
         Log.error(location, "Not an lvalue")
         type = ErrorType
+    }
+
+    abstract fun codeGenRvalue() : Reg
+
+    open fun codeGenLvalue(reg: Reg) {
+        error("codeGenLvalue called on non lvalue")
+    }
+
+    open fun codeGenBool(trueLabel: Label, falseLabel:Label) {
+        TODO()
     }
 
     open fun isMutable(): Boolean = false
@@ -47,5 +59,11 @@ sealed class AstExpr(location: Location) : Ast(location) {
         return this is AstIdentifier && this.symbol is SymbolTypeName
     }
 
+    override fun dump(sb: StringBuilder, indent: Int) {
+        TODO("Not yet implemented")
+    }
 
+    override fun dumpWithType(sb: StringBuilder, indent: Int) {
+        TODO("Not yet implemented")
+    }
 }

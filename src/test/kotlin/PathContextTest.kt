@@ -215,7 +215,7 @@ class PathContextTest {
         """.trimIndent()
 
         val expected = """
-            test.txt 4.81:- Function should return a value of type Int
+            test.txt 4.81:- backend.Function should return a value of type Int
         """.trimIndent()
 
         runTest(prog, expected)

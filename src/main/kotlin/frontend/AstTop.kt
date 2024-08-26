@@ -1,6 +1,12 @@
 package frontend
 
-class AstTop() : AstBlock(nullLocation, null) {
+import backend.allFunctions
+
+var currentFunction = backend.Function("<dummy>")
+
+class AstTop : AstBlock(nullLocation, null) {
+
+    private val backendFunction = backend.Function("<top>")
 
     override fun dump(sb: StringBuilder, indent: Int) {
         sb.append(". ".repeat(indent))
@@ -37,4 +43,17 @@ class AstTop() : AstBlock(nullLocation, null) {
         typeCheck(this)
     }
 
+    override fun codeGen() {
+        currentFunction = backendFunction
+        currentFunction.add(backend.InstrStart())
+
+        for(stmt in body)
+            stmt.codeGen()
+
+        val main = allFunctions.find { it.name == "main" }
+        if (main != null)
+            currentFunction.add(backend.InstrJsr(main))
+
+        currentFunction.add(backend.InstrEnd())
+    }
 }

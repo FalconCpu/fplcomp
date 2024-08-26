@@ -30,5 +30,4 @@ class AstParameter(
         }
         return symbol
     }
-
 }

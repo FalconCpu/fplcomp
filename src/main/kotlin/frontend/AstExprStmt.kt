@@ -23,4 +23,7 @@ class AstExprStmt(
             Log.warning(location, "Expression has no effect")
     }
 
+    override fun codeGen() {
+        TODO("Not yet implemented")
+    }
 }

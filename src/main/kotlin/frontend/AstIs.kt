@@ -1,5 +1,7 @@
 package frontend
 
+import backend.Reg
+
 class AstIs (
     location: Location,
     private val lhs: AstExpr,
@@ -48,5 +50,9 @@ class AstIs (
             falseBranchContext = currentPathContext.addSmartCast(lhsSym, rhsType)
             trueBranchContext = currentPathContext
         }
+    }
+
+    override fun codeGenRvalue(): Reg {
+        TODO("Not yet implemented")
     }
 }

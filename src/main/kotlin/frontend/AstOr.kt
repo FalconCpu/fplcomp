@@ -1,5 +1,7 @@
 package frontend
 
+import backend.Reg
+
 class AstOr(
     location: Location,
     private val lhs: AstExpr,
@@ -36,5 +38,9 @@ class AstOr(
             mergePathContext(listOf(midTrueContext, trueBranchContext))
 
         type = BoolType
+    }
+
+    override fun codeGenRvalue(): Reg {
+        TODO("Not yet implemented")
     }
 }

@@ -43,4 +43,22 @@ class AstDeclaration (
         else
             currentPathContext = currentPathContext.addUninitializedVariable(symbol)
     }
+
+    override fun codeGen() {
+        if (value==null)
+            return
+
+        val rhs = value.codeGenRvalue()
+
+        when(symbol) {
+            is SymbolLocalVar -> currentFunction.instrMove( currentFunction.getReg(symbol), rhs)
+            is SymbolField -> TODO()
+            is SymbolGlobalVar -> TODO()
+            is SymbolFunctionName,
+            is SymbolLiteral,
+            is SymbolMemberAccess,
+            is SymbolTypeName -> error("Got ${this.javaClass} in AstDeclaration")
+        }
+
+    }
 }

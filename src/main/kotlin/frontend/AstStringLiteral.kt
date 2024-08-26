@@ -1,5 +1,7 @@
 package frontend
 
+import backend.Reg
+
 class AstStringLiteral(
     location: Location,
     private val value: String
@@ -19,4 +21,7 @@ class AstStringLiteral(
         type = StringType
     }
 
+    override fun codeGenRvalue(): Reg {
+        return currentFunction.instrLea(backend.StringValue(value))
+    }
 }

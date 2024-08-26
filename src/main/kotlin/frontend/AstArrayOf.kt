@@ -1,5 +1,7 @@
 package frontend
 
+import backend.Reg
+
 class AstArrayOf(
     location: Location,
     private val astElementType: AstType?,
@@ -33,6 +35,10 @@ class AstArrayOf(
             elementType.checkAssignCompatible (element.location, element.type)
 
         type = makeArrayType(elementType)
+    }
+
+    override fun codeGenRvalue(): Reg {
+        TODO("Not yet implemented")
     }
 
 }

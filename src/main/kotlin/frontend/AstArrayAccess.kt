@@ -1,5 +1,7 @@
 package frontend
 
+import backend.Reg
+
 class AstArrayAccess(
     location: Location,
     private val lhs: AstExpr,
@@ -33,4 +35,9 @@ class AstArrayAccess(
         IntType.checkAssignCompatible(index.location, index.type)
         type = lhsType.elementType
     }
+
+    override fun codeGenRvalue(): Reg {
+        TODO("Not yet implemented")
+    }
+
 }

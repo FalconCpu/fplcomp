@@ -252,7 +252,7 @@ class TypeCheck {
         """.trimIndent()
 
         val expected = """
-            test.txt 2.5:- Function should return a value of type Int
+            test.txt 2.5:- backend.Function should return a value of type Int
         """.trimIndent()
 
         runTest(prog, expected)
@@ -1067,17 +1067,20 @@ class TypeCheck {
         runTest(prog, expected)
     }
 
-
-
-
-
-    fun emptyTest() {
+    @Test
+    fun helloWorld() {
         val prog = """
-
+            fun main()
+                println "Hello, world!"
         """.trimIndent()
 
         val expected = """
-            """.trimIndent()
+            TOP
+            . FUNCTION main ()->Unit
+            . . PRINT
+            . . . STRINGLIT Hello, world! String
+
+        """.trimIndent()
 
         runTest(prog, expected)
     }

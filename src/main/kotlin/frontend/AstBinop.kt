@@ -1,6 +1,7 @@
 package frontend
 
-import AluOp
+import backend.AluOp
+import backend.Reg
 
 class AstBinop(
     location: Location,
@@ -36,9 +37,15 @@ class AstBinop(
         opType = match.op
     }
 
+    override fun codeGenRvalue(): Reg {
+        val lhs = lhs.codeGenRvalue()
+        val rhs = rhs.codeGenRvalue()
+        return currentFunction.instrAlu(opType, lhs, rhs)
+    }
+
 }
 
-private class Operator(val kind: TokenKind, val lhsType:Type, val rhsType: Type, val op:AluOp, val resultType:Type)
+private class Operator(val kind: TokenKind, val lhsType:Type, val rhsType: Type, val op: AluOp, val resultType:Type)
 private val operatorTable = listOf(
     Operator(TokenKind.PLUS,    IntType, IntType, AluOp.ADD_I, IntType),
     Operator(TokenKind.MINUS,   IntType, IntType, AluOp.SUB_I, IntType),

@@ -1,5 +1,7 @@
 package frontend
 
+import backend.Reg
+
 class AstIntLiteral(
     location: Location,
     private val value: Int
@@ -19,4 +21,7 @@ class AstIntLiteral(
         type = IntType
     }
 
+    override fun codeGenRvalue(): Reg {
+        return currentFunction.instrInt(value)
+    }
 }

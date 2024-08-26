@@ -1,5 +1,7 @@
 package frontend
 
+import backend.Reg
+
 class AstIdentifier (
     location: Location,
     val name: String
@@ -70,4 +72,27 @@ class AstIdentifier (
         currentPathContext = currentPathContext.initializeVariable(symbol)
     }
 
+    override fun codeGenRvalue(): Reg {
+        return when(symbol) {
+            is SymbolLocalVar -> currentFunction.getReg(symbol)
+            is SymbolField -> TODO()
+            is SymbolFunctionName -> TODO()
+            is SymbolGlobalVar -> TODO()
+            is SymbolLiteral -> TODO()
+            is SymbolMemberAccess -> TODO()
+            is SymbolTypeName -> TODO()
+        }
+    }
+
+    override fun codeGenLvalue(value: Reg) {
+        when (symbol) {
+            is SymbolLocalVar -> currentFunction.instrMove( currentFunction.getReg(symbol), value)
+            is SymbolField -> TODO()
+            is SymbolGlobalVar -> TODO()
+            is SymbolFunctionName,
+            is SymbolLiteral,
+            is SymbolMemberAccess,
+            is SymbolTypeName -> error("Got kind ${symbol.javaClass} in codeGenLvalue")
+        }
+    }
 }

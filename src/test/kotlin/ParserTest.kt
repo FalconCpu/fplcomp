@@ -797,16 +797,20 @@ class ParserTest {
         runTest(prog, expected)
     }
 
-
-
-
-
-    fun emptyTest() {
+    @Test
+    fun helloWorld() {
         val prog = """
+            fun main()
+                println "Hello, world!"
         """.trimIndent()
 
-        val expected = """  
-            """.trimIndent()
+        val expected = """
+            TOP
+            . FUNCTION main
+            . . PRINT
+            . . . STRINGLIT Hello, world!
+
+        """.trimIndent()
 
         runTest(prog, expected)
     }
