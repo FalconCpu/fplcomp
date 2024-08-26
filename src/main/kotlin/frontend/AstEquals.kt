@@ -1,5 +1,7 @@
 package frontend
 
+import backend.AluOp
+import backend.Label
 import backend.Reg
 
 class AstEquals(
@@ -84,5 +86,14 @@ class AstEquals(
 
     override fun codeGenRvalue(): Reg {
         TODO("Not yet implemented")
+    }
+
+    override fun codeGenBool(trueLabel: Label, falseLabel: Label) {
+        check(lhs.type != RealType && lhs.type != StringType){"TODO REAL AND STRING EQUALS"}
+        val lhs = lhs.codeGenRvalue()
+        val rhs = rhs.codeGenRvalue()
+        val op = if (eq) AluOp.EQ_I else AluOp.NE_I
+        currentFunction.instrBranch(op, lhs, rhs, trueLabel)
+        currentFunction.instrJump(falseLabel)
     }
 }

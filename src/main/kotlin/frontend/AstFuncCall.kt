@@ -1,6 +1,7 @@
 package frontend
 
 import backend.Reg
+import backend.allMachineRegs
 
 class AstFuncCall (
     location: Location,
@@ -75,6 +76,15 @@ class AstFuncCall (
     }
 
     override fun codeGenRvalue(): Reg {
-        TODO("Not yet implemented")
+        val funcName = func.isFunctionName()
+        val args = args.map { it.codeGenRvalue() }
+
+        if (funcName!=null) {
+            for (index in args.indices)
+                currentFunction.instrMove(allMachineRegs[index + 1], args[index])
+            return currentFunction.instrCall(funcName.astFunction.backendFunction)
+        } else {
+            TODO("Function calls to calculated address")
+        }
     }
 }

@@ -24,6 +24,6 @@ class AstExprStmt(
     }
 
     override fun codeGen() {
-        TODO("Not yet implemented")
+        expr.codeGenRvalue()
     }
 }

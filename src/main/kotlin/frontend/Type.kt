@@ -31,20 +31,21 @@ sealed class Type (val name:String) {
         else -> this
     }
 
-//    fun getSize(): Int = when (this) {
-//        CharType -> 1
-//        UnitType -> 0
-//        BoolType -> 4
-//        is ArrayType -> 4
-//        is ClassType -> 4
-//        ErrorType -> 4
-//        is FunctionType -> 4
-//        IntType -> 4
-//        NullType -> 4
-//        is NullableType -> 4
-//        RealType -> 4
-//        StringType -> 4
-//    }
+    fun getSize(): Int = when (this) {
+        CharType -> 1
+        UnitType -> 0
+        BoolType -> 4
+        is ArrayType -> 4
+        is ClassType -> 4
+        ErrorType -> 4
+        is FunctionType -> 4
+        IntType -> 4
+        NullType -> 4
+        is NullableType -> 4
+        RealType -> 4
+        StringType -> 4
+        is EnumType -> 4
+    }
 }
 
 // ---------------------------------------------------------------------

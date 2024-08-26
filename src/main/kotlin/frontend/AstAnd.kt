@@ -1,5 +1,6 @@
 package frontend
 
+import backend.Label
 import backend.Reg
 
 class AstAnd(
@@ -42,5 +43,12 @@ class AstAnd(
 
     override fun codeGenRvalue(): Reg {
         TODO("Not yet implemented")
+    }
+
+    override fun codeGenBool(trueLabel: Label, falseLabel: Label) {
+        val label = currentFunction.newLabel()
+        lhs.codeGenBool(label, falseLabel)
+        currentFunction.instrLabel(label)
+        rhs.codeGenBool(trueLabel, falseLabel)
     }
 }

@@ -37,7 +37,9 @@ class AstArrayAccess(
     }
 
     override fun codeGenRvalue(): Reg {
-        TODO("Not yet implemented")
+        val addr = lhs.codeGenRvalue()
+        val index = index.codeGenRvalue()
+        return currentFunction.instrLoad(type.getSize(), addr, index)
     }
 
 }

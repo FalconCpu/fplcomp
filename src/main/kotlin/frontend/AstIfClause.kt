@@ -30,6 +30,7 @@ class AstIfClause(
     }
 
     override fun codeGen() {
-        TODO("Not yet implemented")
+        for(statement in body)
+            statement.codeGen()
     }
 }

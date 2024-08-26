@@ -22,7 +22,7 @@ sealed class AstExpr(location: Location) : Ast(location) {
     }
 
     open fun codeGenBool(trueLabel: Label, falseLabel:Label) {
-        TODO()
+        TODO("Not implemented codeGenBool ${this.javaClass}")
     }
 
     open fun isMutable(): Boolean = false
@@ -57,6 +57,15 @@ sealed class AstExpr(location: Location) : Ast(location) {
             returns(true) implies (this@AstExpr is AstIdentifier)
         }
         return this is AstIdentifier && this.symbol is SymbolTypeName
+    }
+
+    fun isFunctionName() : SymbolFunctionName? {
+        if (this !is AstIdentifier)
+            return null
+        val symbol = this.symbol
+        if (symbol !is SymbolFunctionName)
+            return null
+        return symbol
     }
 
     override fun dump(sb: StringBuilder, indent: Int) {

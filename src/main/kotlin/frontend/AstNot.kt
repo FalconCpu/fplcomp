@@ -1,5 +1,7 @@
 package frontend
 
+import backend.AluOp
+import backend.Label
 import backend.Reg
 
 class AstNot(
@@ -30,6 +32,12 @@ class AstNot(
     }
 
     override fun codeGenRvalue(): Reg {
-        TODO("Not yet implemented")
+        val v = expr.codeGenRvalue()
+        return currentFunction.instrAlu(AluOp.XOR_I, v, 1)
     }
+
+    override fun codeGenBool(trueLabel: Label, falseLabel: Label) {
+        expr.codeGenBool(falseLabel, trueLabel)
+    }
+
 }

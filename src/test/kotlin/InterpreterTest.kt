@@ -4,7 +4,7 @@ import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
 import java.io.StringReader
 
-private val debug = true
+private val debug = false
 
 class InterpreterTest {
 
@@ -105,5 +105,76 @@ class InterpreterTest {
 
         runTest(prog, expected)
     }
+
+    @Test
+    fun arrayTest() {
+        val prog = """
+            fun sum(array:Array<Int>)->Int
+                var sum = 0
+                var index = 0
+                while index < array.size
+                    sum = sum + array[index]
+                    index = index + 1
+                return sum
+                
+            fun main()
+                val arr = arrayOf(1, 2, 3, 4, 5)
+                println sum(arr)
+        """.trimIndent()
+
+        val expected = """
+            15
+
+        """.trimIndent()
+
+        runTest(prog, expected)
+    }
+
+    @Test
+    fun ifTest() {
+        val prog = """
+            fun compare_to_5(x:Int)
+                if x < 5
+                    println x," is less than 5"
+                else if x = 5
+                    println x," is equal to 5"
+                else
+                    println x," is greater than to 5"
+                    
+            fun main()
+                var count = 0
+                while count < 20
+                    compare_to_5(count)
+                    count = count + 1
+        """.trimIndent()
+
+        val expected = """
+            0 is less than 5
+            1 is less than 5
+            2 is less than 5
+            3 is less than 5
+            4 is less than 5
+            5 is equal to 5
+            6 is greater than to 5
+            7 is greater than to 5
+            8 is greater than to 5
+            9 is greater than to 5
+            10 is greater than to 5
+            11 is greater than to 5
+            12 is greater than to 5
+            13 is greater than to 5
+            14 is greater than to 5
+            15 is greater than to 5
+            16 is greater than to 5
+            17 is greater than to 5
+            18 is greater than to 5
+            19 is greater than to 5
+
+        """.trimIndent()
+
+        runTest(prog, expected)
+    }
+
+
 
 }

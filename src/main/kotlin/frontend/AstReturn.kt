@@ -5,6 +5,8 @@ class AstReturn(
     private val value: AstExpr?
 ) : AstStmt(location) {
 
+    lateinit var func : AstFunction
+
     override fun dump(sb: StringBuilder, indent: Int) {
         sb.append(". ".repeat(indent))
         sb.append("RETURN\n")
@@ -18,7 +20,7 @@ class AstReturn(
     }
 
     override fun typeCheck(context: AstBlock) {
-        val func = context.findEnclosingFunction() ?:
+        func = context.findEnclosingFunction() ?:
             return Log.error(location, "Return statement not in function")
 
         value?.typeCheck(context)
@@ -32,6 +34,10 @@ class AstReturn(
     }
 
     override fun codeGen() {
-        TODO("Not yet implemented")
+        if (value!= null  && value.type != UnitType) {
+            val value = value.codeGenRvalue()
+            currentFunction.instrMove(backend.regResult, value)
+        }
+        currentFunction.instrJump(func.endLabel)
     }
 }

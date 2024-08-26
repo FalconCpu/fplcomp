@@ -1,5 +1,6 @@
 package backend
-import frontend.Symbol
+
+import frontend.SymbolField
 
 sealed class Instr {
     var index = 0
@@ -12,6 +13,14 @@ class InstrMov(val dest: Reg, val src:Reg) : Instr() {
 class InstrAlu(val dest:Reg, val op: AluOp, val lhs:Reg, val rhs:Reg)  : Instr() {
     override fun toString() = "$dest = $lhs $op $rhs"
 }
+
+class InstrAluLit(val dest:Reg, val op: AluOp, val lhs:Reg, val rhs:Int)  : Instr() {
+    init {
+        check(rhs in -0x400..0x3ff)
+    }
+    override fun toString() = "$dest = $lhs $op $rhs"
+}
+
 
 class InstrLit(val dest:Reg, val value: Int) : Instr() {
     override fun toString() = "$dest = $value"
@@ -41,13 +50,30 @@ class InstrEnd() : Instr() {
     override fun toString() = "end"
 }
 
-class InstrLoad(val size:MemSize, val dest: Reg, val addr: Reg, val offset:Symbol) : Instr() {
+class InstrLoadArrayLit(val size:Int, val dest: Reg, val addr: Reg, val offset:Int) : Instr() {
     override fun toString() = "$dest = $addr[$offset]"
 }
 
-class InstrStore(val size:Int, val data: Reg, val addr: Reg, val offset:Symbol) : Instr() {
-    override fun toString() = "ST$size $data, $addr[$offset]"
+class InstrStoreArrayLit(val size:Int, val data: Reg, val addr: Reg, val offset:Int) : Instr() {
+    override fun toString() = "$addr[$offset] = $data"
 }
+
+class InstrLoadArray(val size:Int, val dest: Reg, val addr: Reg, val offset:Reg) : Instr() {
+    override fun toString() = "$dest = $addr[$offset]"
+}
+
+class InstrStoreArray(val size:Int, val data: Reg, val addr: Reg, val offset:Reg) : Instr() {
+    override fun toString() = "$addr[$offset] = $data"
+}
+
+class InstrLoadField(val size:Int, val dest: Reg, val addr: Reg, val offset:SymbolField) : Instr() {
+    override fun toString() = "$dest = $addr->$offset"
+}
+
+class InstrStoreField(val size:Int, val data: Reg, val addr: Reg, val offset:SymbolField) : Instr() {
+    override fun toString() = "$addr->$offset = $data"
+}
+
 
 class InstrLea(val dest:Reg, val src:Value) : Instr() {
     override fun toString() = "$dest = ADDR($src)"

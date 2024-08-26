@@ -105,9 +105,12 @@ class AstMemberAccess (
     }
 
     override fun codeGenRvalue(): Reg {
-        TODO("Not yet implemented")
+        val sym = symbol
+        check(sym is SymbolField)
+        val addr = lhs.codeGenRvalue()
+        return currentFunction.instrLoad(type.getSize(), addr, sym)
     }
 }
 
-private val sizeSymbol = SymbolField(nullLocation, "size", IntType, false)
+val sizeSymbol = SymbolField(nullLocation, "size", IntType, false)
 

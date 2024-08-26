@@ -1,5 +1,7 @@
 package frontend
 
+import backend.Label
+
 class AstIf(
     location: Location,
     parent : AstBlock,
@@ -54,6 +56,29 @@ class AstIf(
     }
 
     override fun codeGen() {
-        TODO("Not yet implemented")
+        val labelEnd = currentFunction.newLabel()
+        val clauseLabels = mutableListOf<Label>()
+
+        // Generate the code for the conditions for each clause
+        for (clause in clauses) {
+            val clauseLabel = currentFunction.newLabel()
+            clauseLabels += clauseLabel
+            if (clause.condition != null) {
+                val nextClause = currentFunction.newLabel()
+                clause.condition.codeGenBool(clauseLabel, nextClause)
+                currentFunction.instrLabel(nextClause)
+            } else
+                currentFunction.instrJump(clauseLabel)
+        }
+        currentFunction.instrLabel(labelEnd)
+
+        // Generate the code for the body of each clause
+        for ((index,clause) in clauses.withIndex()) {
+            currentFunction.instrLabel(clauseLabels[index])
+            clause.codeGen()
+            currentFunction.instrJump(labelEnd)
+        }
+
+        currentFunction.instrLabel(labelEnd)
     }
 }

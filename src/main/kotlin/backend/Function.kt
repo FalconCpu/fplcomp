@@ -1,5 +1,6 @@
 package backend
 
+import frontend.SymbolField
 import frontend.currentFunction
 
 val allFunctions = mutableListOf<Function>()
@@ -49,8 +50,8 @@ open class Function(val name:String, isStdLib:Boolean=false) {
         }
     }
 
-    fun instrMove(src: Reg, dst: Reg) {
-        add(InstrMov(src, dst))
+    fun instrMove(dst: Reg, src: Reg) {
+        add(InstrMov(dst, src))
     }
 
     fun instrAlu(op: AluOp, lhs: Reg, rhs: Reg) : Reg {
@@ -58,6 +59,13 @@ open class Function(val name:String, isStdLib:Boolean=false) {
         add(InstrAlu(ret, op, lhs, rhs))
         return ret
     }
+
+    fun instrAlu(op: AluOp, lhs: Reg, rhs: Int) : Reg {
+        val ret = newTemp()
+        add(InstrAluLit(ret, op, lhs, rhs))
+        return ret
+    }
+
 
     fun instrInt(value: Int): Reg {
         val ret = newTemp()
@@ -75,6 +83,14 @@ open class Function(val name:String, isStdLib:Boolean=false) {
         add(InstrJump(target))
     }
 
+    fun instrCall(target: Function) : Reg {
+        add(InstrJsr(target))
+        val ret = newTemp()
+        add(InstrMov(ret, regResult))
+        return ret
+    }
+
+
     fun instrBranch(op: AluOp, lhs: Reg, rhs: Reg, target: Label) {
         add(InstrBranch(op, lhs, rhs, target))
     }
@@ -83,12 +99,42 @@ open class Function(val name:String, isStdLib:Boolean=false) {
         add(InstrLabel(label))
     }
 
+    fun instrStore(size:Int, data:Reg, addr:Reg, offset: Int) {
+        add(InstrStoreArrayLit(size, data, addr, offset))
+    }
+
+    fun instrLoad(size:Int, addr:Reg, offset: Int) : Reg {
+        val ret = newTemp()
+        add(InstrLoadArrayLit(size, ret, addr, offset))
+        return ret
+    }
+
+    fun instrStore(size:Int, data:Reg, addr:Reg, offset: Reg) {
+        add(InstrStoreArray(size, data, addr, offset))
+    }
+
+    fun instrLoad(size:Int, addr:Reg, offset: Reg) : Reg {
+        val ret = newTemp()
+        add(InstrLoadArray(size, ret, addr, offset))
+        return ret
+    }
+
+    fun instrStore(size:Int, data:Reg, addr:Reg, offset: SymbolField) {
+        add(InstrStoreField(size, data, addr, offset))
+    }
+
+    fun instrLoad(size:Int, addr:Reg, offset: SymbolField) : Reg {
+        val ret = newTemp()
+        add(InstrLoadField(size, ret, addr, offset))
+        return ret
+    }
+
+
+
     fun rebuildIndex() {
         for((index, instr) in prog.withIndex())
-            if (instr is InstrLabel) {
-                println("Setting index of ${instr.label} to $index")
+            if (instr is InstrLabel)
                 instr.label.index = index
-            }
     }
 }
 

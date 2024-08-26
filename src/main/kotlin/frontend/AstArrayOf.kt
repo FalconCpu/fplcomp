@@ -1,12 +1,16 @@
 package frontend
 
+import backend.InstrLit
 import backend.Reg
+import backend.StdlibMallocArray
 
 class AstArrayOf(
     location: Location,
     private val astElementType: AstType?,
     private val elements : List<AstExpr>
 ) : AstExpr(location) {
+
+    lateinit var elementType : Type
 
     override fun dump(sb: StringBuilder, indent: Int) {
         sb.append(". ".repeat(indent))
@@ -29,7 +33,7 @@ class AstArrayOf(
         if (elements.isEmpty() && astElementType == null)
             return setTypeError("Array of unknown type")
 
-        val elementType = astElementType?.resolveType(context) ?: elements[0].type
+        elementType = astElementType?.resolveType(context) ?: elements[0].type
 
         for (element in elements)
             elementType.checkAssignCompatible (element.location, element.type)
@@ -38,7 +42,15 @@ class AstArrayOf(
     }
 
     override fun codeGenRvalue(): Reg {
-        TODO("Not yet implemented")
+        val numElements = elements.size
+        val elementSize = elementType.getSize()
+        currentFunction.add(InstrLit(backend.regArg1, numElements))
+        currentFunction.add(InstrLit(backend.regArg2, elementSize))
+        val ret = currentFunction.instrCall(StdlibMallocArray)
+        for ((index, element) in elements.withIndex()) {
+            val value = element.codeGenRvalue()
+            currentFunction.instrStore(elementSize, value, ret, index)
+        }
+        return ret
     }
-
 }

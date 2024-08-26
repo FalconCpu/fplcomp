@@ -1,6 +1,8 @@
 package backend
 
+import frontend.ClassType
 import frontend.SymbolGlobalVar
+import frontend.sizeSymbol
 
 // This file contains a basic Interpreter for the IR code.
 // It is not planned to be efficient, but it can be used to get a reference output for comparison with the
@@ -11,12 +13,13 @@ private val allRegisters = mutableMapOf<Reg, Value>()
 private var localVariables = mutableMapOf<Reg, Value>()
 private val programOutput = StringBuilder()
 
-private val debug = true
+private val debug = false
 
 fun runInterpreter(): String {
     globalVariables.clear()
     allRegisters.clear()
     allRegisters[ allMachineRegs[0] ] = IntValue(0)
+    allRegisters[ allMachineRegs[8] ] = UndefinedValue
     programOutput.clear()
     allFunctions.forEach{it.rebuildIndex()}
     allFunctions[0].run()
@@ -34,6 +37,10 @@ private fun Function.run() {
         when(instr) {
             is InstrAlu ->
                 instr.dest.setValue( evaluate(instr.op, instr.lhs.getIntValue(), instr.rhs.getIntValue()) )
+
+            is InstrAluLit ->
+                instr.dest.setValue( evaluate(instr.op, instr.lhs.getIntValue(), instr.rhs) )
+
 
             is InstrBranch ->
                 if (compare(instr.op, instr.lhs.getIntValue(), instr.rhs.getIntValue()))
@@ -60,18 +67,54 @@ private fun Function.run() {
             is InstrLea ->
                 instr.dest.setValue(instr.src)
 
-            is InstrLoad ->
-                TODO()
+            is InstrLoadArrayLit -> {
+                check(instr.size==4)
+                val array = instr.addr.getArrayValue()
+                instr.dest.setValue( array[instr.offset] )
+            }
+
+            is InstrLoadArray -> {
+                check(instr.size==4)
+                val array = instr.addr.getArrayValue()
+                instr.dest.setValue( array[instr.offset.getIntValue()])
+            }
 
             is InstrMov -> instr.dest.setValue(instr.src.getValue())
 
             is InstrStart -> {}
 
-            is InstrStore ->
-                TODO()
+            is InstrStoreArrayLit -> {
+                check(instr.size==4)
+                val array = instr.addr.getArrayValue()
+                array[instr.offset] = instr.data.getValue()
+            }
 
             is InstrLit ->
                 instr.dest.setValue(IntValue(instr.value))
+
+
+            is InstrStoreArray -> {
+                check(instr.size==4)
+                val array = instr.addr.getArrayValue()
+                val offset = instr.offset.getIntValue()
+                array[offset] = instr.data.getValue()
+            }
+
+            is InstrLoadField -> {
+                val addr = instr.addr.getValue()
+                if (addr is ArrayValue && instr.offset== sizeSymbol)
+                    instr.dest.setValue(IntValue(addr.value.size))
+                else if (addr is ClassValue)
+                    instr.dest.setValue(addr.value.getValue(instr.offset))
+                else
+                    error("Illegal type in InstrLoadField ${addr.javaClass}")
+            }
+
+            is InstrStoreField -> {
+                val addr = instr.addr.getValue()
+                check(addr is ClassValue)
+                addr.value[instr.offset] = instr.data.getValue()
+            }
         }
     }
 }
@@ -84,18 +127,17 @@ private fun Reg.getValue() : Value {
     }
 }
 
-private fun Reg.getIntValue() : IntValue {
+private fun Reg.getIntValue() : Int {
     val value = getValue()
     check (value is IntValue)
-    return value
+    return value.value
 }
 
-private fun Reg.getArrayValue() : ArrayValue {
+private fun Reg.getArrayValue() : Array<Value> {
     val value = getValue()
     check (value is ArrayValue)
-    return value
+    return value.value
 }
-
 
 private fun Reg.setValue(value:Value) {
     when (this) {
@@ -107,13 +149,14 @@ private fun Reg.setValue(value:Value) {
 
 private fun executeStdlibCall(target: StdLibFunction) {
     val arg1 = allRegisters.getValue( allMachineRegs[1])
-    val resultReg = allMachineRegs[8]
 
     when (target) {
-        StdlibPrintBool -> programOutput.append(if ((arg1 as IntValue).value == 0) "false" else "true")
-        StdlibPrintChar -> programOutput.append((arg1 as IntValue).value.toChar())
-        StdlibPrintInt -> programOutput.append((arg1 as IntValue).value)
-        StdlibPrintString -> programOutput.append((arg1 as StringValue).value)
+        StdlibPrintBool -> programOutput.append(if (arg1.getIntValue() == 0) "false" else "true")
+        StdlibPrintChar -> programOutput.append(arg1.getIntValue().toChar())
+        StdlibPrintInt -> programOutput.append(arg1.getIntValue())
+        StdlibPrintString -> programOutput.append(arg1.getStringValue())
         StdlibNewline -> programOutput.append("\n")
+        StdlibMallocArray -> regResult.setValue( ArrayValue( Array((arg1 as IntValue).value) { UndefinedValue }))
     }
 }
+
