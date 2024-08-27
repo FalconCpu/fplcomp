@@ -18,31 +18,17 @@ class AstBinop(
         rhs.dump(sb, indent + 1)
     }
 
-    override fun dumpWithType(sb: StringBuilder, indent: Int) {
-        sb.append(". ".repeat(indent))
-        sb.append("BINARYOP $op $type\n")
-        lhs.dumpWithType(sb, indent + 1)
-        rhs.dumpWithType(sb, indent + 1)
-    }
+    override fun typeCheck(context: AstBlock) : TcExpr{
+        val lhs = lhs.typeCheck(context)
+        val rhs = rhs.typeCheck(context)
+        if (lhs.type==ErrorType) return lhs
+        if (rhs.type==ErrorType) return rhs
 
-    override fun typeCheck(context: AstBlock) {
-        lhs.typeCheck(context)
-        rhs.typeCheck(context)
-        if (lhs.type==ErrorType || rhs.type == ErrorType)
-            return setTypeError()
         val match = operatorTable.find { it.kind == op && it.lhsType == lhs.type && it.rhsType == rhs.type }
         if (match == null)
-            return setTypeError("No operation defined for ${lhs.type} $op ${rhs.type}")
-        type = match.resultType
-        opType = match.op
+            return TcError(location, "No operation defined for ${lhs.type} $op ${rhs.type}")
+        return TcBinop(location, match.resultType, match.op, lhs, rhs)
     }
-
-    override fun codeGenRvalue(): Reg {
-        val lhs = lhs.codeGenRvalue()
-        val rhs = rhs.codeGenRvalue()
-        return currentFunction.instrAlu(opType, lhs, rhs)
-    }
-
 }
 
 private class Operator(val kind: TokenKind, val lhsType:Type, val rhsType: Type, val op: AluOp, val resultType:Type)
@@ -58,3 +44,27 @@ private val operatorTable = listOf(
 //    Operator(TokenKind.LEFT,    IntType, IntType, AluOp.SHL_I, IntType),
 //    Operator(TokenKind.RIGHT,   IntType, IntType, AluOp.SHR_I, IntType),
 )
+
+class TcBinop(
+    location: Location,
+    type: Type,
+    val op : AluOp,
+    val lhs: TcExpr,
+    val rhs: TcExpr
+) : TcExpr(location, type) {
+
+    override fun dump(sb: StringBuilder, indent: Int) {
+        sb.append(". ".repeat(indent))
+        sb.append("BINARYOP $op $type\n")
+        lhs.dump(sb, indent + 1)
+        rhs.dump(sb, indent + 1)
+    }
+
+    override fun codeGenRvalue(): Reg {
+        val lhs = lhs.codeGenRvalue()
+        val rhs = rhs.codeGenRvalue()
+        return currentFunction.instrAlu(op, lhs, rhs)
+    }
+
+}
+

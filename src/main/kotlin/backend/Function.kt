@@ -15,6 +15,7 @@ open class Function(val name:String, isStdLib:Boolean=false) {
     val prog = mutableListOf<Instr>()
     private val symbolMap = mutableMapOf<frontend.Symbol, Reg>()
     private val labels = mutableListOf<Label>()
+    val endLabel = newLabel()
 
     override fun toString() = name
 

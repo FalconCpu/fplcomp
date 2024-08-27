@@ -16,31 +16,44 @@ class AstNullAccess(
         lhs.dump(sb, indent + 1)
     }
 
-    override fun dumpWithType(sb: StringBuilder, indent: Int) {
-        sb.append(". ".repeat(indent))
-        sb.append("NULLACCESS $name $type\n")
-        lhs.dumpWithType(sb, indent + 1)
-    }
 
-    override fun typeCheck(context: AstBlock) {
-        lhs.typeCheck(context)
+    override fun typeCheck(context: AstBlock) : TcExpr {
+        val lhs = lhs.typeCheck(context)
         if (lhs.type is ErrorType)
-            return setTypeError()
+            return lhs
         if (lhs.type !is NullableType)
-            return setTypeError("Not a nullable type '${lhs.type}'")
+            return TcError(location, "Not a nullable type '${lhs.type}'")
 
         val lhsType = lhs.type.makeNonNull()
         if (lhsType !is ClassType)
-            return setTypeError("Cannot access field $name of non-class type $lhsType")
+            return TcError(location, "Cannot access field $name of non-class type $lhsType")
 
         symbol = lhsType.definition.lookupNoHierarchy(name)
-            ?: return setTypeError("Class '$lhsType' has no field named '$name'")
+            ?: return TcError(location, "Class '$lhsType' has no field named '$name'")
 
         check(symbol is SymbolField || symbol is SymbolFunctionName || symbol is SymbolLiteral)
-        type = makeNullableType(symbol.type)
+        val type = makeNullableType(symbol.type)
+        return TcNullAccess(location, type, lhs, symbol)
     }
+
+}
+
+class TcNullAccess(
+    location: Location,
+    type: Type,
+    private val lhs: TcExpr,
+    private val symbol : Symbol
+) : TcExpr(location, type) {
+
+    override fun dump(sb: StringBuilder, indent: Int) {
+        sb.append(". ".repeat(indent))
+        sb.append("NULLACCESS $symbol $type\n")
+        lhs.dump(sb, indent + 1)
+    }
+
 
     override fun codeGenRvalue(): Reg {
         TODO("Not yet implemented")
     }
+
 }

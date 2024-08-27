@@ -29,14 +29,14 @@ fun compile(files:List<Lexer>, stopAt: StopAt) : String {
 
     // Typecheck
     top.identifyFunctions(top)
-    top.typeCheck()
+    val tcTop = top.typeCheck()
     if (Log.anyError())
         return Log.dump()
     if (stopAt == StopAt.TYPECHECK)
-        return top.dumpWithType()
+        return tcTop.dump()
 
     // IRGen
-    top.codeGen()
+    tcTop.codeGen()
     if (Log.anyError())
         return Log.dump()
     if (stopAt == StopAt.IRGEN)

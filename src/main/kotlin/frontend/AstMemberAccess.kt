@@ -8,10 +8,7 @@ class AstMemberAccess (
     private val name: String
 ) : AstExpr(location) {
 
-    lateinit var symbol : Symbol
-
     // For the purpose of smart casting we represent a castable member access as a symbol
-    var smartCastSymbol : SymbolMemberAccess? = null    // A M
 
     override fun dump(sb: StringBuilder, indent: Int) {
         sb.append(". ".repeat(indent))
@@ -19,90 +16,98 @@ class AstMemberAccess (
         lhs.dump(sb, indent + 1)
     }
 
-    override fun dumpWithType(sb: StringBuilder, indent: Int) {
-        sb.append(". ".repeat(indent))
-        sb.append("MEMBERACCESS $name $type\n")
-        lhs.dumpWithType(sb, indent + 1)
-    }
-
-    override fun isMutable(): Boolean = symbol.isMutable()
-
-    private fun generateSmartCastSymbol(): SymbolMemberAccess? {
+    private fun generateSmartCastSymbol(lhs:TcExpr, rhs:Symbol): SymbolMemberAccess? {
         // if this member access has either an immutable symbol or another member access as its lhs
         // then we can potentially track this as a smart cast
         val lhsSymbol =
             if (lhs.isMutable())
                 null
-            else if (lhs is AstIdentifier)
+            else if (lhs is TcIdentifier)
                 lhs.symbol
-            else if (lhs is AstMemberAccess)
+            else if (lhs is TcMemberAccess)
                 lhs.smartCastSymbol
             else
                 null
 
-        val smartCastSymbol =
-            if (lhsSymbol != null)
-                SymbolMemberAccess(location, lhsSymbol, symbol)
+        return if (lhsSymbol != null)
+                SymbolMemberAccess(location, lhsSymbol, rhs)
             else
                 null
-        return smartCastSymbol
     }
 
-    override fun typeCheckLvalue(context: AstBlock) {
-        typeCheck(context)
+
+    override fun typeCheckLvalue(context: AstBlock) : TcExpr {
+        return typeCheck(context)
     }
 
-    private fun accessEnum(lhsType:EnumType) {
-        symbol = lhsType.definition.lookupNoHierarchy(name)
-            ?: return setTypeError("Enum '$lhsType' has no field named '$name'")
-        type = symbol.type
+    private fun accessEnum(lhsType:EnumType) : TcExpr {
+        val symbol = lhsType.definition.lookupNoHierarchy(name)
+            ?: return TcError(location, "Enum '$lhsType' has no field named '$name'")
+        return TcIdentifier(location, symbol.type, symbol)
     }
 
-    private fun accessArray(lhsType:ArrayType) {
-        if (name=="size") {
-            type = IntType
-            symbol = sizeSymbol
-            return
-        } else {
-            setTypeError("Cannot access field $name of array type $lhsType")
-        }
+    private fun accessArray(lhs:TcExpr) : TcExpr {
+        return if (name=="size")
+            TcMemberAccess(location, IntType, lhs, sizeSymbol, null)
+        else
+            TcError(location, "Cannot access field $name of array type ${lhs.type}")
     }
 
-    private fun accessClass(lhsType:ClassType) {
-        symbol = lhsType.definition.lookupNoHierarchy(name)
-            ?: return setTypeError("Class '$lhsType' has no field named '$name'")
+    private fun accessClass(lhs: TcExpr) : TcExpr {
+        require(lhs.type is ClassType)
+        val symbol = lhs.type.definition.lookupNoHierarchy(name)
+            ?: return TcError(location,"Class '${lhs.type}' has no field named '$name'")
 
         check(symbol is SymbolField || symbol is SymbolFunctionName || symbol is SymbolLiteral)
-        val smartCastSymbol = generateSmartCastSymbol()
+        val smartCastSymbol = generateSmartCastSymbol(lhs,symbol)
 
         val smartCastType = if (smartCastSymbol != null)
             currentPathContext.smartCasts[smartCastSymbol] else null
 
-        type = smartCastType ?:  symbol.type
-        this.smartCastSymbol = smartCastSymbol
+        val type = smartCastType ?:  symbol.type
+        return TcMemberAccess(location, type, lhs, symbol, smartCastSymbol)
     }
 
-
-    override fun typeCheck(context:AstBlock) {
-        lhs.typeCheckAllowTypeName(context)
-        val lhsType = lhs.type
+    override fun typeCheck(context:AstBlock) : TcExpr {
+        val lhs = lhs.typeCheckAllowTypeName(context)
 
         return if (lhs.isTypeName()) {
-            when (lhsType) {
-                is ErrorType -> setTypeError()
-                is EnumType -> accessEnum(lhsType)
-                else -> setTypeError("Cannot access field $name of type $lhsType")
+            when (lhs.type) {
+                is ErrorType -> lhs
+                is EnumType -> accessEnum(lhs.type)
+                else -> TcError(location, "Cannot access field $name of type ${lhs.type}")
             }
         } else {
-            when (lhsType) {
-                is ErrorType -> setTypeError()
-                is ClassType -> accessClass(lhsType)
-                is NullableType -> setTypeError("Member access is not allowed on nullable type $lhsType")
-                is ArrayType -> accessArray(lhsType)
-                else -> setTypeError("Cannot access field $name of non-class type $lhsType")
+            when (lhs.type) {
+                is ErrorType -> lhs
+                is ClassType -> accessClass(lhs)
+                is NullableType -> TcError(location, "Member access is not allowed on nullable type ${lhs.type}")
+                is ArrayType -> accessArray(lhs)
+                else -> TcError(location, "Cannot access field $name of non-class type ${lhs.type}")
             }
         }
     }
+
+}
+
+val sizeSymbol = SymbolField(nullLocation, "size", IntType, false)
+
+
+class TcMemberAccess (
+    location: Location,
+    type : Type,
+    val lhs: TcExpr,
+    val symbol: Symbol,
+    val smartCastSymbol: SymbolMemberAccess?
+) : TcExpr(location, type) {
+
+    override fun dump(sb: StringBuilder, indent: Int) {
+        sb.append(". ".repeat(indent))
+        sb.append("MEMBERACCESS $symbol $type\n")
+        lhs.dump(sb, indent + 1)
+    }
+
+    override fun isMutable(): Boolean = symbol.isMutable()
 
     override fun codeGenRvalue(): Reg {
         val sym = symbol
@@ -110,7 +115,5 @@ class AstMemberAccess (
         val addr = lhs.codeGenRvalue()
         return currentFunction.instrLoad(type.getSize(), addr, sym)
     }
+
 }
-
-val sizeSymbol = SymbolField(nullLocation, "size", IntType, false)
-

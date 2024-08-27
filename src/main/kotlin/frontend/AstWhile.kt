@@ -3,7 +3,7 @@ package frontend
 class AstWhile(
     location: Location,
     parent: AstBlock,
-    val condition: AstExpr,
+    private val condition: AstExpr,
 ) : AstBlock(location, parent) {
 
     override fun dump(sb: StringBuilder, indent: Int) {
@@ -14,27 +14,37 @@ class AstWhile(
             stmt.dump(sb, indent + 1)
     }
 
-    override fun dumpWithType(sb: StringBuilder, indent: Int) {
-        sb.append(". ".repeat(indent))
-        sb.append("WHILE\n")
-        condition.dumpWithType(sb, indent + 1)
-        for (stmt in body)
-            stmt.dumpWithType(sb, indent + 1)
-    }
-
-    override fun typeCheck(context: AstBlock) {
+    override fun typeCheck(context: AstBlock) : TcBlock {
         trueBranchContext = currentPathContext
         falseBranchContext = currentPathContext
-        condition.typeCheck(context)
+        val condition = condition.typeCheck(context)
         BoolType.checkAssignCompatible(location, condition.type)
 
         val endContext = falseBranchContext  // Save the context for the end of the loop
         currentPathContext = trueBranchContext
 
-        for(statement in body)
-            statement.typeCheck(this)
+        val ret = TcWhile(location, symbolTable, condition)
+
+        for(stmt in body)
+            ret.add( stmt.typeCheck(this))
 
         currentPathContext = endContext
+        return ret
+    }
+}
+
+class TcWhile(
+    location: Location,
+    symbolTable: SymbolTable,
+    val condition: TcExpr,
+) : TcBlock(location, symbolTable) {
+
+    override fun dump(sb: StringBuilder, indent: Int) {
+        sb.append(". ".repeat(indent))
+        sb.append("WHILE\n")
+        condition.dump(sb, indent + 1)
+        for (stmt in body)
+            stmt.dump(sb, indent + 1)
     }
 
     override fun codeGen() {
@@ -49,4 +59,5 @@ class AstWhile(
         condition.codeGenBool(labStart,labEnd)
         currentFunction.instrLabel(labEnd)
     }
+
 }

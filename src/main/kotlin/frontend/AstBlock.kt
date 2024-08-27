@@ -1,25 +1,8 @@
 package frontend
 
-sealed class AstBlock(location: Location, protected val parent:AstBlock?) : AstStmt(location) {
-    protected val symbolTable = mutableMapOf<String, Symbol>()
+sealed class AstBlock(location: Location, parent:AstBlock?) : AstStmt(location) {
+    protected val symbolTable : SymbolTable = SymbolTable(parent?.symbolTable)
     protected val body = mutableListOf<AstStmt>()
-
-
-    fun add(symbol: Symbol) {
-        val duplicate = this.symbolTable[symbol.name]
-        if (duplicate != null)
-            Log.error(symbol.location, "duplicate symbol: $symbol")
-        this.symbolTable[symbol.name] = symbol
-    }
-
-    fun replace(symbol: Symbol) {
-        check(this.symbolTable[symbol.name] != null)
-        this.symbolTable[symbol.name] = symbol
-    }
-
-    open fun lookup(name: String): Symbol? = this.symbolTable[name] ?: parent?.lookup(name)
-
-    fun lookupNoHierarchy(name: String): Symbol? = this.symbolTable[name]
 
     fun add(stmt: AstStmt) {
         body.add(stmt)
@@ -31,13 +14,27 @@ sealed class AstBlock(location: Location, protected val parent:AstBlock?) : AstS
                 stmt.identifyFunctions(this)
     }
 
-    fun findEnclosingFunction(): AstFunction? {
-        var current : AstBlock? = this
-        while (current !=null) {
-            if (current is AstFunction)
-                return current
-            current = current.parent
-        }
-        return null
+    fun add(symbol: Symbol) {
+        symbolTable.add(symbol)
     }
+
+    fun lookup(name: String): Symbol? = symbolTable.lookup(name)
+
+    fun lookupNoHierarchy(name: String): Symbol? = symbolTable.lookupNoHierarchy(name)
+
+    fun replace(symbol: Symbol) {
+        symbolTable.replace(symbol)
+    }
+}
+
+sealed class TcBlock(
+    location: Location,
+    val symbolTable: SymbolTable?,
+) : TcStmt(location) {
+    val body = mutableListOf<TcStmt>()
+
+    fun add(stmt: TcStmt) {
+        body.add(stmt)
+    }
+
 }

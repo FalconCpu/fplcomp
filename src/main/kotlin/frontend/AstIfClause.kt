@@ -7,6 +7,7 @@ class AstIfClause(
 ) : AstBlock(location, parent) {
 
     lateinit var pathContextIn : PathContext
+    var tcCondition : TcExpr? = null   // Filled in by typeCheckCondition
 
     override fun dump(sb: StringBuilder, indent: Int) {
         sb.append(". ".repeat(indent))
@@ -16,21 +17,43 @@ class AstIfClause(
             stmt.dump(sb, indent + 1)
     }
 
-    override fun dumpWithType(sb: StringBuilder, indent: Int) {
-        sb.append(". ".repeat(indent))
-        sb.append("CLAUSE\n")
-        condition?.dumpWithType(sb, indent + 1)
-        for (stmt in body)
-            stmt.dumpWithType(sb, indent + 1)
+    fun typeCheckCondition(context: AstBlock) {
+        val tc = condition?.typeCheck(context)
+        if (tc != null)
+            BoolType.checkAssignCompatible(tc.location, tc.type)
+        tcCondition = tc
     }
 
-    override fun typeCheck(context:AstBlock) {
+    fun typeCheckBody(context:AstBlock) : TcIfClause {
+        val ret = TcIfClause(location, symbolTable, tcCondition)
         for (statement in body)
-            statement.typeCheck(this)
+            ret.add( statement.typeCheck(this) )
+        return ret
+    }
+
+    override fun typeCheck(context: AstBlock): TcStmt {
+        error("AstIfClause should never be typecheked directly")
+    }
+}
+
+class TcIfClause(
+    location: Location,
+    symbolTable: SymbolTable,
+    val condition: TcExpr?
+) : TcBlock(location, symbolTable) {
+
+    override fun dump(sb: StringBuilder, indent: Int) {
+        sb.append(". ".repeat(indent))
+        sb.append("CLAUSE\n")
+        condition?.dump(sb, indent + 1)
+        for (stmt in body)
+            stmt.dump(sb, indent + 1)
     }
 
     override fun codeGen() {
         for(statement in body)
             statement.codeGen()
     }
+
+
 }

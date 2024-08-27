@@ -292,6 +292,44 @@ class IrgenTest {
         runTest(prog, expected)
     }
 
+    @Test
+    fun forTest() {
+        val prog = """
+            fun main()
+                for i in 1 to 10
+                    println i
+        """.trimIndent()
+
+        val expected = """
+            Function <top>
+            start
+            call main
+            end
+
+            Function main
+            start
+            t0 = 1
+            t1 = 10
+            i = t0
+            jmp @2
+            @1:
+            %1 = i
+            call StdlibPrintInt
+            call StdlibNewline
+            t2 = i + 1
+            i = t2
+            @2:
+            if i <= t1 jmp @1
+            @0:
+            end
+
+
+        """.trimIndent()
+
+        runTest(prog, expected)
+    }
+
+
 
 
 }

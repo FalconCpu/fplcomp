@@ -5,7 +5,31 @@ class AstReturn(
     private val value: AstExpr?
 ) : AstStmt(location) {
 
-    lateinit var func : AstFunction
+    override fun dump(sb: StringBuilder, indent: Int) {
+        sb.append(". ".repeat(indent))
+        sb.append("RETURN\n")
+        value?.dump(sb, indent + 1)
+    }
+
+    override fun typeCheck(context: AstBlock) : TcStmt {
+        val value = value?.typeCheck(context)
+        val valueType = value?.type ?: UnitType
+        currentPathContext = currentPathContext.setUnreachable()
+
+        if (value==null && enclosingFunction.returnType != UnitType)
+            Log.error(location, "Function ${enclosingFunction.name} should return a value of type ${enclosingFunction.returnType}")
+        else
+            enclosingFunction.returnType.checkAssignCompatible(location, valueType)
+
+        return TcReturn(location, value)
+    }
+
+}
+
+class TcReturn(
+    location: Location,
+    private val value: TcExpr?
+) : TcStmt(location) {
 
     override fun dump(sb: StringBuilder, indent: Int) {
         sb.append(". ".repeat(indent))
@@ -13,31 +37,13 @@ class AstReturn(
         value?.dump(sb, indent + 1)
     }
 
-    override fun dumpWithType(sb: StringBuilder, indent: Int) {
-        sb.append(". ".repeat(indent))
-        sb.append("RETURN\n")
-        value?.dumpWithType(sb, indent + 1)
-    }
-
-    override fun typeCheck(context: AstBlock) {
-        func = context.findEnclosingFunction() ?:
-            return Log.error(location, "Return statement not in function")
-
-        value?.typeCheck(context)
-        val valueType = value?.type ?: UnitType
-        currentPathContext = currentPathContext.setUnreachable()
-
-        if (value==null && func.retType != UnitType)
-            return Log.error(location, "backend.Function should return a value of type ${func.retType}")
-
-        func.retType.checkAssignCompatible(location, valueType)
-    }
 
     override fun codeGen() {
         if (value!= null  && value.type != UnitType) {
             val value = value.codeGenRvalue()
             currentFunction.instrMove(backend.regResult, value)
         }
-        currentFunction.instrJump(func.endLabel)
+        currentFunction.instrJump(currentFunction.endLabel)
     }
+
 }

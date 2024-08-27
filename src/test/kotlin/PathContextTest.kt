@@ -215,7 +215,7 @@ class PathContextTest {
         """.trimIndent()
 
         val expected = """
-            test.txt 4.81:- backend.Function should return a value of type Int
+            test.txt 4.81:- Function main should return a value of type Int
         """.trimIndent()
 
         runTest(prog, expected)
@@ -283,8 +283,6 @@ class PathContextTest {
         val expected = """
             TOP
             . CLASS Cat
-            . . PARAMETER FIELD name String
-            . . PARAMETER FIELD age Int
             . FUNCTION foo (Cat?)->Int
             . . IF
             . . . CLAUSE
@@ -317,8 +315,6 @@ class PathContextTest {
         val expected = """
             TOP
             . CLASS Cat
-            . . PARAMETER FIELD name String
-            . . PARAMETER FIELD age Int
             . FUNCTION foo (Cat?)->Int
             . . IF
             . . . CLAUSE
@@ -350,8 +346,6 @@ class PathContextTest {
         val expected = """
             TOP
             . CLASS Cat
-            . . PARAMETER FIELD name String
-            . . PARAMETER FIELD age Int
             . FUNCTION foo (Cat?)->Int
             . . IF
             . . . CLAUSE
@@ -401,8 +395,6 @@ class PathContextTest {
         val expected = """
             TOP
             . CLASS Cat
-            . . PARAMETER FIELD name String
-            . . PARAMETER FIELD age Int
             . FUNCTION foo (Cat?,Cat)->Int
             . . IF
             . . . CLAUSE
@@ -475,8 +467,6 @@ class PathContextTest {
         val expected = """
             TOP
             . CLASS Cat
-            . . PARAMETER FIELD name String
-            . . PARAMETER FIELD age Int
             . FUNCTION foo ()->Int
             . . DECL LOCALVAR c Cat?
             . . . IDENTIFIER LITERAL null Null
@@ -485,7 +475,6 @@ class PathContextTest {
             . . ASSIGN
             . . . IDENTIFIER LOCALVAR c Cat?
             . . . CONSTRUCTOR Cat
-            . . . . IDENTIFIER TYPENAME Cat Cat
             . . . . STRINGLIT Fred String
             . . . . INTLIT 10 Int
             . . RETURN
@@ -511,8 +500,6 @@ class PathContextTest {
         val expected = """
             TOP
             . CLASS Cat
-            . . PARAMETER FIELD name String
-            . . PARAMETER FIELD age Int
             . FUNCTION foo (Cat?,Int)->Int
             . . IF
             . . . CLAUSE
@@ -565,24 +552,22 @@ class PathContextTest {
         """.trimIndent()
 
         val expected = """
-            TOP
-            . CLASS LinkedListNode
-            . . PARAMETER FIELD value Int
-            . . PARAMETER FIELD next LinkedListNode?
-            . FUNCTION nextValue (LinkedListNode)->Int
-            . . IF
-            . . . CLAUSE
-            . . . . NEQ Bool
-            . . . . . MEMBERACCESS next LinkedListNode?
-            . . . . . . IDENTIFIER LOCALVAR a LinkedListNode
-            . . . . . IDENTIFIER LITERAL null Null
-            . . . . RETURN
-            . . . . . MEMBERACCESS value Int
-            . . . . . . MEMBERACCESS next LinkedListNode
-            . . . . . . . IDENTIFIER LOCALVAR a LinkedListNode
-            . . . CLAUSE
-            . . . . RETURN
-            . . . . . INTLIT 0 Int
+                    TOP
+                    . CLASS LinkedListNode
+                    . FUNCTION nextValue (LinkedListNode)->Int
+                    . . IF
+                    . . . CLAUSE
+                    . . . . NEQ Bool
+                    . . . . . MEMBERACCESS next LinkedListNode?
+                    . . . . . . IDENTIFIER LOCALVAR a LinkedListNode
+                    . . . . . IDENTIFIER LITERAL null Null
+                    . . . . RETURN
+                    . . . . . MEMBERACCESS value Int
+                    . . . . . . MEMBERACCESS next LinkedListNode
+                    . . . . . . . IDENTIFIER LOCALVAR a LinkedListNode
+                    . . . CLAUSE
+                    . . . . RETURN
+                    . . . . . INTLIT 0 Int
 
         """.trimIndent()
 
@@ -637,14 +622,11 @@ class PathContextTest {
         val expected = """
             TOP
             . CLASS LinkedListNode
-            . . PARAMETER FIELD value Int
-            . . PARAMETER FIELD next LinkedListNode?
             . FUNCTION nextValue (LinkedListNode)->Int
             . . ASSIGN
             . . . MEMBERACCESS next LinkedListNode?
             . . . . IDENTIFIER LOCALVAR a LinkedListNode
             . . . CONSTRUCTOR LinkedListNode
-            . . . . IDENTIFIER TYPENAME LinkedListNode LinkedListNode
             . . . . INTLIT 10 Int
             . . . . IDENTIFIER LITERAL null Null
             . . RETURN
@@ -668,8 +650,6 @@ class PathContextTest {
         val expected = """
             TOP
             . CLASS Cat
-            . . PARAMETER FIELD name String
-            . . PARAMETER FIELD age Int
             . FUNCTION main (Cat?)->String
             . . RETURN
             . . . IF_EXPR String

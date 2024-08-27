@@ -15,19 +15,29 @@ class AstCast(
         astType.dump(sb, indent + 1)
     }
 
-    override fun dumpWithType(sb: StringBuilder, indent: Int) {
-        sb.append(". ".repeat(indent))
-        sb.append("CAST $type\n")
-        expr.dumpWithType(sb, indent + 1)
+
+    override fun typeCheck(context: AstBlock) : TcExpr {
+        val expr = expr.typeCheck(context)
+        val type = astType.resolveType(context)
+        return TcCast(location, type, expr)
     }
 
-    override fun typeCheck(context: AstBlock) {
-        expr.typeCheck(context)
-        type = astType.resolveType(context)
+}
+
+class TcCast(
+    location: Location,
+    type : Type,
+    private val expr: TcExpr
+) : TcExpr(location,type) {
+
+    override fun dump(sb: StringBuilder, indent: Int) {
+        sb.append(". ".repeat(indent))
+        sb.append("CAST $type\n")
+        expr.dump(sb, indent + 1)
     }
 
     override fun codeGenRvalue(): Reg {
-        TODO("Not yet implemented")
+        return expr.codeGenRvalue()
     }
 
 }

@@ -815,4 +815,26 @@ class ParserTest {
         runTest(prog, expected)
     }
 
+    @Test
+    fun forTest() {
+        val prog = """
+            fun main()
+                for i in 1 to 10
+                    println i
+        """.trimIndent()
+
+        val expected = """
+            TOP
+            . FUNCTION main
+            . . FOR_RANGE i
+            . . . INTLIT 1
+            . . . INTLIT 10
+            . . . PRINT
+            . . . . IDENTIFIER i
+
+        """.trimIndent()
+
+        runTest(prog, expected)
+    }
+
 }

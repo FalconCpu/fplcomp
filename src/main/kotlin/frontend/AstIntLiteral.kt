@@ -12,16 +12,25 @@ class AstIntLiteral(
         sb.append("INTLIT $value\n")
     }
 
-    override fun dumpWithType(sb: StringBuilder, indent: Int) {
-        sb.append(". ".repeat(indent))
-        sb.append("INTLIT $value $type\n")
+    override fun typeCheck(context:AstBlock) : TcExpr {
+        return TcIntLiteral(location, IntType, value)
     }
 
-    override fun typeCheck(context:AstBlock) {
-        type = IntType
+}
+
+class TcIntLiteral(
+    location: Location,
+    type : Type,
+    private val value: Int
+) : TcExpr(location, type) {
+
+    override fun dump(sb: StringBuilder, indent: Int) {
+        sb.append(". ".repeat(indent))
+        sb.append("INTLIT $value $type\n")
     }
 
     override fun codeGenRvalue(): Reg {
         return currentFunction.instrInt(value)
     }
+
 }

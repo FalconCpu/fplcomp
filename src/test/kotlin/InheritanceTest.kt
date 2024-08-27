@@ -52,19 +52,13 @@ class InheritanceTest {
         val expected = """
             TOP
             . CLASS Animal
-            . . PARAMETER FIELD name String
             . CLASS Dog
-            . . PARAMETER LOCALVAR name String
-            . . PARAMETER FIELD owner String
-            . . SUPERCLASS Animal
-            . . . IDENTIFIER LOCALVAR name String
             . FUNCTION main ()->Unit
             . . DECL LOCALVAR a Animal
             . . . CONSTRUCTOR Dog
-            . . . . IDENTIFIER TYPENAME Dog Dog
             . . . . STRINGLIT Fido String
             . . . . STRINGLIT Simon String
-            
+
         """.trimIndent()
 
         runTest(prog, expected)
@@ -101,17 +95,12 @@ class InheritanceTest {
         val expected = """
             TOP
             . CLASS Animal
-            . . PARAMETER FIELD name String
             . CLASS Dog
-            . . PARAMETER LOCALVAR name String
-            . . PARAMETER FIELD owner String
-            . . SUPERCLASS Animal
-            . . . IDENTIFIER LOCALVAR name String
             . FUNCTION main (Dog)->String
             . . RETURN
             . . . MEMBERACCESS name String
             . . . . IDENTIFIER LOCALVAR d Dog
-
+            
         """.trimIndent()
 
         runTest(prog, expected)
@@ -150,12 +139,7 @@ class InheritanceTest {
         val expected = """
             TOP
             . CLASS Animal
-            . . PARAMETER FIELD name String
             . CLASS Dog
-            . . PARAMETER LOCALVAR name String
-            . . PARAMETER FIELD owner String
-            . . SUPERCLASS Animal
-            . . . IDENTIFIER LOCALVAR name String
             . FUNCTION main (Animal)->String
             . . IF
             . . . CLAUSE
@@ -189,12 +173,7 @@ class InheritanceTest {
         val expected = """
             TOP
             . CLASS Animal
-            . . PARAMETER FIELD name String
             . CLASS Dog
-            . . PARAMETER LOCALVAR name String
-            . . PARAMETER FIELD owner String
-            . . SUPERCLASS Animal
-            . . . IDENTIFIER LOCALVAR name String
             . FUNCTION main (Animal)->String
             . . IF
             . . . CLAUSE
@@ -245,12 +224,7 @@ class InheritanceTest {
         val expected = """
             TOP
             . CLASS Animal
-            . . PARAMETER FIELD name String
             . CLASS Dog
-            . . PARAMETER LOCALVAR name String
-            . . PARAMETER FIELD owner String
-            . . SUPERCLASS Animal
-            . . . IDENTIFIER LOCALVAR name String
             . FUNCTION main (Animal,Int)->String
             . . IF
             . . . CLAUSE
@@ -286,12 +260,7 @@ class InheritanceTest {
         val expected = """
             TOP
             . CLASS Animal
-            . . PARAMETER FIELD name String
             . CLASS Dog
-            . . PARAMETER LOCALVAR name String
-            . . PARAMETER FIELD owner String
-            . . SUPERCLASS Animal
-            . . . IDENTIFIER LOCALVAR name String
             . FUNCTION main (Animal?)->String
             . . IF
             . . . CLAUSE
@@ -324,15 +293,10 @@ class InheritanceTest {
         val expected = """
             TOP
             . CLASS Animal
-            . . PARAMETER FIELD name String
-            . . FUNCTION speak ()->String
+            . . FUNCTION Animal/speak ()->String
             . . . RETURN
             . . . . STRINGLIT I am an animal String
             . CLASS Dog
-            . . PARAMETER LOCALVAR name String
-            . . PARAMETER FIELD owner String
-            . . SUPERCLASS Animal
-            . . . IDENTIFIER LOCALVAR name String
             . FUNCTION main (Dog)->String
             . . RETURN
             . . . FUNCCALL String
@@ -384,16 +348,11 @@ class InheritanceTest {
         val expected = """
             TOP
             . CLASS Animal
-            . . PARAMETER FIELD name String
-            . . FUNCTION speak ()->String
+            . . FUNCTION Animal/speak ()->String
             . . . RETURN
             . . . . STRINGLIT I am an animal String
             . CLASS Dog
-            . . PARAMETER LOCALVAR name String
-            . . PARAMETER FIELD owner String
-            . . SUPERCLASS Animal
-            . . . IDENTIFIER LOCALVAR name String
-            . . FUNCTION speak ()->String
+            . . FUNCTION Dog/speak ()->String
             . . . RETURN
             . . . . STRINGLIT I am a dog String
             . FUNCTION main (Dog)->String
@@ -448,20 +407,14 @@ class InheritanceTest {
         val expected = """
             TOP
             . CLASS Animal
-            . . PARAMETER FIELD name String
-            . . FUNCTION speak ()->String
+            . . FUNCTION Animal/speak ()->String
             . CLASS Dog
-            . . PARAMETER LOCALVAR name String
-            . . PARAMETER FIELD owner String
-            . . SUPERCLASS Animal
-            . . . IDENTIFIER LOCALVAR name String
-            . . FUNCTION speak ()->String
+            . . FUNCTION Dog/speak ()->String
             . . . RETURN
             . . . . STRINGLIT I am a dog String
             . FUNCTION main ()->Unit
             . . DECL LOCALVAR a Dog
             . . . CONSTRUCTOR Dog
-            . . . . IDENTIFIER TYPENAME Dog Dog
             . . . . STRINGLIT Fred String
             . . . . STRINGLIT Simon String
             . . EXPR

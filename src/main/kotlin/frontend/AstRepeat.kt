@@ -15,26 +15,38 @@ class AstRepeat(
             stmt.dump(sb, indent + 1)
     }
 
-    override fun dumpWithType(sb: StringBuilder, indent: Int) {
-        sb.append(". ".repeat(indent))
-        sb.append("REPEAT\n")
-        condition.dumpWithType(sb, indent + 1)
-        for (stmt in body)
-            stmt.dumpWithType(sb, indent + 1)
-    }
-
-    override fun typeCheck(context: AstBlock) {
-        for (stmt in body)
-            stmt.typeCheck(this)
+    override fun typeCheck(context: AstBlock) : TcBlock  {
+        val body = body. map { it.typeCheck(this) }
 
         trueBranchContext = currentPathContext
         falseBranchContext = currentPathContext
-        condition.typeCheck(context)
+        val condition = condition.typeCheck(context)
         BoolType.checkAssignCompatible(location, condition.type)
         currentPathContext = falseBranchContext
+
+        val ret = TcRepeat(location, symbolTable, condition)
+        body.forEach { ret.add(it) }
+        return ret
+    }
+
+}
+
+class TcRepeat(
+    location: Location,
+    symbolTable: SymbolTable,
+    private val condition: TcExpr
+) : TcBlock(location, symbolTable) {
+
+    override fun dump(sb: StringBuilder, indent: Int) {
+        sb.append(". ".repeat(indent))
+        sb.append("REPEAT\n")
+        condition.dump(sb, indent + 1)
+        for (stmt in body)
+            stmt.dump(sb, indent + 1)
     }
 
     override fun codeGen() {
         TODO("Not yet implemented")
     }
+
 }

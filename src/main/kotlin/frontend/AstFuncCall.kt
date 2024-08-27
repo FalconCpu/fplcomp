@@ -9,8 +9,6 @@ class AstFuncCall (
     private val args: List<AstExpr>
 ) : AstExpr(location) {
 
-    var isConstructor = false
-
     override fun dump(sb: StringBuilder, indent: Int) {
         sb.append(". ".repeat(indent))
         sb.append("FUNCCALL\n")
@@ -20,59 +18,54 @@ class AstFuncCall (
         }
     }
 
-    override fun dumpWithType(sb: StringBuilder, indent: Int) {
-        sb.append(". ".repeat(indent))
-        if (isConstructor)
-            sb.append("CONSTRUCTOR $type\n")
-        else
-            sb.append("FUNCCALL $type\n")
-        func.dumpWithType(sb, indent + 1)
-        for (arg in args) {
-            arg.dumpWithType(sb, indent + 1)
-        }
+    private fun typeCheckFunctionCall(func:TcExpr, args:List<TcExpr>) : TcExpr {
+        require(func.type is FunctionType)
+        val paramTypes = func.type.paramTypes
+        checkArgList(location, paramTypes, args)
+        return TcFuncCall(location, func.type.retType, func, args)
     }
 
-    private fun checkArgs(params:List<Type>, args:List<AstExpr>) {
-        val argTypes = args.map { it.type }
-        if (params.size != argTypes.size)
-            return Log.error(location, "Got ${argTypes.size} arguments when expecting ${params.size}")
-        for (index in args.indices) {
-            params[index].checkAssignCompatible(args[index].location, argTypes[index])
-        }
-    }
+    private fun typeCheckConstructor(type:Type, args:List<TcExpr>) : TcExpr {
+        if (type !is ClassType)
+            return TcError(location, "Cannot call constructor for type '$type'")
+        if (type.definition.isAbstract)
+            Log.error(location, "Cannot call constructor for abstract class '$type'")
 
-    private fun typeCheckFunctionCall(funcType: FunctionType) {
-        checkArgs(funcType.paramTypes, args)
-        type = funcType.retType
-    }
-
-    private fun typeCheckConstructor(lhs:Symbol) {
-        if (lhs.type is ErrorType)
-            return setTypeError()
-        if (lhs.type !is ClassType)
-            return setTypeError("Cannot call constructor for type '${lhs.type}'")
-        if (lhs.type.definition.isAbstract)
-            Log.error(location, "Cannot call constructor for abstract class '${lhs.type}'")
-
-        val params = lhs.type.definition.constructorParameters.map { it.type }
-        checkArgs(params, args)
-        type = lhs.type
-        isConstructor = true
+        val params = type.definition.constructorParameters
+        checkArgListSymbol(location, params, args)
+        return TcConstructor(location, type, args)
     }
 
 
-    override fun typeCheck(context: AstBlock) {
-        func.typeCheckAllowTypeName(context)
-        args.forEach { it.typeCheck(context) }
-        val funcType = func.type
+    override fun typeCheck(context: AstBlock) : TcExpr {
+        val func = func.typeCheckAllowTypeName(context)
+        val args = args.map { it.typeCheck(context) }
 
-        if (funcType is ErrorType)
-            return setTypeError()
+        if (func.type is ErrorType)
+            return func
         if (func.isTypeName())
-            return typeCheckConstructor(func.symbol as SymbolTypeName)
-        if (funcType is FunctionType)
-            return typeCheckFunctionCall(funcType)
-        return setTypeError("Got type '$funcType' when expecting a function")
+            return typeCheckConstructor(func.symbol.type, args)
+        if (func.type is FunctionType)
+            return typeCheckFunctionCall(func, args)
+        return TcError(location, "Got type '${func.type}' when expecting a function")
+    }
+
+}
+
+class TcFuncCall (
+    location: Location,
+    type: Type,
+    private val func: TcExpr,
+    private val args: List<TcExpr>
+) : TcExpr(location, type) {
+
+    override fun dump(sb: StringBuilder, indent: Int) {
+        sb.append(". ".repeat(indent))
+        sb.append("FUNCCALL $type\n")
+        func.dump(sb, indent + 1)
+        for (arg in args) {
+            arg.dump(sb, indent + 1)
+        }
     }
 
     override fun codeGenRvalue(): Reg {
@@ -82,9 +75,29 @@ class AstFuncCall (
         if (funcName!=null) {
             for (index in args.indices)
                 currentFunction.instrMove(allMachineRegs[index + 1], args[index])
-            return currentFunction.instrCall(funcName.astFunction.backendFunction)
+            return currentFunction.instrCall(funcName.function.backendFunction)
         } else {
             TODO("Function calls to calculated address")
         }
+    }
+
+}
+
+class TcConstructor(
+    location: Location,
+    type: Type,
+    private val args: List<TcExpr>
+) : TcExpr(location, type) {
+
+    override fun dump(sb: StringBuilder, indent: Int) {
+        sb.append(". ".repeat(indent))
+        sb.append("CONSTRUCTOR $type\n")
+        for (arg in args) {
+            arg.dump(sb, indent + 1)
+        }
+    }
+
+    override fun codeGenRvalue(): Reg {
+        TODO("Constructors")
     }
 }

@@ -9,8 +9,6 @@ class AstIs (
     private val isPositiveCheck : Boolean    // true for is, false for is not
 ) : AstExpr(location) {
 
-    lateinit var rhsType: ClassType
-
     override fun dump(sb: StringBuilder, indent: Int) {
         sb.append(". ".repeat(indent))
         sb.append("IS\n")
@@ -18,29 +16,20 @@ class AstIs (
         astType.dump(sb, indent + 1)
     }
 
-    override fun dumpWithType(sb: StringBuilder, indent: Int) {
-        sb.append(". ".repeat(indent))
-        sb.append("IS $rhsType\n")
-        lhs.dumpWithType(sb, indent + 1)
-    }
-
-    override fun typeCheck(context: AstBlock) {
-        lhs.typeCheck(context)
+    override fun typeCheck(context: AstBlock) : TcExpr {
+        val lhs = lhs.typeCheck(context)
         val rhsType = astType.resolveType(context)
-        type = BoolType
 
-        if (lhs.type == ErrorType || rhsType == ErrorType)
-            return
+        if (lhs.type == ErrorType) return lhs
 
         val lhsType = lhs.type.makeNonNull()
 
         if (lhsType !is ClassType)
-            return Log.error(lhs.location, "Cannot use 'is' on non-class type $lhsType")
+            return TcError(lhs.location, "Cannot use 'is' on non-class type $lhsType")
         if (rhsType !is ClassType)
-            return Log.error(astType.location, "Cannot use 'is' on non-class type $rhsType")
+            return TcError(astType.location, "Cannot use 'is' on non-class type $rhsType")
         if (!rhsType.isSubTypeOf(lhsType))
-            return Log.error(location, "Type $lhsType is not a subtype of $rhsType")
-        this.rhsType = rhsType
+            return TcError(location, "Type $lhsType is not a subtype of $rhsType")
 
         val lhsSym = lhs.getSmartCastSymbol()
         if (isPositiveCheck) {
@@ -50,9 +39,27 @@ class AstIs (
             falseBranchContext = currentPathContext.addSmartCast(lhsSym, rhsType)
             trueBranchContext = currentPathContext
         }
+        return TcIs(location, BoolType, lhs, rhsType, isPositiveCheck)
+    }
+
+}
+
+class TcIs (
+    location: Location,
+    type: Type,
+    private val lhs: TcExpr,
+    private val compType: Type,
+    private val isPositiveCheck : Boolean    // true for is, false for is not
+) : TcExpr(location, type) {
+
+    override fun dump(sb: StringBuilder, indent: Int) {
+        sb.append(". ".repeat(indent))
+        sb.append("IS $compType\n")
+        lhs.dump(sb, indent + 1)
     }
 
     override fun codeGenRvalue(): Reg {
         TODO("Not yet implemented")
     }
+
 }

@@ -15,22 +15,13 @@ class AstIf(
             clause.dump(sb, indent + 1)
     }
 
-    override fun dumpWithType(sb: StringBuilder, indent: Int) {
-        sb.append(". ".repeat(indent))
-        sb.append("IF\n")
-        for (clause in clauses)
-            clause.dumpWithType(sb, indent + 1)
-    }
-
-    override fun typeCheck(context: AstBlock) {
+    override fun typeCheck(context: AstBlock) : TcStmt {
         // Make a first pass through the clauses to check the conditions and set the pathContextIn for when that cause is taken
         for (clause in clauses) {
             if (clause.condition != null) {
-                trueBranchContext =
-                    currentPathContext  // These global vars get updated by condition.typeCheck()
+                trueBranchContext = currentPathContext
                 falseBranchContext = currentPathContext
-                clause.condition.typeCheck(context)
-                BoolType.checkAssignCompatible(clause.location, clause.condition.type)
+                clause.typeCheckCondition(context)  // updates global vars trueBranchContext and falseBranchContext
                 clause.pathContextIn = trueBranchContext
                 currentPathContext = falseBranchContext
             } else {
@@ -45,15 +36,31 @@ class AstIf(
 
         // Make a second pass through the clauses to type check the body of each clause and get the path
         // contexts for that case
+        val tcClauses = mutableListOf<TcIfClause>()
         for (clause in clauses) {
             currentPathContext = clause.pathContextIn
-            clause.typeCheck(clause)
+            tcClauses += clause.typeCheckBody(clause)
             mergeContexts.add(currentPathContext)
         }
 
         currentPathContext = mergePathContext(mergeContexts)
-
+        return TcIf(location, tcClauses)
     }
+
+}
+
+class TcIf(
+    location: Location,
+    private val clauses : List<TcIfClause>
+) : TcStmt(location) {
+
+    override fun dump(sb: StringBuilder, indent: Int) {
+        sb.append(". ".repeat(indent))
+        sb.append("IF\n")
+        for (clause in clauses)
+            clause.dump(sb, indent + 1)
+    }
+
 
     override fun codeGen() {
         val labelEnd = currentFunction.newLabel()
@@ -81,4 +88,5 @@ class AstIf(
 
         currentFunction.instrLabel(labelEnd)
     }
+
 }

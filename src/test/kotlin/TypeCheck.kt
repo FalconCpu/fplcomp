@@ -252,7 +252,7 @@ class TypeCheck {
         """.trimIndent()
 
         val expected = """
-            test.txt 2.5:- backend.Function should return a value of type Int
+            test.txt 2.5:- Function foo should return a value of type Int
         """.trimIndent()
 
         runTest(prog, expected)
@@ -301,14 +301,11 @@ class TypeCheck {
         val expected = """
             TOP
             . CLASS Cat
-            . . PARAMETER FIELD name String
-            . . PARAMETER FIELD age Int
             . . DECL FIELD legs Int
             . . . INTLIT 4 Int
             . FUNCTION main ()->Int
             . . DECL LOCALVAR cat Cat
             . . . CONSTRUCTOR Cat
-            . . . . IDENTIFIER TYPENAME Cat Cat
             . . . . STRINGLIT Fluffy String
             . . . . INTLIT 2 Int
             . . RETURN
@@ -500,9 +497,7 @@ class TypeCheck {
         val expected = """
             TOP
             . CLASS Cat
-            . . PARAMETER FIELD name String
-            . . PARAMETER FIELD age Int
-            . . FUNCTION timePasses ()->Unit
+            . . FUNCTION Cat/timePasses ()->Unit
             . . . ASSIGN
             . . . . IDENTIFIER FIELD age Int
             . . . . BINARYOP + Int
@@ -511,7 +506,6 @@ class TypeCheck {
             . FUNCTION main ()->Int
             . . DECL LOCALVAR c Cat
             . . . CONSTRUCTOR Cat
-            . . . . IDENTIFIER TYPENAME Cat Cat
             . . . . STRINGLIT Fluffy String
             . . . . INTLIT 2 Int
             . . EXPR
@@ -562,8 +556,6 @@ class TypeCheck {
         val expected = """
             TOP
             . CLASS Cat
-            . . PARAMETER FIELD name String
-            . . PARAMETER LOCALVAR age Int
             . . DECL FIELD days Int
             . . . BINARYOP * Int
             . . . . IDENTIFIER LOCALVAR age Int
@@ -571,7 +563,6 @@ class TypeCheck {
             . FUNCTION main ()->Int
             . . DECL LOCALVAR c Cat
             . . . CONSTRUCTOR Cat
-            . . . . IDENTIFIER TYPENAME Cat Cat
             . . . . STRINGLIT Fluffy String
             . . . . INTLIT 2 Int
             . . RETURN
@@ -714,8 +705,6 @@ class TypeCheck {
         val expected = """
             TOP
             . CLASS Cat
-            . . PARAMETER FIELD name String?
-            . . PARAMETER LOCALVAR age Int
             . FUNCTION getName (Cat)->String
             . . RETURN
             . . . ELVIS String
@@ -739,7 +728,7 @@ class TypeCheck {
         """.trimIndent()
 
         val expected = """
-            test.txt 4.19:- Not a nullable type for elvis operator: String
+            test.txt 4.14:- Not a nullable type for elvis operator: String
         """.trimIndent()
 
         runTest(prog, expected)
@@ -756,7 +745,7 @@ class TypeCheck {
         """.trimIndent()
 
         val expected = """
-            test.txt 4.19:- Incompatible types for elvis operator String? and Int
+            test.txt 4.22:- Incompatible types for elvis operator String? and Int
         """.trimIndent()
 
         runTest(prog, expected)
@@ -926,8 +915,6 @@ class TypeCheck {
         val expected = """  
             TOP
             . CLASS Cat
-            . . PARAMETER FIELD name String
-            . . PARAMETER FIELD age Int
             . FUNCTION main ()->Int
             . . DECL LOCALVAR c Cat
             . . . CAST Cat
@@ -955,8 +942,7 @@ class TypeCheck {
             . ENUM Color
             . FUNCTION main ()->Color
             . . RETURN
-            . . . MEMBERACCESS RED Color
-            . . . . IDENTIFIER TYPENAME Color Color
+            . . . IDENTIFIER LITERAL RED Color
 
         """.trimIndent()
 
@@ -1084,4 +1070,28 @@ class TypeCheck {
 
         runTest(prog, expected)
     }
+
+    @Test
+    fun forTest() {
+        val prog = """
+            fun main()
+                for i in 1 to 10
+                    println i
+        """.trimIndent()
+
+        val expected = """
+            TOP
+            . FUNCTION main ()->Unit
+            . . FOR_RANGE i
+            . . . INTLIT 1 Int
+            . . . INTLIT 10 Int
+            . . . PRINT
+            . . . . IDENTIFIER LOCALVAR i Int
+
+        """.trimIndent()
+
+        runTest(prog, expected)
+    }
+
+
 }

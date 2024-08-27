@@ -15,17 +15,27 @@ class AstArrayConstructor (
         size.dump(sb, indent + 1)
     }
 
-    override fun dumpWithType(sb: StringBuilder, indent: Int) {
-        sb.append(". ".repeat(indent))
-        sb.append("ARRAYCONSTRUCTOR $type\n")
-        size.dumpWithType(sb, indent + 1)
+    override fun typeCheck(context: AstBlock) : TcExpr {
+        val elementType = astElementType.resolveType(context)
+        val size = size.typeCheck(context)
+        IntType.checkAssignCompatible (location, size.type)
+        val type = makeArrayType(elementType)
+        return TcArrayConstructor(location, type, elementType, size)
     }
 
-    override fun typeCheck(context: AstBlock) {
-        val elementType = astElementType.resolveType(context)
-        size.typeCheck(context)
-        IntType.checkAssignCompatible (location, size.type)
-        type = makeArrayType(elementType)
+}
+
+class TcArrayConstructor (
+    location: Location,
+    type : Type,
+    private val elementType : Type,
+    private val size: TcExpr
+) : TcExpr(location, type ) {
+
+    override fun dump(sb: StringBuilder, indent: Int) {
+        sb.append(". ".repeat(indent))
+        sb.append("ARRAYCONSTRUCTOR $type\n")
+        size.dump(sb, indent + 1)
     }
 
     override fun codeGenRvalue(): Reg {

@@ -1,9 +1,9 @@
 package frontend
 
 sealed class AstStmt(location: Location) : Ast(location) {
+    abstract fun typeCheck(context:AstBlock) : TcStmt
+}
 
-    abstract fun typeCheck(context:AstBlock)
-
+sealed class TcStmt(location: Location) : Tc(location) {
     abstract fun codeGen()
-
 }

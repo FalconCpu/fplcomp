@@ -7,8 +7,6 @@ class AstDeclaration (
     private val type: AstType?,
     private val value: AstExpr?
 ) : AstStmt(location) {
-    lateinit var symbol : Symbol
-
 
     override fun dump(sb: StringBuilder, indent: Int) {
         sb.append(". ".repeat(indent))
@@ -17,21 +15,14 @@ class AstDeclaration (
         value?.dump(sb, indent + 1)
     }
 
-    override fun dumpWithType(sb: StringBuilder, indent: Int) {
-        sb.append(". ".repeat(indent))
-        sb.append("DECL ${symbol.description()} ${symbol.type}\n")
-        value?.dumpWithType(sb, indent + 1)
-    }
-
-
-    override fun typeCheck(context:AstBlock) {
-        value?.typeCheck(context)
+    override fun typeCheck(context:AstBlock) : TcStmt {
+        val value = value?.typeCheck(context)
         val type =  type?.resolveType(context) ?:
                     value?.type ?:
                     makeTypeError(location, "Unknown type for $name")
         val mutable = (op == TokenKind.VAR)
 
-        symbol = when (context) {
+        val symbol = when (context) {
             is AstTop   -> SymbolGlobalVar(location, name, type, mutable)
             is AstClass -> SymbolField(location, name, type, mutable)
             else             -> SymbolLocalVar(location, name, type, mutable)
@@ -42,6 +33,21 @@ class AstDeclaration (
             type.checkAssignCompatible(value.location, value.type)
         else
             currentPathContext = currentPathContext.addUninitializedVariable(symbol)
+        return TcDeclaration(location, symbol, value)
+    }
+
+}
+
+class TcDeclaration (
+    location: Location,
+    private val symbol: Symbol,
+    private val value: TcExpr?
+) : TcStmt(location) {
+
+    override fun dump(sb: StringBuilder, indent: Int) {
+        sb.append(". ".repeat(indent))
+        sb.append("DECL ${symbol.description()} ${symbol.type}\n")
+        value?.dump(sb, indent + 1)
     }
 
     override fun codeGen() {
@@ -61,4 +67,5 @@ class AstDeclaration (
         }
 
     }
+
 }

@@ -10,8 +10,6 @@ class AstArrayOf(
     private val elements : List<AstExpr>
 ) : AstExpr(location) {
 
-    lateinit var elementType : Type
-
     override fun dump(sb: StringBuilder, indent: Int) {
         sb.append(". ".repeat(indent))
         sb.append("ARRAYOF\n")
@@ -20,25 +18,35 @@ class AstArrayOf(
             element.dump(sb, indent + 1)
     }
 
-    override fun dumpWithType(sb: StringBuilder, indent: Int) {
-        sb.append(". ".repeat(indent))
-        sb.append("ARRAYOF $type\n")
-        for (element in elements)
-            element.dumpWithType(sb, indent + 1)
-    }
-
-    override fun typeCheck(context: AstBlock) {
-        elements.forEach { it.typeCheck(context) }
+    override fun typeCheck(context: AstBlock) : TcExpr {
+        val elements = elements.map { it.typeCheck(context) }
 
         if (elements.isEmpty() && astElementType == null)
-            return setTypeError("Array of unknown type")
+            return TcError(location, "Array of unknown type")
 
-        elementType = astElementType?.resolveType(context) ?: elements[0].type
+        val elementType = astElementType?.resolveType(context) ?: elements[0].type
 
         for (element in elements)
             elementType.checkAssignCompatible (element.location, element.type)
 
-        type = makeArrayType(elementType)
+        val type = makeArrayType(elementType)
+        return TcArrayOf(location, type, elementType, elements)
+    }
+
+}
+
+class TcArrayOf(
+    location: Location,
+    type: Type,
+    private val elementType: Type,
+    private val elements : List<TcExpr>
+) : TcExpr(location, type) {
+
+    override fun dump(sb: StringBuilder, indent: Int) {
+        sb.append(". ".repeat(indent))
+        sb.append("ARRAYOF $type\n")
+        for (element in elements)
+            element.dump(sb, indent + 1)
     }
 
     override fun codeGenRvalue(): Reg {
@@ -53,4 +61,5 @@ class AstArrayOf(
         }
         return ret
     }
+
 }

@@ -15,25 +15,35 @@ class AstArrayAccess(
         index.dump(sb, indent + 1)
     }
 
-    override fun dumpWithType(sb: StringBuilder, indent: Int) {
-        sb.append(". ".repeat(indent))
-        sb.append("ARRAYACCESS $type\n")
-        lhs.dumpWithType(sb, indent + 1)
-        index.dumpWithType(sb, indent + 1)
-    }
 
-    override fun typeCheck(context: AstBlock) {
-        lhs.typeCheck(context)
-        index.typeCheck(context)
-        val lhsType = lhs.type
+    override fun typeCheck(context: AstBlock) : TcExpr {
+        val lhs = lhs.typeCheck(context)
+        val index = index.typeCheck(context)
 
-        if (lhsType is ErrorType || index.type is ErrorType)
-            return setTypeError()
-        if (lhsType !is ArrayType)
-            return setTypeError("Cannot index into type '$lhsType'")
+        if (lhs.type is ErrorType) return lhs
+        if (index.type is ErrorType) return index
+
+        if (lhs.type !is ArrayType)
+            return TcError(location, "Cannot index into type '${lhs.type}'")
 
         IntType.checkAssignCompatible(index.location, index.type)
-        type = lhsType.elementType
+        return TcArrayAccess(location, lhs.type.elementType, lhs, index)
+    }
+
+}
+
+class TcArrayAccess(
+    location: Location,
+    type: Type,
+    private val lhs: TcExpr,
+    private val index: TcExpr
+) : TcExpr(location, type) {
+
+    override fun dump(sb: StringBuilder, indent: Int) {
+        sb.append(". ".repeat(indent))
+        sb.append("ARRAYACCESS $type\n")
+        lhs.dump(sb, indent + 1)
+        index.dump(sb, indent + 1)
     }
 
     override fun codeGenRvalue(): Reg {

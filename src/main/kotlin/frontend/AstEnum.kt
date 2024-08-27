@@ -9,10 +9,11 @@ class AstEnum (
 
     val type = makeEnumType(name, this)
     private val symbol = SymbolTypeName(location, name, type)
-
     init {
         parent.add(symbol)
     }
+
+    private lateinit var tcEnum: TcEnum    // filled in at identifyFunctions()
 
     override fun dump(sb: StringBuilder, indent: Int) {
         sb.append(". ".repeat(indent))
@@ -20,23 +21,33 @@ class AstEnum (
         astValues.forEach { it.dump(sb, indent + 1) }
     }
 
-    override fun dumpWithType(sb: StringBuilder, indent: Int) {
+    override fun identifyFunctions(context: AstBlock) {
+        tcEnum = TcEnum(location, symbolTable, name)
+        for((index,value) in astValues.withIndex()) {
+            val sym = SymbolLiteral(value.location, value.name, type, index)
+            symbolTable.add(sym)
+        }
+    }
+
+    override fun typeCheck(context: AstBlock) : TcBlock {
+        return tcEnum
+    }
+
+
+}
+
+class TcEnum (
+    location: Location,
+    symbolTable: SymbolTable,
+    private val name: String
+) : TcBlock(location, symbolTable) {
+
+    override fun dump(sb: StringBuilder, indent: Int) {
         sb.append(". ".repeat(indent))
         sb.append("ENUM $name\n")
     }
 
-    override fun typeCheck(context: AstBlock) {
-
-    }
-
-    override fun identifyFunctions(context: AstBlock) {
-        for((index,value) in astValues.withIndex()) {
-            val sym = SymbolLiteral(value.location, value.name, type, index)
-            add(sym)
-        }
-    }
-
     override fun codeGen() {
-        TODO("Not yet implemented")
+        // Nothing needed
     }
 }

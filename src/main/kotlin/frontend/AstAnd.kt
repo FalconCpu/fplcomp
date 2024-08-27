@@ -16,29 +16,39 @@ class AstAnd(
         rhs.dump(sb, indent + 1)
     }
 
-    override fun dumpWithType(sb: StringBuilder, indent: Int) {
-        sb.append(". ".repeat(indent))
-        sb.append("AND $type\n")
-        lhs.dumpWithType(sb, indent + 1)
-        rhs.dumpWithType(sb, indent + 1)
-    }
 
-    override fun typeCheck(context: AstBlock) {
+    override fun typeCheck(context: AstBlock) : TcExpr {
         // typeCheck() reads state from global variable currentPathContext, and sets trueBranchContext and falseBranchContext
         trueBranchContext = currentPathContext
         falseBranchContext = currentPathContext
-        lhs.typeCheck(context)
+        val lhs = lhs.typeCheck(context)
         BoolType.checkAssignCompatible(location, lhs.type)
         val midFalseContext = falseBranchContext
 
         currentPathContext = trueBranchContext
         falseBranchContext = currentPathContext
-        rhs.typeCheck(context)
+        val rhs = rhs.typeCheck(context)
         BoolType.checkAssignCompatible(location, rhs.type)
         falseBranchContext =
             mergePathContext(listOf(midFalseContext, falseBranchContext))
 
-        type = BoolType
+        return TcAnd(location, BoolType, lhs, rhs)
+    }
+
+}
+
+class TcAnd(
+    location: Location,
+    type : Type,
+    private val lhs: TcExpr,
+    private val rhs: TcExpr
+) : TcExpr(location, type) {
+
+    override fun dump(sb: StringBuilder, indent: Int) {
+        sb.append(". ".repeat(indent))
+        sb.append("AND $type\n")
+        lhs.dump(sb, indent + 1)
+        rhs.dump(sb, indent + 1)
     }
 
     override fun codeGenRvalue(): Reg {
@@ -51,4 +61,5 @@ class AstAnd(
         currentFunction.instrLabel(label)
         rhs.codeGenBool(trueLabel, falseLabel)
     }
+
 }

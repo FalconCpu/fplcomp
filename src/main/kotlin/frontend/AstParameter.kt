@@ -16,10 +16,10 @@ class AstParameter(
         type.dump(sb, indent + 1)
     }
 
-    override fun dumpWithType(sb: StringBuilder, indent: Int) {
-        sb.append(". ".repeat(indent))
-        sb.append("PARAMETER ${symbol.description()} ${symbol.type}\n")
-    }
+//    override fun dumpWithType(sb: StringBuilder, indent: Int) {
+//        sb.append(". ".repeat(indent))
+//        sb.append("PARAMETER ${symbol.description()} ${symbol.type}\n")
+//    }
     fun resolveParameter(context:AstBlock): Symbol {
         val type = type.resolveType(context)
         symbol = when(kind) {

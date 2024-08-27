@@ -35,6 +35,8 @@ enum class TokenKind (val text: String, val lineContinues : Boolean) {
     GTE      (">=", true),
     IS       ("is", true),
     ISNOT    ("isnot", true),
+    IN       ("in", true),
+    TO       ("to", true),
     AND      ("and", true),
     NOT      ("not", true),
     OR       ("or", true),
@@ -70,6 +72,7 @@ enum class TokenKind (val text: String, val lineContinues : Boolean) {
     OPEN     ("open", false),
     ENUM     ("enum", false),
     PRINT    ("print", false),
+    FOR      ("for", false),
     PRINTLN  ("println", false),
     ERROR    ("<ERROR>", false);
 

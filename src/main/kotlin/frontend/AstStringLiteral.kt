@@ -12,16 +12,25 @@ class AstStringLiteral(
         sb.append("STRINGLIT $value\n")
     }
 
-    override fun dumpWithType(sb: StringBuilder, indent: Int) {
-        sb.append(". ".repeat(indent))
-        sb.append("STRINGLIT $value $type\n")
+
+    override fun typeCheck(context:AstBlock) : TcExpr{
+        return TcStringLiteral(location, value)
     }
 
-    override fun typeCheck(context:AstBlock) {
-        type = StringType
+}
+
+class TcStringLiteral(
+    location: Location,
+    private val value: String
+) : TcExpr(location, StringType) {
+
+    override fun dump(sb: StringBuilder, indent: Int) {
+        sb.append(". ".repeat(indent))
+        sb.append("STRINGLIT $value $type\n")
     }
 
     override fun codeGenRvalue(): Reg {
         return currentFunction.instrLea(backend.StringValue(value))
     }
+
 }

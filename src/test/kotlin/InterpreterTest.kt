@@ -175,6 +175,35 @@ class InterpreterTest {
         runTest(prog, expected)
     }
 
+    @Test
+    fun forTest() {
+        val prog = """
+            fun main()
+                for i in 1 to 10
+                    println i
+                for i in 4 to <6
+                    println i
+        """.trimIndent()
+
+        val expected = """
+            1
+            2
+            3
+            4
+            5
+            6
+            7
+            8
+            9
+            10
+            4
+            5
+
+        """.trimIndent()
+
+        runTest(prog, expected)
+    }
+
 
 
 }

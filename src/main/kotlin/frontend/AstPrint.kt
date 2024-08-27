@@ -15,16 +15,23 @@ class AstPrint(
             expr.dump(sb, indent + 1)
     }
 
-    override fun dumpWithType(sb: StringBuilder, indent: Int) {
+    override fun typeCheck(context: AstBlock) : TcStmt {
+        val exprs = exprs.map { it.typeCheck(context) }
+        return TcPrint(location, exprs, newline)
+    }
+}
+
+class TcPrint(
+    location: Location,
+    private val exprs: List<TcExpr>,
+    private val newline: Boolean
+) : TcStmt(location) {
+
+    override fun dump(sb: StringBuilder, indent: Int) {
         sb.append(". ".repeat(indent))
         sb.append("PRINT\n")
         for (expr in exprs)
-            expr.dumpWithType(sb, indent + 1)
-    }
-
-    override fun typeCheck(context: AstBlock) {
-        for (expr in exprs)
-            expr.typeCheck(context)
+            expr.dump(sb, indent + 1)
     }
 
     override fun codeGen() {
@@ -43,7 +50,5 @@ class AstPrint(
         if (newline)
             currentFunction.add(InstrJsr(backend.StdlibNewline))
     }
-
-
 
 }

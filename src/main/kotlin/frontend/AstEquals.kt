@@ -21,17 +21,7 @@ class AstEquals(
         rhs.dump(sb, indent + 1)
     }
 
-    override fun dumpWithType(sb: StringBuilder, indent: Int) {
-        sb.append(". ".repeat(indent))
-        if (eq)
-            sb.append("EQ $type\n")
-        else
-            sb.append("NEQ $type\n")
-        lhs.dumpWithType(sb, indent + 1)
-        rhs.dumpWithType(sb, indent + 1)
-    }
-
-    private fun isAcceptableTypes(a:AstExpr, b:AstExpr): Boolean {
+    private fun isAcceptableTypes(a:TcExpr, b:TcExpr): Boolean {
         // Since equality checking is symmetrical, without loss of generality we can assume 'a' is the more complex type
         // We can also assume the operation is an equality check. For not-equals we can just flip the smart casts
         val aType = a.type
@@ -61,9 +51,9 @@ class AstEquals(
         return false
     }
 
-    override fun typeCheck(context: AstBlock) {
-        lhs.typeCheck(context)
-        rhs.typeCheck(context)
+    override fun typeCheck(context: AstBlock) : TcExpr {
+        val lhs = lhs.typeCheck(context)
+        val rhs = rhs.typeCheck(context)
 
         trueBranchContext = currentPathContext
         falseBranchContext = currentPathContext
@@ -80,8 +70,26 @@ class AstEquals(
             falseBranchContext = temp
         }
 
-        type = BoolType
+        return TcEquals(location, BoolType, lhs, rhs, eq)
+    }
+}
 
+class TcEquals(
+    location: Location,
+    type : Type,
+    private val lhs: TcExpr,
+    private val rhs: TcExpr,
+    private val eq : Boolean  // true = ==, false = !=
+) : TcExpr(location, type) {
+
+    override fun dump(sb: StringBuilder, indent: Int) {
+        sb.append(". ".repeat(indent))
+        if (eq)
+            sb.append("EQ $type\n")
+        else
+            sb.append("NEQ $type\n")
+        lhs.dump(sb, indent + 1)
+        rhs.dump(sb, indent + 1)
     }
 
     override fun codeGenRvalue(): Reg {
@@ -96,4 +104,5 @@ class AstEquals(
         currentFunction.instrBranch(op, lhs, rhs, trueLabel)
         currentFunction.instrJump(falseLabel)
     }
+
 }

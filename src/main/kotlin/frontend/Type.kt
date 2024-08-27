@@ -161,8 +161,8 @@ fun makeTypeError(location: Location, message:String): Type {
 
 val predefinedSymbols = createPredefinedSymbols()
 
-private fun createPredefinedSymbols(): AstTop {
-    val symbolTable = AstTop()
+private fun createPredefinedSymbols(): SymbolTable {
+    val symbolTable = SymbolTable(null)
     for (type in listOf(NullType, UnitType, BoolType, CharType, IntType, RealType, StringType)) {
         val sym = SymbolTypeName(nullLocation, type.name, type)
         symbolTable.add(sym)

@@ -44,8 +44,10 @@ class SymbolFunctionName(
     location: Location,
     name: String,
     type: Type,
-    val astFunction : AstFunction
-) : Symbol(location, name, type)
+    val methodKind: MethodKind
+) : Symbol(location, name, type) {
+    lateinit var function : TcFunction
+}
 
 class SymbolTypeName(
     location: Location,

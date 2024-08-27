@@ -1,6 +1,5 @@
 package backend
 
-import frontend.ClassType
 import frontend.SymbolGlobalVar
 import frontend.sizeSymbol
 

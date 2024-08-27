@@ -6,14 +6,20 @@ import kotlin.contracts.ExperimentalContracts
 import kotlin.contracts.contract
 
 sealed class AstExpr(location: Location) : Ast(location) {
-    lateinit var type: Type
 
-    abstract fun typeCheck(context:AstBlock)
+    abstract fun typeCheck(context:AstBlock) : TcExpr
 
-    open fun typeCheckLvalue(context: AstBlock) {
-        Log.error(location, "Not an lvalue")
-        type = ErrorType
+    open fun typeCheckLvalue(context: AstBlock) : TcExpr {
+        return TcError(location, "Not an lvalue")
     }
+
+    open fun typeCheckAllowTypeName(context: AstBlock) : TcExpr {
+        return typeCheck(context)
+    }
+
+}
+
+sealed class TcExpr(location: Location, val type: Type) : Tc(location){
 
     abstract fun codeGenRvalue() : Reg
 
@@ -25,54 +31,29 @@ sealed class AstExpr(location: Location) : Ast(location) {
         TODO("Not implemented codeGenBool ${this.javaClass}")
     }
 
-    open fun isMutable(): Boolean = false
-
-    fun setTypeError(message:String) {
-        Log.error(location, message)
-        type = ErrorType
-    }
-
-    fun setTypeError() {
-        type = ErrorType
-    }
-
-    open fun typeCheckAllowTypeName(context: AstBlock) {
-        typeCheck(context)
-    }
-
-    /**
-     * Return a symbol that represents this expression for smart casts.
-     * If there is no symbol, return null.
-     */
     fun getSmartCastSymbol() =
         when (this) {
-            is AstIdentifier -> symbol
-            is AstMemberAccess -> smartCastSymbol
+            is TcIdentifier -> symbol
+            is TcMemberAccess -> smartCastSymbol
             else -> null
         }
+
+    open fun isMutable(): Boolean = false
 
     @OptIn(ExperimentalContracts::class)
     fun isTypeName() : Boolean {
         contract {
-            returns(true) implies (this@AstExpr is AstIdentifier)
+            returns(true) implies (this@TcExpr is TcIdentifier)
         }
-        return this is AstIdentifier && this.symbol is SymbolTypeName
+        return this is TcIdentifier && this.symbol is SymbolTypeName
     }
 
     fun isFunctionName() : SymbolFunctionName? {
-        if (this !is AstIdentifier)
+        if (this !is TcIdentifier)
             return null
         val symbol = this.symbol
         if (symbol !is SymbolFunctionName)
             return null
         return symbol
-    }
-
-    override fun dump(sb: StringBuilder, indent: Int) {
-        TODO("Not yet implemented")
-    }
-
-    override fun dumpWithType(sb: StringBuilder, indent: Int) {
-        TODO("Not yet implemented")
     }
 }

@@ -381,6 +381,7 @@ class Parser(private val lexer: Lexer) {
             parseBody(ret)
         else
             Log.error(lookahead.location, "Missing function body")
+
         ret.endLocation = lookahead.location
         checkEnd(FUN)
     }
@@ -479,6 +480,7 @@ class Parser(private val lexer: Lexer) {
         do {
             clauses += parseIfClause(block)
         } while (lookahead.kind==ELSE)
+        checkEnd(IF)
 
         // check that any else clauses only occur ot the end
         val elseClause = clauses.find { it.condition == null }
@@ -535,6 +537,26 @@ class Parser(private val lexer: Lexer) {
         block.add(AstPrint(tok.location,exprs, tok.kind == PRINTLN))
     }
 
+    private fun parseFor(block: AstBlock) {
+        expect(FOR)
+        val id = expect(ID)
+        expect(IN)
+        val start = parseExpression()
+        expect(TO)
+        val inclusive = !canTake(LT)
+        val end = parseExpression()
+        expectEol()
+        val ret = AstForRange(id.location, block, id.text, start, end, inclusive)
+
+        if (canTake(INDENT))
+            parseBody(ret)
+        else
+            Log.error(lookahead.location, "Missing for loop body")
+
+        checkEnd(FOR)
+        block.add(ret)
+    }
+
     private fun parseStatement(block:AstBlock) {
         try {
             when (lookahead.kind) {
@@ -551,6 +573,7 @@ class Parser(private val lexer: Lexer) {
                 EOF -> {}
                 INDENT -> parseIndent(block)
                 PRINT, PRINTLN -> parsePrint(block)
+                FOR -> parseFor(block)
                 else -> throw ParseError(lookahead.location, "Got '${lookahead}' when expecting statement")
             }
 
