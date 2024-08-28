@@ -23,7 +23,7 @@ class AstWhile(
         val endContext = falseBranchContext  // Save the context for the end of the loop
         currentPathContext = trueBranchContext
 
-        val ret = TcWhile(location, symbolTable, condition)
+        val ret = TcWhile(location,  condition)
 
         for(stmt in body)
             ret.add( stmt.typeCheck(this))
@@ -35,9 +35,8 @@ class AstWhile(
 
 class TcWhile(
     location: Location,
-    symbolTable: SymbolTable,
     val condition: TcExpr,
-) : TcBlock(location, symbolTable) {
+) : TcBlock(location) {
 
     override fun dump(sb: StringBuilder, indent: Int) {
         sb.append(". ".repeat(indent))

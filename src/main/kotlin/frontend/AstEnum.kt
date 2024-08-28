@@ -22,10 +22,10 @@ class AstEnum (
     }
 
     override fun identifyFunctions(context: AstBlock) {
-        tcEnum = TcEnum(location, symbolTable, name)
+        tcEnum = TcEnum(location, name)
         for((index,value) in astValues.withIndex()) {
             val sym = SymbolLiteral(value.location, value.name, type, index)
-            symbolTable.add(sym)
+            add(sym)
         }
     }
 
@@ -38,9 +38,8 @@ class AstEnum (
 
 class TcEnum (
     location: Location,
-    symbolTable: SymbolTable,
     private val name: String
-) : TcBlock(location, symbolTable) {
+) : TcBlock(location) {
 
     override fun dump(sb: StringBuilder, indent: Int) {
         sb.append(". ".repeat(indent))

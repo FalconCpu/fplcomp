@@ -64,7 +64,7 @@ class AstFunction (
 
         val funcName = if (methodOf!=null) "$methodOf/$name" else name
 
-        tcFunction = TcFunction(location, symbolTable, funcName, params, retType, methodKind, thisSymbol, symbol)
+        tcFunction = TcFunction(location, funcName, params, retType, methodKind, thisSymbol, symbol)
         symbol.function = tcFunction
     }
 
@@ -88,14 +88,13 @@ enum class MethodKind {
 
 class TcFunction (
     location: Location,
-    symbolTable: SymbolTable,
     val name: String,
     private val params: List<Symbol>,
     val returnType: Type,
     val methodKind: MethodKind,
     private val thisSymbol : SymbolLocalVar?,
     private val functionSymbol : SymbolFunctionName
-) : TcBlock(location, symbolTable) {
+) : TcBlock(location) {
 
     val backendFunction = Function(name)
 

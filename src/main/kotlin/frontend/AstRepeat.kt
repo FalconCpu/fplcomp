@@ -24,7 +24,7 @@ class AstRepeat(
         BoolType.checkAssignCompatible(location, condition.type)
         currentPathContext = falseBranchContext
 
-        val ret = TcRepeat(location, symbolTable, condition)
+        val ret = TcRepeat(location, condition)
         body.forEach { ret.add(it) }
         return ret
     }
@@ -33,9 +33,8 @@ class AstRepeat(
 
 class TcRepeat(
     location: Location,
-    symbolTable: SymbolTable,
     private val condition: TcExpr
-) : TcBlock(location, symbolTable) {
+) : TcBlock(location) {
 
     override fun dump(sb: StringBuilder, indent: Int) {
         sb.append(". ".repeat(indent))

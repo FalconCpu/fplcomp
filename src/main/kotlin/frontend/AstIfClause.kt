@@ -25,7 +25,7 @@ class AstIfClause(
     }
 
     fun typeCheckBody(context:AstBlock) : TcIfClause {
-        val ret = TcIfClause(location, symbolTable, tcCondition)
+        val ret = TcIfClause(location, tcCondition)
         for (statement in body)
             ret.add( statement.typeCheck(this) )
         return ret
@@ -38,9 +38,8 @@ class AstIfClause(
 
 class TcIfClause(
     location: Location,
-    symbolTable: SymbolTable,
     val condition: TcExpr?
-) : TcBlock(location, symbolTable) {
+) : TcBlock(location) {
 
     override fun dump(sb: StringBuilder, indent: Int) {
         sb.append(". ".repeat(indent))

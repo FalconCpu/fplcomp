@@ -43,21 +43,20 @@ class AstClass(
             val superclassParams = superClass.definition.constructorParameters
             checkArgListSymbol(location, superclassParams, superclassConstructorArgs)
 
-            // blank the sumbol table and copy all the members from the super class into the current class
-            symbolTable.clear()
-            symbolTable.import(superClass.definition.symbolTable)
+            // import all the members from the super class into the current class
+            import(superClass.definition)
 
             // add our constructor parameters back into the symbol table, but allow for the case where
             // we have a parameter with the same name as a superclass field
             for(param in constructorParameters)
-                if (symbolTable.lookupNoHierarchy(param.name)==null || param !is SymbolLocalVar)
+                if (lookupNoHierarchy(param.name)==null || param !is SymbolLocalVar)
                     add(param)
 
-            tcClass = TcClass(location, symbolTable, name, constructorParameters,
+            tcClass = TcClass(location, name, constructorParameters,
                 superClass.definition.type, superclassConstructorArgs, isAbstract)
 
         } else {
-            tcClass = TcClass(location, symbolTable, name, constructorParameters,
+            tcClass = TcClass(location, name, constructorParameters,
                 null, emptyList(), isAbstract)
         }
 
@@ -72,7 +71,7 @@ class AstClass(
         // Local variables are only accessible in the constructor.
         // Since we have finished building the constructor now remove them from the symbol table to
         // make sure they don't get used in any methods
-        symbolTable.removeLocals()
+        removeLocals()
     }
 
     private fun resolveSuperClass(context: AstBlock) : ClassType? {
@@ -98,7 +97,7 @@ class AstClass(
                 tcClass.add( statement.typeCheck(this) )
 
         if (!isAbstract) {
-            symbolTable.getMethods()
+            getMethods()
                 .forEach{ if (it.methodKind == MethodKind.ABSTRACT_METHOD)
                     Log.error(it.location, "No override provided for abstract function '$it'")
                 }
@@ -110,13 +109,12 @@ class AstClass(
 
 class TcClass(
     location: Location,
-    symbolTable: SymbolTable,
     val name: String,
     private val parameters: List<Symbol>,
     private val superClass: ClassType?,
     private val superClassConstructorArgs: List<TcExpr>,
     val isAbstract : Boolean
-) : TcBlock(location, symbolTable) {
+) : TcBlock(location) {
 
     override fun dump(sb: StringBuilder, indent: Int) {
         sb.append(". ".repeat(indent))

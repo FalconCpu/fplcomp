@@ -30,7 +30,7 @@ class AstForRange(
         val symbol = SymbolLocalVar(location, name, IntType, false)
         add(symbol)
 
-        val ret = TcForRange(location, symbolTable, symbol, start, end, inclusive)
+        val ret = TcForRange(location, symbol, start, end, inclusive)
 
         for(stmt in body)
             ret.add( stmt.typeCheck(this) )
@@ -41,12 +41,11 @@ class AstForRange(
 
 class TcForRange(
     location: Location,
-    symbolTable: SymbolTable,
     private val symbol: Symbol,
     private val start: TcExpr,
     private val end: TcExpr,
     private val inclusive: Boolean,
-) : TcBlock(location,symbolTable) {
+) : TcBlock(location) {
 
     override fun dump(sb: StringBuilder, indent: Int) {
         sb.append(". ".repeat(indent))

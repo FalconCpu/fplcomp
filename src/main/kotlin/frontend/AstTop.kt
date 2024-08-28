@@ -41,7 +41,7 @@ class AstTop : AstBlock(nullLocation, null) {
 
 }
 
-class TcTop : TcBlock(nullLocation, null) {
+class TcTop : TcBlock(nullLocation) {
 
     private val backendFunction = backend.Function("<top>")
 
