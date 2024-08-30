@@ -1,7 +1,6 @@
 package frontend
 
-import backend.Reg
-import backend.allMachineRegs
+import backend.*
 
 class AstFuncCall (
     location: Location,
@@ -22,16 +21,24 @@ class AstFuncCall (
         require(func.type is FunctionType)
         val paramTypes = func.type.paramTypes
         checkArgList(location, paramTypes, args)
-        return TcFuncCall(location, func.type.retType, func, args)
+
+        return if (func is TcMemberAccess && func.symbol is SymbolFunctionName)
+            // got a method call of the form expr.funcname
+            TcFuncCall(location, func.type.retType, func.symbol , args, func.lhs)
+        else if (func is TcIdentifier && func.symbol is SymbolFunctionName)
+            // got a function call direct to a function
+            TcFuncCall(location, func.type.retType, func.symbol, args, null)
+        else
+            TODO("Calls to calculated address")
     }
 
     private fun typeCheckConstructor(type:Type, args:List<TcExpr>) : TcExpr {
         if (type !is ClassType)
             return TcError(location, "Cannot call constructor for type '$type'")
-        if (type.definition.isAbstract)
+        if (type.isAbstract)
             Log.error(location, "Cannot call constructor for abstract class '$type'")
 
-        val params = type.definition.constructorParameters
+        val params = type.constructorParameters
         checkArgListSymbol(location, params, args)
         return TcConstructor(location, type, args)
     }
@@ -55,32 +62,39 @@ class AstFuncCall (
 class TcFuncCall (
     location: Location,
     type: Type,
-    private val func: TcExpr,
-    private val args: List<TcExpr>
+    private val funcSym: SymbolFunctionName,
+    private val args: List<TcExpr>,
+    private val thisArg: TcExpr?
 ) : TcExpr(location, type) {
 
     override fun dump(sb: StringBuilder, indent: Int) {
         sb.append(". ".repeat(indent))
-        sb.append("FUNCCALL $type\n")
-        func.dump(sb, indent + 1)
+        sb.append("FUNCCALL ${funcSym.function} $type\n")
+        thisArg?.dump(sb, indent + 1)
         for (arg in args) {
             arg.dump(sb, indent + 1)
         }
     }
 
     override fun codeGenRvalue(): Reg {
-        val funcName = func.isFunctionName()
         val args = args.map { it.codeGenRvalue() }
 
-        if (funcName!=null) {
-            for (index in args.indices)
-                currentFunction.instrMove(allMachineRegs[index + 1], args[index])
-            return currentFunction.instrCall(funcName.function.backendFunction)
-        } else {
-            TODO("Function calls to calculated address")
-        }
-    }
 
+        val thisReg = if (thisArg!=null)
+            thisArg.codeGenRvalue() else currentFunction.thisReg
+
+        var argIndex = 1
+        if (funcSym.function.thisSymbol!=null)
+            currentFunction.instrMove(allMachineRegs[argIndex++], thisReg!!)
+
+        for (arg in args)
+            currentFunction.instrMove(allMachineRegs[argIndex++], arg)
+
+        return if (funcSym.function.methodKind == MethodKind.NONE)
+            currentFunction.instrCall(funcSym.function.backendFunction)
+        else
+            currentFunction.instrVirtCall(thisReg!!, funcSym)
+    }
 }
 
 class TcConstructor(
@@ -98,6 +112,20 @@ class TcConstructor(
     }
 
     override fun codeGenRvalue(): Reg {
-        TODO("Constructors")
+        require(type is ClassType)
+
+        // Malloc the memory
+        currentFunction.instrLea(regArg1, backend.ClassRefValue(type))
+        val ret = currentFunction.instrCall(StdlibMallocObject)
+
+        // Call the constructor
+        val args = args.map { it.codeGenRvalue() }
+        var argIndex = 1
+        currentFunction.instrMove( allMachineRegs[argIndex++], ret)   // Setup 'this'
+        for (arg in args)
+            currentFunction.instrMove(allMachineRegs[argIndex++], arg)
+        currentFunction.instrCall(type.constructor)
+
+        return ret
     }
 }

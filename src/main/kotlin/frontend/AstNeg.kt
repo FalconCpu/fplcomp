@@ -1,6 +1,8 @@
 package frontend
 
+import backend.AluOp
 import backend.Reg
+import backend.regZero
 
 class AstNeg(
     location: Location,
@@ -37,6 +39,10 @@ class TcNeg(
     }
 
     override fun codeGenRvalue(): Reg {
-        TODO("Not yet implemented")
+        return when(type) {
+            is IntType -> currentFunction.instrAlu(AluOp.SUB_I, regZero, expr.codeGenRvalue())
+            is RealType -> TODO("Real Numbers")
+            else -> error("Unknown type ${type}")
+        }
     }
 }

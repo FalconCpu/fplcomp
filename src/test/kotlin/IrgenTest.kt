@@ -329,7 +329,338 @@ class IrgenTest {
         runTest(prog, expected)
     }
 
+    @Test
+    fun methodCalls() {
+        val prog = """
+            class Cat(val name:String, val age:Int) 
+                fun greet()
+                    println name," says hello"
+            
+            fun main()
+                val cat = Cat("Whiskers", 4)
+                cat.greet()
+        """.trimIndent()
 
+        val expected = """
+            Function <top>
+            start
+            call main
+            end
+
+            Function Cat/greet
+            start
+            this = %1
+            t0 = this->name
+            %1 = t0
+            call StdlibPrintString
+            t1 = ADDR(" says hello")
+            %1 = t1
+            call StdlibPrintString
+            call StdlibNewline
+            @0:
+            end
+
+            Function main
+            start
+            %1 = ADDR(Cat)
+            call StdlibMallocObject
+            t0 = %8
+            t1 = ADDR("Whiskers")
+            t2 = 4
+            %1 = t0
+            %2 = t1
+            %3 = t2
+            call Cat
+            t3 = %8
+            cat = t0
+            %1 = cat
+            call Cat/greet
+            t4 = %8
+            @0:
+            end
+
+            Function Cat
+            start
+            this = %1
+            this->name = %2
+            this->age = %3
+            @0:
+            end
+
+
+        """.trimIndent()
+
+        runTest(prog, expected)
+    }
+
+    @Test
+    fun methodCalls3(){
+        val prog = """
+           class Animal(val name:String)
+                open fun greet()
+                    println name, " says grunt"
+            
+           class Cat(name: String) : Animal(name)
+               override fun greet()
+                    println name, " says meow"
+
+           fun main()
+               val cat = Cat("Whiskers")
+               cat.greet()
+       """.trimIndent()
+
+        val expected = """
+            Function <top>
+            start
+            call main
+            end
+
+            Function Animal/greet
+            start
+            this = %1
+            t0 = this->name
+            %1 = t0
+            call StdlibPrintString
+            t1 = ADDR(" says grunt")
+            %1 = t1
+            call StdlibPrintString
+            call StdlibNewline
+            @0:
+            end
+
+            Function Cat/greet
+            start
+            this = %1
+            t0 = this->name
+            %1 = t0
+            call StdlibPrintString
+            t1 = ADDR(" says meow")
+            %1 = t1
+            call StdlibPrintString
+            call StdlibNewline
+            @0:
+            end
+
+            Function main
+            start
+            %1 = ADDR(Cat)
+            call StdlibMallocObject
+            t0 = %8
+            t1 = ADDR("Whiskers")
+            %1 = t0
+            %2 = t1
+            call Cat
+            t2 = %8
+            cat = t0
+            %1 = cat
+            virtcall cat, greet
+            t3 = %8
+            @0:
+            end
+
+            Function Animal
+            start
+            this = %1
+            this->name = %2
+            @0:
+            end
+
+            Function Cat
+            start
+            this = %1
+            name = %2
+            %1 = this
+            %2 = name
+            call Animal
+            t0 = %8
+            @0:
+            end
+
+
+        """.trimIndent()
+
+        runTest(prog, expected)
+    }
+
+    @Test
+    fun boolAndTest(){
+        val prog = """
+           fun main(a:Int, b:Int) -> Bool
+               val bool = (a = 1) and (b = 2)
+               return bool
+       """.trimIndent()
+
+        val expected = """
+            Function <top>
+            start
+            call main
+            end
+
+            Function main
+            start
+            a = %1
+            b = %2
+            t1 = 1
+            t2 = a == t1
+            t0 = t2
+            if t2 == 0 jmp @1
+            t3 = 2
+            t4 = b == t3
+            t0 = t4
+            @1:
+            bool = t0
+            %8 = bool
+            jmp @0
+            @0:
+            end
+
+
+        """.trimIndent()
+
+        runTest(prog, expected)
+    }
+
+    @Test
+    fun boolOrTest(){
+        val prog = """
+           fun main(a:Int, b:Int) -> Bool
+               val bool = (a = 1) or (b = 2)
+               return bool
+       """.trimIndent()
+
+        val expected = """
+            Function <top>
+            start
+            call main
+            end
+
+            Function main
+            start
+            a = %1
+            b = %2
+            t1 = 1
+            t2 = a == t1
+            t0 = t2
+            if t2 != 0 jmp @1
+            t3 = 2
+            t4 = b == t3
+            t0 = t4
+            @1:
+            bool = t0
+            %8 = bool
+            jmp @0
+            @0:
+            end
+
+
+        """.trimIndent()
+
+        runTest(prog, expected)
+    }
+
+    @Test
+    fun negTest(){
+        val prog = """
+           fun main(a:Int) -> Int
+               return -a
+       """.trimIndent()
+
+        val expected = """
+            Function <top>
+            start
+            call main
+            end
+
+            Function main
+            start
+            a = %1
+            t0 = 0 - a
+            %8 = t0
+            jmp @0
+            @0:
+            end
+
+
+        """.trimIndent()
+
+        runTest(prog, expected)
+    }
+
+    @Test
+    fun arrayConstructor(){
+        val prog = """
+           fun main(size:Int) -> Array<Int>
+               return Array<Int>(size)
+       """.trimIndent()
+
+        val expected = """
+            Function <top>
+            start
+            call main
+            end
+
+            Function main
+            start
+            size = %1
+            %1 = size
+            call StdlibMallocArray
+            t0 = %8
+            %8 = t0
+            jmp @0
+            @0:
+            end
+
+
+        """.trimIndent()
+
+        runTest(prog, expected)
+    }
+
+    @Test
+    fun compareRvalue(){
+        val prog = """
+           fun main(a:Int, b:Int) -> Bool
+               return a<=b
+       """.trimIndent()
+
+        val expected = """
+            Function <top>
+            start
+            call main
+            end
+
+            Function main
+            start
+            a = %1
+            b = %2
+            t0 = a <= b
+            %8 = t0
+            jmp @0
+            @0:
+            end
+
+
+        """.trimIndent()
+
+        runTest(prog, expected)
+    }
+
+
+    @Test
+    fun globalVar(){
+        val prog = """
+           var count = 0
+            
+           fun main() -> Int
+               count = count + 1
+               return count
+       """.trimIndent()
+
+        val expected = """
+        """.trimIndent()
+
+        runTest(prog, expected)
+    }
 
 
 }

@@ -31,7 +31,7 @@ class AstCompare(
                (lhs.type == RealType && rhs.type == RealType) ||
                (lhs.type == StringType && rhs.type == StringType) ) )
             return TcError(location,"No operation defined for ${lhs.type} $op ${rhs.type}")
-                    
+
         val op = when (op) {
             TokenKind.LT -> AluOp.LT_I
             TokenKind.LTE -> AluOp.LE_I
@@ -42,7 +42,6 @@ class AstCompare(
 
         return TcCompare(location, op, lhs, rhs)
     }
-
 }
 
 class TcCompare(
@@ -60,7 +59,12 @@ class TcCompare(
     }
 
     override fun codeGenRvalue(): Reg {
-        TODO("Not yet implemented")
+        if (lhs.type == StringType)  TODO("String comparison not implemented")
+        if (lhs.type == RealType) TODO("Real comparison not implemented")
+
+        val lhs = lhs.codeGenRvalue()
+        val rhs = rhs.codeGenRvalue()
+        return currentFunction.instrAlu(op, lhs, rhs)
     }
 
     override fun codeGenBool(trueLabel: Label, falseLabel: Label) {

@@ -58,8 +58,8 @@ class TcDeclaration (
 
         when(symbol) {
             is SymbolLocalVar -> currentFunction.instrMove( currentFunction.getReg(symbol), rhs)
-            is SymbolField -> TODO()
-            is SymbolGlobalVar -> TODO()
+            is SymbolField -> currentFunction.instrStore(rhs, currentFunction.thisReg!!, symbol)
+            is SymbolGlobalVar -> currentFunction.instrStore(rhs, symbol)
             is SymbolFunctionName,
             is SymbolLiteral,
             is SymbolMemberAccess,
@@ -67,5 +67,4 @@ class TcDeclaration (
         }
 
     }
-
 }

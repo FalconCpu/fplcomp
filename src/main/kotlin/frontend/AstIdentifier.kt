@@ -89,20 +89,20 @@ class TcIdentifier(
     override fun codeGenRvalue(): Reg {
         return when(symbol) {
             is SymbolLocalVar -> currentFunction.getReg(symbol)
-            is SymbolField -> TODO()
-            is SymbolFunctionName -> TODO()
-            is SymbolGlobalVar -> TODO()
-            is SymbolLiteral -> TODO()
-            is SymbolMemberAccess -> TODO()
-            is SymbolTypeName -> TODO()
+            is SymbolField -> currentFunction.instrLoad(currentFunction.getThis(), symbol)
+            is SymbolFunctionName -> TODO("Function names as rvalues")
+            is SymbolGlobalVar -> currentFunction.instrLoad(symbol)
+            is SymbolLiteral -> currentFunction.instrInt(symbol.value)
+            is SymbolMemberAccess,
+            is SymbolTypeName -> error("Got kind ${symbol.javaClass} in codeGenRvalue")
         }
     }
 
     override fun codeGenLvalue(value: Reg) {
         when (symbol) {
             is SymbolLocalVar -> currentFunction.instrMove( currentFunction.getReg(symbol), value)
-            is SymbolField -> TODO()
-            is SymbolGlobalVar -> TODO()
+            is SymbolField -> currentFunction.instrStore(value, currentFunction.thisReg!!, symbol)
+            is SymbolGlobalVar -> currentFunction.instrStore(value, symbol)
             is SymbolFunctionName,
             is SymbolLiteral,
             is SymbolMemberAccess,

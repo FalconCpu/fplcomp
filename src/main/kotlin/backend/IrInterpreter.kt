@@ -50,11 +50,20 @@ private fun Function.run() {
                 return
             }
 
-            is InstrJsr ->
+            is InstrCall ->
                 if (instr.target is StdLibFunction)
                     executeStdlibCall(instr.target)
                 else
                     instr.target.run()
+
+            is InstrVirtCall -> {
+                val instance = instr.arg.getValue() as ClassValue
+                val func = instance.classRef.methods[instr.func.funcNo].function
+                func.backendFunction.run()
+            }
+
+
+
 
             is InstrJump -> {
                 // if (debug) println("Jumping to ${instr.target} ${instr.target.index}")
@@ -104,7 +113,7 @@ private fun Function.run() {
                 if (addr is ArrayValue && instr.offset== sizeSymbol)
                     instr.dest.setValue(IntValue(addr.value.size))
                 else if (addr is ClassValue)
-                    instr.dest.setValue(addr.value.getValue(instr.offset))
+                    instr.dest.setValue( addr.fields[instr.offset.offset] )
                 else
                     error("Illegal type in InstrLoadField ${addr.javaClass}")
             }
@@ -112,8 +121,11 @@ private fun Function.run() {
             is InstrStoreField -> {
                 val addr = instr.addr.getValue()
                 check(addr is ClassValue)
-                addr.value[instr.offset] = instr.data.getValue()
+                addr.fields[instr.offset.offset] = instr.data.getValue()
             }
+
+            is InstrLoadGlobal -> instr.dest.setValue( globalVariables.getValue(instr.globalVar) )
+            is InstrStoreGlobal -> globalVariables[instr.globalVar] = instr.data.getValue()
         }
     }
 }
@@ -150,12 +162,14 @@ private fun executeStdlibCall(target: StdLibFunction) {
     val arg1 = allRegisters.getValue( allMachineRegs[1])
 
     when (target) {
-        StdlibPrintBool -> programOutput.append(if (arg1.getIntValue() == 0) "false" else "true")
-        StdlibPrintChar -> programOutput.append(arg1.getIntValue().toChar())
-        StdlibPrintInt -> programOutput.append(arg1.getIntValue())
-        StdlibPrintString -> programOutput.append(arg1.getStringValue())
-        StdlibNewline -> programOutput.append("\n")
-        StdlibMallocArray -> regResult.setValue( ArrayValue( Array((arg1 as IntValue).value) { UndefinedValue }))
+        is StdlibPrintBool -> target.execute(arg1, programOutput)
+        is StdlibPrintChar -> target.execute(arg1, programOutput)
+        is StdlibPrintInt -> target.execute(arg1, programOutput)
+        is StdlibPrintString -> target.execute(arg1, programOutput)
+        is StdlibNewline -> target.execute(programOutput)
+        is StdlibMallocArray -> regResult.setValue( target.execute(arg1) )
+        is StdlibMallocObject -> regResult.setValue( target.execute(arg1) )
+        is StdlibStrcat -> regResult.setValue( target.execute(arg1, allRegisters.getValue(allMachineRegs[2])) )
     }
 }
 

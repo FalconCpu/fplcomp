@@ -39,6 +39,7 @@ class AstFunction (
         if (overridenSymbol.type != newSymbol.type)
             return Log.error(location, "Type mismatch in overriding method. Got ${overridenSymbol.type} but expected ${newSymbol.type}")
         context.replace(newSymbol)
+        methodOf.type.override(newSymbol)
     }
 
     override fun identifyFunctions(context: AstBlock) {
@@ -92,7 +93,7 @@ class TcFunction (
     private val params: List<Symbol>,
     val returnType: Type,
     val methodKind: MethodKind,
-    private val thisSymbol : SymbolLocalVar?,
+    val thisSymbol : SymbolLocalVar?,
     private val functionSymbol : SymbolFunctionName
 ) : TcBlock(location) {
 
@@ -105,14 +106,22 @@ class TcFunction (
             stmt.dump(sb, indent + 1)
     }
 
+    override fun toString() = backendFunction.name
+
     override fun codeGen() {
         val oldCurrentFunction = currentFunction
         currentFunction = backendFunction
 
         currentFunction.add(InstrStart())
 
-        for ((index,param) in params.withIndex())
-            currentFunction.instrMove( currentFunction.getReg(param), allMachineRegs[index+1])
+        var argno = 1
+        if (thisSymbol!=null) {
+            currentFunction.thisReg = currentFunction.getReg(thisSymbol)
+            currentFunction.instrMove( currentFunction.getThis(), allMachineRegs[argno++])
+        }
+
+        for (param in params)
+            currentFunction.instrMove( currentFunction.getReg(param), allMachineRegs[argno++])
 
         for (statement in body)
             statement.codeGen()

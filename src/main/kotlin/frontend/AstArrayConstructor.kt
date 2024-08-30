@@ -1,6 +1,8 @@
 package frontend
 
 import backend.Reg
+import backend.StdlibMallocArray
+import backend.regArg1
 
 class AstArrayConstructor (
     location: Location,
@@ -39,7 +41,8 @@ class TcArrayConstructor (
     }
 
     override fun codeGenRvalue(): Reg {
-        TODO("Not yet implemented")
+        currentFunction.instrMove(regArg1, size.codeGenRvalue())
+        return currentFunction.instrCall(StdlibMallocArray)
     }
 
 }

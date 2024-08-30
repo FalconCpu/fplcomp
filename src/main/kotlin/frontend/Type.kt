@@ -99,19 +99,31 @@ fun makeFunctionType(paramTypes: List<Type>, retType: Type): FunctionType {
 //                           Class Types
 // ---------------------------------------------------------------------
 
-class ClassType(name: String, val definition:AstClass, val superClass: ClassType?) : Type(name) {
+class ClassType(name: String, val superClass: ClassType?, val isAbstract: Boolean) : Type(name) {
+    val fields = mutableListOf<SymbolField>()
+    val methods = mutableListOf<SymbolFunctionName>()
+    lateinit var constructor : backend.Function
+    lateinit var constructorParameters : List<Symbol>
 
     fun isSubTypeOf(superclass: ClassType): Boolean {
         if (this == superclass) return true
         if (superClass == null) return false
         return superClass.isSubTypeOf(superclass)
     }
+
+    fun lookup(name: String) : Symbol? = fields.find { it.name == name } ?: methods.find { it.name == name }
+
+    fun override(symbolFunctionName: SymbolFunctionName) {
+        methods.replaceAll {
+            if (it.name==symbolFunctionName.name) symbolFunctionName  else it
+        }
+    }
 }
 
 val allClassTypes = mutableListOf<ClassType>()
 
-fun makeClassType(name: String, definition: AstClass, superClass: ClassType?): ClassType {
-    val new = ClassType(name, definition, superClass)
+fun makeClassType(name: String, definition: AstClass, superClass: ClassType?, isAbstract: Boolean): ClassType {
+    val new = ClassType(name, superClass, isAbstract)
     allClassTypes.add(new)
     return new
 }

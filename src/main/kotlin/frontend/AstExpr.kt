@@ -1,7 +1,9 @@
 package frontend
 
+import backend.AluOp
 import backend.Label
 import backend.Reg
+import backend.regZero
 import kotlin.contracts.ExperimentalContracts
 import kotlin.contracts.contract
 
@@ -28,7 +30,9 @@ sealed class TcExpr(location: Location, val type: Type) : Tc(location){
     }
 
     open fun codeGenBool(trueLabel: Label, falseLabel:Label) {
-        TODO("Not implemented codeGenBool ${this.javaClass}")
+        val tmp = codeGenRvalue()
+        currentFunction.instrBranch(AluOp.NE_I, tmp, regZero, trueLabel)
+        currentFunction.instrJump(falseLabel)
     }
 
     fun getSmartCastSymbol() =

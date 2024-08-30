@@ -28,7 +28,7 @@ class AstNullAccess(
         if (lhsType !is ClassType)
             return TcError(location, "Cannot access field $name of non-class type $lhsType")
 
-        symbol = lhsType.definition.lookupNoHierarchy(name)
+        symbol = lhsType.lookup(name)
             ?: return TcError(location, "Class '$lhsType' has no field named '$name'")
 
         check(symbol is SymbolField || symbol is SymbolFunctionName || symbol is SymbolLiteral)

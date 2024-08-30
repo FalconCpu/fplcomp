@@ -299,9 +299,8 @@ class InheritanceTest {
             . CLASS Dog
             . FUNCTION main (Dog)->String
             . . RETURN
-            . . . FUNCCALL String
-            . . . . MEMBERACCESS speak ()->String
-            . . . . . IDENTIFIER LOCALVAR d Dog
+            . . . FUNCCALL Animal/speak String
+            . . . . IDENTIFIER LOCALVAR d Dog
 
         """.trimIndent()
 
@@ -357,9 +356,8 @@ class InheritanceTest {
             . . . . STRINGLIT I am a dog String
             . FUNCTION main (Dog)->String
             . . RETURN
-            . . . FUNCCALL String
-            . . . . MEMBERACCESS speak ()->String
-            . . . . . IDENTIFIER LOCALVAR d Dog
+            . . . FUNCCALL Dog/speak String
+            . . . . IDENTIFIER LOCALVAR d Dog
 
         """.trimIndent()
 
@@ -418,9 +416,8 @@ class InheritanceTest {
             . . . . STRINGLIT Fred String
             . . . . STRINGLIT Simon String
             . . EXPR
-            . . . FUNCCALL String
-            . . . . MEMBERACCESS speak ()->String
-            . . . . . IDENTIFIER LOCALVAR a Dog
+            . . . FUNCCALL Dog/speak String
+            . . . . IDENTIFIER LOCALVAR a Dog
 
         """.trimIndent()
 
@@ -467,6 +464,47 @@ class InheritanceTest {
         runTest(prog, expected)
     }
 
+    @Test
+    fun methodCalls3(){
+        val prog = """
+           class Animal(val name:String)
+                open fun greet()
+                    println name, " says grunt"
+            
+           class Cat(name: String) : Animal(name)
+               override fun greet()
+                    println name, " says meow"
+
+           fun main()
+               val cat = Cat("Whiskers")
+               cat.greet()
+       """.trimIndent()
+
+        val expected = """
+            TOP
+            . CLASS Animal
+            . . FUNCTION Animal/greet ()->Unit
+            . . . PRINT
+            . . . . IDENTIFIER FIELD name String
+            . . . . STRINGLIT  says grunt String
+            . CLASS Cat
+            . . FUNCTION Cat/greet ()->Unit
+            . . . PRINT
+            . . . . IDENTIFIER FIELD name String
+            . . . . STRINGLIT  says meow String
+            . FUNCTION main ()->Unit
+            . . DECL LOCALVAR cat Cat
+            . . . CONSTRUCTOR Cat
+            . . . . STRINGLIT Whiskers String
+            . . EXPR
+            . . . FUNCCALL Cat/greet Unit
+            . . . . IDENTIFIER LOCALVAR cat Cat
+
+        """.trimIndent()
+
+        runTest(prog, expected)
+
+    }
 
 
 

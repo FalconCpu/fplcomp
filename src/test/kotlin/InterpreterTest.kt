@@ -204,6 +204,102 @@ class InterpreterTest {
         runTest(prog, expected)
     }
 
+    @Test
+    fun methodCalls() {
+        val prog = """
+            class Cat(val name:String, val age:Int) 
+                fun greet()
+                    println name," says hello"
+            
+            fun main()
+                val cat = Cat("Whiskers", 4)
+                cat.greet()
+        """.trimIndent()
+
+        val expected = """
+            Whiskers says hello
+
+        """.trimIndent()
+
+        runTest(prog, expected)
+    }
+
+    @Test
+    fun methodCalls2(){
+       val prog = """
+           class Cat(val name: String, val age: Int)
+               fun greet(greeting: String) -> String
+                   return name + " says " + greeting
+
+           fun main()
+               val cat = Cat("Whiskers", 4)
+               println cat.greet("meow")
+       """.trimIndent()
+
+        val expected = """
+            Whiskers says meow
+
+        """.trimIndent()
+
+        runTest(prog, expected)
+
+    }
+
+    @Test
+    fun methodCalls3(){
+        val prog = """
+           class Animal(val name:String)
+                open fun greet()
+                    println name, " says grunt"
+            
+           class Cat(name: String) : Animal(name)
+               override fun greet()
+                    println name, " says meow"
+
+           fun main()
+               val cat = Cat("Whiskers")
+               cat.greet()
+       """.trimIndent()
+
+        val expected = """
+            Whiskers says meow
+
+        """.trimIndent()
+
+        runTest(prog, expected)
+
+    }
+
+
+    @Test
+    fun methodCalls4(){
+        val prog = """
+           class Animal(val name:String)
+                open fun greet()
+                    println name, " says grunt"
+            
+           class Cat(name: String) : Animal(name)
+               override fun greet()
+                    println name, " says meow"
+
+           fun main()
+               val c = Cat("Whiskers")
+               c.greet()
+               
+               val a : Animal = c
+               a.greet()
+       """.trimIndent()
+
+        val expected = """
+            Whiskers says meow
+            Whiskers says meow
+
+        """.trimIndent()
+
+        runTest(prog, expected)
+
+    }
+
 
 
 }

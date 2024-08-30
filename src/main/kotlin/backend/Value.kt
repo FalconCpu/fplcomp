@@ -1,11 +1,13 @@
 package backend
 
+import frontend.ClassType
 import frontend.SymbolField
 
 sealed class Value() {
     fun getIntValue() = (this as IntValue).value
     fun getStringValue() = (this as StringValue).value
     fun getArrayValue() = (this as ArrayValue).value
+    fun getClassValue() = (this as ClassValue)
 }
 
 class IntValue(val value: Int) : Value()  {
@@ -18,7 +20,11 @@ class StringValue(val value: String) : Value() {
 
 class ArrayValue(val value: Array<Value>) : Value()
 
-class ClassValue(val value: MutableMap<SymbolField, Value>) : Value()
+class ClassValue(val classRef: ClassType, val fields: Array<Value>) : Value()
+
+class ClassRefValue(val classRef: ClassType) : Value() {
+    override fun toString() = classRef.name
+}
 
 object UndefinedValue : Value()
 

@@ -55,7 +55,7 @@ class AstMemberAccess (
 
     private fun accessClass(lhs: TcExpr) : TcExpr {
         require(lhs.type is ClassType)
-        val symbol = lhs.type.definition.lookupNoHierarchy(name)
+        val symbol = lhs.type.lookup(name)
             ?: return TcError(location,"Class '${lhs.type}' has no field named '$name'")
 
         check(symbol is SymbolField || symbol is SymbolFunctionName || symbol is SymbolLiteral)
@@ -113,7 +113,7 @@ class TcMemberAccess (
         val sym = symbol
         check(sym is SymbolField)
         val addr = lhs.codeGenRvalue()
-        return currentFunction.instrLoad(type.getSize(), addr, sym)
+        return currentFunction.instrLoad(addr, sym)
     }
 
 }

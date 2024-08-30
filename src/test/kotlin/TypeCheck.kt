@@ -125,8 +125,7 @@ class TypeCheck {
             . . . . INTLIT 2 Int
             . FUNCTION main ()->Unit
             . . DECL LOCALVAR x Int
-            . . . FUNCCALL Int
-            . . . . IDENTIFIER FUNC double (Int)->Int
+            . . . FUNCCALL double Int
             . . . . INTLIT 10 Int
 
         """.trimIndent()
@@ -418,8 +417,7 @@ class TypeCheck {
             . . . INTLIT 6 Int
             . FUNCTION main ()->Unit
             . . EXPR
-            . . . FUNCCALL Unit
-            . . . . IDENTIFIER FUNC foo ()->Unit
+            . . . FUNCCALL foo Unit
             
         """.trimIndent()
 
@@ -509,9 +507,8 @@ class TypeCheck {
             . . . . STRINGLIT Fluffy String
             . . . . INTLIT 2 Int
             . . EXPR
-            . . . FUNCCALL Unit
-            . . . . MEMBERACCESS timePasses ()->Unit
-            . . . . . IDENTIFIER LOCALVAR c Cat
+            . . . FUNCCALL Cat/timePasses Unit
+            . . . . IDENTIFIER LOCALVAR c Cat
             . . RETURN
             . . . MEMBERACCESS age Int
             . . . . IDENTIFIER LOCALVAR c Cat

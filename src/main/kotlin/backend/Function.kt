@@ -1,6 +1,8 @@
 package backend
 
 import frontend.SymbolField
+import frontend.SymbolFunctionName
+import frontend.SymbolGlobalVar
 import frontend.currentFunction
 
 val allFunctions = mutableListOf<Function>()
@@ -16,11 +18,16 @@ open class Function(val name:String, isStdLib:Boolean=false) {
     private val symbolMap = mutableMapOf<frontend.Symbol, Reg>()
     private val labels = mutableListOf<Label>()
     val endLabel = newLabel()
+    var thisReg : Reg? = null
 
     override fun toString() = name
 
     fun add(instr: Instr) {
         prog.add(instr)
+    }
+
+    fun getThis() : Reg {
+        return thisReg ?: error("Attempt to access 'this' for non member function")
     }
 
     fun newLabel() : Label {
@@ -30,7 +37,7 @@ open class Function(val name:String, isStdLib:Boolean=false) {
     }
 
     private var numTemps = 0
-    private fun newTemp(): Reg {
+    fun newTemp(): Reg {
         val reg = TempReg("t${numTemps++}")
         vars.add(reg)
         return reg
@@ -55,6 +62,10 @@ open class Function(val name:String, isStdLib:Boolean=false) {
         add(InstrMov(dst, src))
     }
 
+    fun instrMove(dst: Reg, src: Int) {
+        add(InstrLit(dst, src))
+    }
+
     fun instrAlu(op: AluOp, lhs: Reg, rhs: Reg) : Reg {
         val ret = newTemp()
         add(InstrAlu(ret, op, lhs, rhs))
@@ -74,10 +85,16 @@ open class Function(val name:String, isStdLib:Boolean=false) {
         return ret
     }
 
+
+
     fun instrLea(value: Value): Reg {
         val ret = newTemp()
         add(InstrLea(ret, value))
         return ret
+    }
+
+    fun instrLea(dest:Reg, value: Value) {
+        add(InstrLea(dest, value))
     }
 
     fun instrJump(target: Label) {
@@ -85,12 +102,18 @@ open class Function(val name:String, isStdLib:Boolean=false) {
     }
 
     fun instrCall(target: Function) : Reg {
-        add(InstrJsr(target))
+        add(InstrCall(target))
         val ret = newTemp()
         add(InstrMov(ret, regResult))
         return ret
     }
 
+    fun instrVirtCall(instance:Reg, target: SymbolFunctionName) : Reg {
+        add(InstrVirtCall(instance, target))
+        val ret = newTemp()
+        add(InstrMov(ret, regResult))
+        return ret
+    }
 
     fun instrBranch(op: AluOp, lhs: Reg, rhs: Reg, target: Label) {
         add(InstrBranch(op, lhs, rhs, target))
@@ -120,15 +143,27 @@ open class Function(val name:String, isStdLib:Boolean=false) {
         return ret
     }
 
-    fun instrStore(size:Int, data:Reg, addr:Reg, offset: SymbolField) {
-        add(InstrStoreField(size, data, addr, offset))
+    fun instrStore(data:Reg, addr:Reg, offset: SymbolField) {
+        add(InstrStoreField(offset.type.getSize(), data, addr, offset))
     }
 
-    fun instrLoad(size:Int, addr:Reg, offset: SymbolField) : Reg {
+    fun instrLoad(addr:Reg, offset: SymbolField) : Reg {
         val ret = newTemp()
-        add(InstrLoadField(size, ret, addr, offset))
+        add(InstrLoadField(offset.type.getSize() , ret, addr, offset))
         return ret
     }
+
+    fun instrStore(data:Reg, offset: SymbolGlobalVar) {
+        add(InstrStoreGlobal(offset.type.getSize(), data, offset))
+    }
+
+    fun instrLoad(offset: SymbolGlobalVar) : Reg {
+        val ret = newTemp()
+        add(InstrLoadGlobal(offset.type.getSize() , ret, offset))
+        return ret
+    }
+
+
 
 
 

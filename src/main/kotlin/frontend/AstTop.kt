@@ -68,7 +68,7 @@ class TcTop : TcBlock(nullLocation) {
 
         val main = allFunctions.find { it.name == "main" }
         if (main != null)
-            currentFunction.add(backend.InstrJsr(main))
+            currentFunction.add(backend.InstrCall(main))
 
         currentFunction.add(backend.InstrEnd())
     }

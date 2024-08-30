@@ -1,6 +1,6 @@
 package frontend
 
-import backend.InstrJsr
+import backend.InstrCall
 
 class AstPrint(
     location: Location,
@@ -45,10 +45,10 @@ class TcPrint(
                 BoolType -> backend.StdlibPrintBool
                 else -> return Log.error(location, "Unsupported type for print ${expr.type}")
             }
-            currentFunction.add(InstrJsr(func))
+            currentFunction.add(InstrCall(func))
         }
         if (newline)
-            currentFunction.add(InstrJsr(backend.StdlibNewline))
+            currentFunction.add(InstrCall(backend.StdlibNewline))
     }
 
 }

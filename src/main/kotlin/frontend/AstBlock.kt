@@ -1,14 +1,14 @@
 package frontend
 
 sealed class AstBlock(location: Location, val parent:AstBlock?) : AstStmt(location) {
-    private val symbolTable = mutableMapOf<String, Symbol>()
+    protected val symbolTable = mutableMapOf<String, Symbol>()
     protected val body = mutableListOf<AstStmt>()
 
     // --------------------------------------------------------
     //                 Symbol table functions
     // --------------------------------------------------------
 
-    fun add(symbol: Symbol) {
+    open fun add(symbol: Symbol) {
         val duplicate = symbolTable[symbol.name]
         if (duplicate != null)
             Log.error(symbol.location, "duplicate symbol: $symbol")
@@ -20,7 +20,12 @@ sealed class AstBlock(location: Location, val parent:AstBlock?) : AstStmt(locati
     fun lookupNoHierarchy(name: String): Symbol? = symbolTable[name]
 
     fun replace(symbol: Symbol) {
-        check(symbolTable.contains(symbol.name))
+        val old = symbolTable[symbol.name]
+        check(old!=null)
+        if (symbol is SymbolFunctionName) {
+            check(old is SymbolFunctionName)
+            symbol.funcNo = old.funcNo
+        }
         symbolTable[symbol.name] = symbol
     }
 
@@ -36,6 +41,8 @@ sealed class AstBlock(location: Location, val parent:AstBlock?) : AstStmt(locati
     }
 
     fun getMethods() = symbolTable.values.filterIsInstance<SymbolFunctionName>()
+
+    fun getFields() = symbolTable.values.filterIsInstance<SymbolField>()
 
     // --------------------------------------------------------
     //                 Statement list functions

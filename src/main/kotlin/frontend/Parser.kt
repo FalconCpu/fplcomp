@@ -386,18 +386,6 @@ class Parser(private val lexer: Lexer) {
         checkEnd(FUN)
     }
 
-    private fun parseSuperClass() : AstSuperClass {
-        val id = expect(ID)
-        val args = mutableListOf<AstExpr>()
-        expect(OPENB)
-        if (lookahead.kind!=CLOSEB)
-            do {
-                args += parseExpression()
-            } while (canTake(COMMA))
-        expect(CLOSEB)
-        return AstSuperClass(id.location, id.text, args)
-    }
-
     private fun parseClass(block: AstBlock, methodKind: MethodKind) {
         if (methodKind!=MethodKind.NONE && methodKind!=MethodKind.ABSTRACT_METHOD)
             Log.error(lookahead.location, "$methodKind cannot be appleid to class")
@@ -405,11 +393,19 @@ class Parser(private val lexer: Lexer) {
         expect(CLASS)
         val id = expect(ID)
         val parameters = if (lookahead.kind==OPENB) parseParamList(true) else emptyList()
-        val superClass = if (canTake(COLON)) parseSuperClass() else null
+        val superClassName : AstIdentifier?
+        val superClassConstuctorArgs : List<AstExpr>
+        if (canTake(COLON)) {
+            superClassName = parseIdentifier()
+            superClassConstuctorArgs = parseExpressionList()
+        } else {
+            superClassName = null
+            superClassConstuctorArgs = emptyList()
+        }
         expectEol()
 
         val isAbstract = methodKind == MethodKind.ABSTRACT_METHOD
-        val ret = AstClass(id.location, block, id.text, parameters, superClass, isAbstract)
+        val ret = AstClass(id.location, block, id.text, parameters, superClassName, superClassConstuctorArgs, isAbstract)
         block.add(ret)
 
         if (canTake(INDENT))

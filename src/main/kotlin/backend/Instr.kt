@@ -1,6 +1,8 @@
 package backend
 
 import frontend.SymbolField
+import frontend.SymbolFunctionName
+import frontend.SymbolGlobalVar
 
 sealed class Instr {
     var index = 0
@@ -38,9 +40,14 @@ class InstrBranch(val op: AluOp, val lhs:Reg, val rhs:Reg, val target: Label) : 
     override fun toString() = "if $lhs $op $rhs jmp $target"
 }
 
-class InstrJsr(val target: Function) : Instr() {
+class InstrCall(val target: Function) : Instr() {
     override fun toString() = "call $target"
 }
+
+class InstrVirtCall(val arg: Reg, val func: SymbolFunctionName) : Instr() {
+    override fun toString() = "virtcall $arg, $func"
+}
+
 
 class InstrStart() : Instr() {
     override fun toString() = "start"
@@ -74,11 +81,19 @@ class InstrStoreField(val size:Int, val data: Reg, val addr: Reg, val offset:Sym
     override fun toString() = "$addr->$offset = $data"
 }
 
+class InstrLoadGlobal(val size:Int, val dest: Reg, val globalVar: SymbolGlobalVar) : Instr() {
+    override fun toString() = "$dest = GLOBAL[$globalVar]"
+}
+
+class InstrStoreGlobal(val  size:Int, val data: Reg, val globalVar: SymbolGlobalVar) : Instr() {
+    override fun toString() = "GLOBAL[$globalVar] = $data"
+}
+
+
 
 class InstrLea(val dest:Reg, val src:Value) : Instr() {
     override fun toString() = "$dest = ADDR($src)"
 }
-
 
 enum class AluOp(val text:String) {
     ADD_I ("+"),

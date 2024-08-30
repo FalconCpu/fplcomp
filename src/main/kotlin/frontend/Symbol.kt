@@ -24,6 +24,10 @@ sealed class Symbol(
         is SymbolField -> mutable
         else -> false
     }
+
+    companion object {
+        const val UNDEFINED_OFFSET = -2
+    }
 }
 
 class SymbolLocalVar(
@@ -47,6 +51,7 @@ class SymbolFunctionName(
     val methodKind: MethodKind
 ) : Symbol(location, name, type) {
     lateinit var function : TcFunction
+    var funcNo = UNDEFINED_OFFSET;
 }
 
 class SymbolTypeName(
@@ -67,7 +72,9 @@ class SymbolField(
     name: String,
     type: Type,
     val mutable : Boolean
-) : Symbol(location, name, type)
+) : Symbol(location, name, type) {
+    var offset = UNDEFINED_OFFSET;
+}
 
 // Symbol used to track smartcasts through member accesses
 class SymbolMemberAccess(

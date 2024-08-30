@@ -1,7 +1,9 @@
 package frontend
 
+import backend.AluOp
 import backend.Label
 import backend.Reg
+import backend.regZero
 
 class AstOr(
     location: Location,
@@ -51,7 +53,15 @@ class TcOr(
     }
 
     override fun codeGenRvalue(): Reg {
-        TODO("Not yet implemented")
+        val labelEnd = currentFunction.newLabel()
+        val ret = currentFunction.newTemp()
+        val lhs = lhs.codeGenRvalue()
+        currentFunction.instrMove(ret, lhs)
+        currentFunction.instrBranch(AluOp.NE_I, lhs, regZero, labelEnd)
+        val rhs = rhs.codeGenRvalue()
+        currentFunction.instrMove(ret, rhs)
+        currentFunction.instrLabel(labelEnd)
+        return ret
     }
 
     override fun codeGenBool(trueLabel: Label, falseLabel: Label) {

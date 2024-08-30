@@ -93,7 +93,10 @@ class TcEquals(
     }
 
     override fun codeGenRvalue(): Reg {
-        TODO("Not yet implemented")
+        val lhs = lhs.codeGenRvalue()
+        val rhs = rhs.codeGenRvalue()
+        val op = if (eq) AluOp.EQ_I else AluOp.NE_I
+        return currentFunction.instrAlu(op, lhs, rhs)
     }
 
     override fun codeGenBool(trueLabel: Label, falseLabel: Label) {
