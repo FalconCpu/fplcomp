@@ -507,7 +507,7 @@ class PathContextTest {
             . . . . . NEQ Bool
             . . . . . . IDENTIFIER LOCALVAR c Cat?
             . . . . . . IDENTIFIER LITERAL null Null
-            . . . . . COMPARE > Bool
+            . . . . . COMPARE cgt Bool
             . . . . . . IDENTIFIER LOCALVAR d Int
             . . . . . . INTLIT 0 Int
             . . . . RETURN

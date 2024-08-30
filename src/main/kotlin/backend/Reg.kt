@@ -3,6 +3,10 @@ package backend
 sealed class Reg(val name:String) {
     var index = 0
     override fun toString() = name
+
+    fun isVar() = this is UserReg || this is TempReg
+    val defs = mutableSetOf<Instr>()
+    val uses = mutableSetOf<Instr>()
 }
 
 class MachineReg(name:String,index:Int) : Reg(name) {

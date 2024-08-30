@@ -34,6 +34,8 @@ private fun Function.run() {
         val instr = prog[pc]
         pc++
         when(instr) {
+            is InstrNop -> {}
+
             is InstrAlu ->
                 instr.dest.setValue( evaluate(instr.op, instr.lhs.getIntValue(), instr.rhs.getIntValue()) )
 

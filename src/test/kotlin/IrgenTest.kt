@@ -25,8 +25,8 @@ class IrgenTest {
 
             Function main
             start
-            t0 = 10
-            x = t0
+            mov t0, 10
+            mov x, t0
             @0:
             end
 
@@ -52,11 +52,11 @@ class IrgenTest {
 
             Function main
             start
-            t0 = 10
-            x = t0
-            t1 = 5
-            t2 = x + t1
-            y = t2
+            mov t0, 10
+            mov x, t0
+            mov t1, 5
+            add t2, x, t1
+            mov y, t2
             @0:
             end
 
@@ -83,16 +83,16 @@ class IrgenTest {
 
             Function main
             start
-            t0 = 0
-            x = t0
+            mov t0, 0
+            mov x, t0
             jmp @2
             @1:
-            t1 = 1
-            t2 = x + t1
-            x = t2
+            mov t1, 1
+            add t2, x, t1
+            mov x, t2
             @2:
-            t3 = 10
-            if x < t3 jmp @1
+            mov t3, 10
+            blt, x, t3, @1
             jmp @3
             @3:
             @0:
@@ -119,11 +119,11 @@ class IrgenTest {
 
             Function main
             start
-            t0 = ADDR("Hello, world!")
-            %1 = t0
+            lea t0, "Hello, world!"
+            mov %1, t0
             call StdlibPrintString
-            t1 = 42
-            %1 = t1
+            mov t1, 42
+            mov %1, t1
             call StdlibPrintInt
             call StdlibNewline
             @0:
@@ -159,50 +159,50 @@ class IrgenTest {
 
             Function sum
             start
-            array = %1
-            t0 = 0
-            sum = t0
-            t1 = 0
-            index = t1
+            mov array, %1
+            mov t0, 0
+            mov sum, t0
+            mov t1, 0
+            mov index, t1
             jmp @2
             @1:
-            t2 = array[index]
-            t3 = sum + t2
-            sum = t3
-            t4 = 1
-            t5 = index + t4
-            index = t5
+            ldw t2, array[index]
+            add t3, sum, t2
+            mov sum, t3
+            mov t4, 1
+            add t5, index, t4
+            mov index, t5
             @2:
-            t6 = array->size
-            if index < t6 jmp @1
+            ldw t6, array->size
+            blt, index, t6, @1
             jmp @3
             @3:
-            %8 = sum
+            mov %8, sum
             jmp @0
             @0:
             end
 
             Function main
             start
-            %1 = 5
-            %2 = 4
+            mov %1, 5
+            mov %2, 4
             call StdlibMallocArray
-            t0 = %8
-            t1 = 1
-            t0[0] = t1
-            t2 = 2
-            t0[1] = t2
-            t3 = 3
-            t0[2] = t3
-            t4 = 4
-            t0[3] = t4
-            t5 = 5
-            t0[4] = t5
-            arr = t0
-            %1 = arr
+            mov t0, %8
+            mov t1, 1
+            stw t1, t0[0]
+            mov t2, 2
+            stw t2, t0[1]
+            mov t3, 3
+            stw t3, t0[2]
+            mov t4, 4
+            stw t4, t0[3]
+            mov t5, 5
+            stw t5, t0[4]
+            mov arr, t0
+            mov %1, arr
             call sum
-            t6 = %8
-            %1 = t6
+            mov t6, %8
+            mov %1, t6
             call StdlibPrintInt
             call StdlibNewline
             @0:
@@ -239,26 +239,26 @@ class IrgenTest {
 
             Function compare_to_10
             start
-            x = %1
-            t0 = 5
-            if x < t0 jmp @2
+            mov x, %1
+            mov t0, 5
+            blt, x, t0, @2
             jmp @3
             @3:
             jmp @4
             @1:
             @2:
-            %1 = x
+            mov %1, x
             call StdlibPrintInt
-            t1 = ADDR(" is less than 5")
-            %1 = t1
+            lea t1, " is less than 5"
+            mov %1, t1
             call StdlibPrintString
             call StdlibNewline
             jmp @1
             @4:
-            %1 = x
+            mov %1, x
             call StdlibPrintInt
-            t2 = ADDR(" is greater than or equal to 5")
-            %1 = t2
+            lea t2, " is greater than or equal to 5"
+            mov %1, t2
             call StdlibPrintString
             call StdlibNewline
             jmp @1
@@ -268,19 +268,19 @@ class IrgenTest {
 
             Function main
             start
-            t0 = 0
-            count = t0
+            mov t0, 0
+            mov count, t0
             jmp @2
             @1:
-            %1 = count
+            mov %1, count
             call compare_to_10
-            t1 = %8
-            t2 = 1
-            t3 = count + t2
-            count = t3
+            mov t1, %8
+            mov t2, 1
+            add t3, count, t2
+            mov count, t3
             @2:
-            t4 = 20
-            if count < t4 jmp @1
+            mov t4, 20
+            blt, count, t4, @1
             jmp @3
             @3:
             @0:
@@ -308,18 +308,18 @@ class IrgenTest {
 
             Function main
             start
-            t0 = 1
-            t1 = 10
-            i = t0
+            mov t0, 1
+            mov t1, 10
+            mov i, t0
             jmp @2
             @1:
-            %1 = i
+            mov %1, i
             call StdlibPrintInt
             call StdlibNewline
-            t2 = i + 1
-            i = t2
+            add t2, i, 1
+            mov i, t2
             @2:
-            if i <= t1 jmp @1
+            ble, i, t1, @1
             @0:
             end
 
@@ -349,12 +349,12 @@ class IrgenTest {
 
             Function Cat/greet
             start
-            this = %1
-            t0 = this->name
-            %1 = t0
+            mov this, %1
+            ldw t0, this->name
+            mov %1, t0
             call StdlibPrintString
-            t1 = ADDR(" says hello")
-            %1 = t1
+            lea t1, " says hello"
+            mov %1, t1
             call StdlibPrintString
             call StdlibNewline
             @0:
@@ -362,28 +362,28 @@ class IrgenTest {
 
             Function main
             start
-            %1 = ADDR(Cat)
+            lea %1, Cat
             call StdlibMallocObject
-            t0 = %8
-            t1 = ADDR("Whiskers")
-            t2 = 4
-            %1 = t0
-            %2 = t1
-            %3 = t2
+            mov t0, %8
+            lea t1, "Whiskers"
+            mov t2, 4
+            mov %1, t0
+            mov %2, t1
+            mov %3, t2
             call Cat
-            t3 = %8
-            cat = t0
-            %1 = cat
+            mov t3, %8
+            mov cat, t0
+            mov %1, cat
             call Cat/greet
-            t4 = %8
+            mov t4, %8
             @0:
             end
 
             Function Cat
             start
-            this = %1
-            this->name = %2
-            this->age = %3
+            mov this, %1
+            stw %2, this->name
+            stw %3, this->age
             @0:
             end
 
@@ -417,12 +417,12 @@ class IrgenTest {
 
             Function Animal/greet
             start
-            this = %1
-            t0 = this->name
-            %1 = t0
+            mov this, %1
+            ldw t0, this->name
+            mov %1, t0
             call StdlibPrintString
-            t1 = ADDR(" says grunt")
-            %1 = t1
+            lea t1, " says grunt"
+            mov %1, t1
             call StdlibPrintString
             call StdlibNewline
             @0:
@@ -430,12 +430,12 @@ class IrgenTest {
 
             Function Cat/greet
             start
-            this = %1
-            t0 = this->name
-            %1 = t0
+            mov this, %1
+            ldw t0, this->name
+            mov %1, t0
             call StdlibPrintString
-            t1 = ADDR(" says meow")
-            %1 = t1
+            lea t1, " says meow"
+            mov %1, t1
             call StdlibPrintString
             call StdlibNewline
             @0:
@@ -443,36 +443,36 @@ class IrgenTest {
 
             Function main
             start
-            %1 = ADDR(Cat)
+            lea %1, Cat
             call StdlibMallocObject
-            t0 = %8
-            t1 = ADDR("Whiskers")
-            %1 = t0
-            %2 = t1
+            mov t0, %8
+            lea t1, "Whiskers"
+            mov %1, t0
+            mov %2, t1
             call Cat
-            t2 = %8
-            cat = t0
-            %1 = cat
+            mov t2, %8
+            mov cat, t0
+            mov %1, cat
             virtcall cat, greet
-            t3 = %8
+            mov t3, %8
             @0:
             end
 
             Function Animal
             start
-            this = %1
-            this->name = %2
+            mov this, %1
+            stw %2, this->name
             @0:
             end
 
             Function Cat
             start
-            this = %1
-            name = %2
-            %1 = this
-            %2 = name
+            mov this, %1
+            mov name, %2
+            mov %1, this
+            mov %2, name
             call Animal
-            t0 = %8
+            mov t0, %8
             @0:
             end
 
@@ -498,18 +498,18 @@ class IrgenTest {
 
             Function main
             start
-            a = %1
-            b = %2
-            t1 = 1
-            t2 = a == t1
-            t0 = t2
-            if t2 == 0 jmp @1
-            t3 = 2
-            t4 = b == t3
-            t0 = t4
+            mov a, %1
+            mov b, %2
+            mov t1, 1
+            ceq t2, a, t1
+            mov t0, t2
+            beq, t2, 0, @1
+            mov t3, 2
+            ceq t4, b, t3
+            mov t0, t4
             @1:
-            bool = t0
-            %8 = bool
+            mov bool, t0
+            mov %8, bool
             jmp @0
             @0:
             end
@@ -536,18 +536,18 @@ class IrgenTest {
 
             Function main
             start
-            a = %1
-            b = %2
-            t1 = 1
-            t2 = a == t1
-            t0 = t2
-            if t2 != 0 jmp @1
-            t3 = 2
-            t4 = b == t3
-            t0 = t4
+            mov a, %1
+            mov b, %2
+            mov t1, 1
+            ceq t2, a, t1
+            mov t0, t2
+            bne, t2, 0, @1
+            mov t3, 2
+            ceq t4, b, t3
+            mov t0, t4
             @1:
-            bool = t0
-            %8 = bool
+            mov bool, t0
+            mov %8, bool
             jmp @0
             @0:
             end
@@ -573,14 +573,14 @@ class IrgenTest {
 
             Function main
             start
-            a = %1
-            t0 = 0 - a
-            %8 = t0
+            mov a, %1
+            sub t0, 0, a
+            mov %8, t0
             jmp @0
             @0:
             end
 
-
+            
         """.trimIndent()
 
         runTest(prog, expected)
@@ -601,11 +601,11 @@ class IrgenTest {
 
             Function main
             start
-            size = %1
-            %1 = size
+            mov size, %1
+            mov %1, size
             call StdlibMallocArray
-            t0 = %8
-            %8 = t0
+            mov t0, %8
+            mov %8, t0
             jmp @0
             @0:
             end
@@ -631,10 +631,10 @@ class IrgenTest {
 
             Function main
             start
-            a = %1
-            b = %2
-            t0 = a <= b
-            %8 = t0
+            mov a, %1
+            mov b, %2
+            cle t0, a, b
+            mov %8, t0
             jmp @0
             @0:
             end
@@ -657,6 +657,26 @@ class IrgenTest {
        """.trimIndent()
 
         val expected = """
+            Function <top>
+            start
+            mov t0, 0
+            stw t0, GLOBAL->count
+            call main
+            end
+
+            Function main
+            start
+            ldw t0, GLOBAL->count
+            mov t1, 1
+            add t2, t0, t1
+            stw t2, GLOBAL->count
+            ldw t3, GLOBAL->count
+            mov %8, t3
+            jmp @0
+            @0:
+            end
+
+
         """.trimIndent()
 
         runTest(prog, expected)

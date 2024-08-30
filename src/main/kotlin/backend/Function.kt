@@ -5,20 +5,23 @@ import frontend.SymbolFunctionName
 import frontend.SymbolGlobalVar
 import frontend.currentFunction
 
-val allFunctions = mutableListOf<Function>()
-
 open class Function(val name:String, isStdLib:Boolean=false) {
     init {
         if (!isStdLib)
             allFunctions.add(this)
     }
 
-    private val vars = allMachineRegs.toMutableList<Reg>()
+    val regs = allMachineRegs.toMutableList<Reg>()
     val prog = mutableListOf<Instr>()
     private val symbolMap = mutableMapOf<frontend.Symbol, Reg>()
     private val labels = mutableListOf<Label>()
     val endLabel = newLabel()
     var thisReg : Reg? = null
+
+    // Values to be filled in by the backend
+    var maxRegister = 0    // The highest register number used
+
+
 
     override fun toString() = name
 
@@ -39,7 +42,7 @@ open class Function(val name:String, isStdLib:Boolean=false) {
     private var numTemps = 0
     fun newTemp(): Reg {
         val reg = TempReg("t${numTemps++}")
-        vars.add(reg)
+        regs.add(reg)
         return reg
     }
 
@@ -50,10 +53,17 @@ open class Function(val name:String, isStdLib:Boolean=false) {
         sb.append("\n")
     }
 
+    fun dumpWithIndex() {
+        for (instr in prog)
+            println("%3d %s".format(prog.indexOf(instr), instr.toString()))
+        println()
+    }
+
+
     fun getReg(symbol: frontend.Symbol): Reg{
         return symbolMap.getOrPut(symbol) {
             val reg = UserReg(symbol.name)
-            vars.add(reg)
+            regs.add(reg)
             reg
         }
     }
@@ -78,14 +88,11 @@ open class Function(val name:String, isStdLib:Boolean=false) {
         return ret
     }
 
-
     fun instrInt(value: Int): Reg {
         val ret = newTemp()
         add(InstrLit(ret, value))
         return ret
     }
-
-
 
     fun instrLea(value: Value): Reg {
         val ret = newTemp()
@@ -127,16 +134,6 @@ open class Function(val name:String, isStdLib:Boolean=false) {
         add(InstrStoreArrayLit(size, data, addr, offset))
     }
 
-    fun instrLoad(size:Int, addr:Reg, offset: Int) : Reg {
-        val ret = newTemp()
-        add(InstrLoadArrayLit(size, ret, addr, offset))
-        return ret
-    }
-
-    fun instrStore(size:Int, data:Reg, addr:Reg, offset: Reg) {
-        add(InstrStoreArray(size, data, addr, offset))
-    }
-
     fun instrLoad(size:Int, addr:Reg, offset: Reg) : Reg {
         val ret = newTemp()
         add(InstrLoadArray(size, ret, addr, offset))
@@ -163,14 +160,35 @@ open class Function(val name:String, isStdLib:Boolean=false) {
         return ret
     }
 
-
-
-
-
     fun rebuildIndex() {
-        for((index, instr) in prog.withIndex())
-            if (instr is InstrLabel)
-                instr.label.index = index
+        for((index,reg) in regs.withIndex()) {
+            reg.index = index
+            reg.defs.clear()
+            reg.uses.clear()
+        }
+
+        for(label in labels)
+            label.uses.clear()
+
+        prog.removeIf { it is InstrNop }
+
+        for((index, instr) in prog.withIndex()) {
+            instr.index = index
+            when (instr) {
+                is InstrLabel -> instr.label.index = index
+                is InstrBranch -> instr.target.uses += instr
+                is InstrJump -> instr.target.uses += instr
+                else -> {}
+            }
+
+            val def = instr.getDef()
+            if (def!=null)
+                def.defs.add(instr)
+
+            val uses = instr.getUses()
+            for(use in uses)
+                use.uses.add(instr)
+        }
     }
 }
 

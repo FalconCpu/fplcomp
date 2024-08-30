@@ -25,7 +25,7 @@ class TypeCheck {
             . DECL GLOBALVAR b Int
             . . IDENTIFIER GLOBALVAR a Int
             . DECL GLOBALVAR c Int
-            . . BINARYOP + Int
+            . . BINARYOP add Int
             . . . IDENTIFIER GLOBALVAR b Int
             . . . INTLIT 1 Int
 
@@ -92,12 +92,12 @@ class TypeCheck {
             . . DECL LOCALVAR count Int
             . . . INTLIT 0 Int
             . . WHILE
-            . . . COMPARE < Bool
+            . . . COMPARE clt Bool
             . . . . IDENTIFIER LOCALVAR count Int
             . . . . IDENTIFIER LOCALVAR a Int
             . . . ASSIGN
             . . . . IDENTIFIER LOCALVAR sum Int
-            . . . . BINARYOP + Int
+            . . . . BINARYOP add Int
             . . . . . IDENTIFIER LOCALVAR sum Int
             . . . . . IDENTIFIER LOCALVAR count Int
 
@@ -120,7 +120,7 @@ class TypeCheck {
             TOP
             . FUNCTION double (Int)->Int
             . . RETURN
-            . . . BINARYOP * Int
+            . . . BINARYOP mul Int
             . . . . IDENTIFIER LOCALVAR a Int
             . . . . INTLIT 2 Int
             . FUNCTION main ()->Unit
@@ -187,20 +187,20 @@ class TypeCheck {
             . . DECL LOCALVAR count Int
             . . . INTLIT 0 Int
             . . WHILE
-            . . . COMPARE < Bool
+            . . . COMPARE clt Bool
             . . . . IDENTIFIER LOCALVAR count Int
             . . . . MEMBERACCESS size Int
             . . . . . IDENTIFIER LOCALVAR a Array<Int>
             . . . ASSIGN
             . . . . IDENTIFIER LOCALVAR sum Int
-            . . . . BINARYOP + Int
+            . . . . BINARYOP add Int
             . . . . . IDENTIFIER LOCALVAR sum Int
             . . . . . ARRAYACCESS Int
             . . . . . . IDENTIFIER LOCALVAR a Array<Int>
             . . . . . . IDENTIFIER LOCALVAR count Int
             . . . ASSIGN
             . . . . IDENTIFIER LOCALVAR count Int
-            . . . . BINARYOP + Int
+            . . . . BINARYOP add Int
             . . . . . IDENTIFIER LOCALVAR count Int
             . . . . . INTLIT 1 Int
             . . RETURN
@@ -308,7 +308,7 @@ class TypeCheck {
             . . . . STRINGLIT Fluffy String
             . . . . INTLIT 2 Int
             . . RETURN
-            . . . BINARYOP + Int
+            . . . BINARYOP add Int
             . . . . MEMBERACCESS legs Int
             . . . . . IDENTIFIER LOCALVAR cat Cat
             . . . . MEMBERACCESS age Int
@@ -498,7 +498,7 @@ class TypeCheck {
             . . FUNCTION Cat/timePasses ()->Unit
             . . . ASSIGN
             . . . . IDENTIFIER FIELD age Int
-            . . . . BINARYOP + Int
+            . . . . BINARYOP add Int
             . . . . . IDENTIFIER FIELD age Int
             . . . . . INTLIT 1 Int
             . FUNCTION main ()->Int
@@ -554,7 +554,7 @@ class TypeCheck {
             TOP
             . CLASS Cat
             . . DECL FIELD days Int
-            . . . BINARYOP * Int
+            . . . BINARYOP mul Int
             . . . . IDENTIFIER LOCALVAR age Int
             . . . . INTLIT 365 Int
             . FUNCTION main ()->Int
@@ -789,13 +789,13 @@ class TypeCheck {
             . FUNCTION main (String,String)->String
             . . IF
             . . . CLAUSE
-            . . . . COMPARE < Bool
+            . . . . COMPARE clt Bool
             . . . . . IDENTIFIER LOCALVAR a String
             . . . . . IDENTIFIER LOCALVAR b String
             . . . . RETURN
             . . . . . STRINGLIT a is less than b String
             . . . CLAUSE
-            . . . . COMPARE > Bool
+            . . . . COMPARE cgt Bool
             . . . . . IDENTIFIER LOCALVAR a String
             . . . . . IDENTIFIER LOCALVAR b String
             . . . . RETURN
@@ -842,13 +842,13 @@ class TypeCheck {
             . FUNCTION main (Real,Real)->String
             . . IF
             . . . CLAUSE
-            . . . . COMPARE < Bool
+            . . . . COMPARE clt Bool
             . . . . . IDENTIFIER LOCALVAR a Real
             . . . . . IDENTIFIER LOCALVAR b Real
             . . . . RETURN
             . . . . . STRINGLIT a is less than b String
             . . . CLAUSE
-            . . . . COMPARE > Bool
+            . . . . COMPARE cgt Bool
             . . . . . IDENTIFIER LOCALVAR a Real
             . . . . . IDENTIFIER LOCALVAR b Real
             . . . . RETURN
@@ -885,7 +885,7 @@ class TypeCheck {
             . . . . . . EQ Bool
             . . . . . . . IDENTIFIER LOCALVAR b Int
             . . . . . . . INTLIT 2 Int
-            . . . . . COMPARE < Bool
+            . . . . . COMPARE clt Bool
             . . . . . . IDENTIFIER LOCALVAR a Int
             . . . . . . INTLIT 0 Int
             . . . . RETURN
@@ -968,7 +968,7 @@ class TypeCheck {
             . . . . INTLIT 10 Int
             . . . ASSIGN
             . . . . IDENTIFIER LOCALVAR i Int
-            . . . . BINARYOP + Int
+            . . . . BINARYOP add Int
             . . . . . IDENTIFIER LOCALVAR i Int
             . . . . . INTLIT 1 Int
             . . RETURN
