@@ -25,7 +25,7 @@ class AstElvis(
         if (lhs.type !is NullableType)
             return TcError(lhs.location, "Not a nullable type for elvis operator: ${lhs.type}")
 
-        if (!lhs.type.isAssignCompatible(rhs.type))
+        if (!lhs.type.isAssignableFrom(rhs.type))
             return TcError(rhs.location, "Incompatible types for elvis operator ${lhs.type} and ${rhs.type}")
 
         return TcElvis(location, rhs.type, lhs, rhs)

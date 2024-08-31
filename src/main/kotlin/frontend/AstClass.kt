@@ -16,9 +16,8 @@ class AstClass(
 ) : AstBlock(location, parent) {
 
     val superClass = resolveSuperClass(parent)
-    val type = makeClassType(name, this, superClass, isAbstract)
+    val type = makeClassType(name, superClass, isAbstract)
     val symbol = SymbolTypeName(location, name, type)
-    lateinit var tcClass: TcClass
 
     init {
         parent.add(symbol)
@@ -48,58 +47,49 @@ class AstClass(
             Log.error(symbol.location, "duplicate symbol: $symbol   ${symbol.javaClass} ${duplicate.javaClass}")
         symbolTable[symbol.name] = symbol
 
-        // Add fields and methods to the class type
         if (symbol is SymbolField) {
-            if (symbol.offset==Symbol.UNDEFINED_OFFSET)
-                symbol.offset = type.fields.size
-            else if (symbol.offset != type.fields.size)
-                Log.error(symbol.location, "Conflict on offset : $symbol: $type ${symbol.offset} ${type.fields.size}")
-            type.fields += symbol
-        }
-
-        if (symbol is SymbolFunctionName) {
-            if (symbol.funcNo==Symbol.UNDEFINED_OFFSET)
-                symbol.funcNo = type.methods.size
-            else if (symbol.funcNo != type.methods.size)
-                Log.error(symbol.location, "Conflict on offset : $symbol $type ${symbol.funcNo} ${type.methods.size}")
-            println("Adding method $symbol to $type  offset ${symbol.funcNo} ${type.methods.size}")
-            type.methods += symbol
-
-        }
+            symbol.offset = type.numFields++
+            type.symbolTable[symbol.name] = symbol
+        } else if (symbol is SymbolFunctionName)
+            type.symbolTable[symbol.name] = symbol
     }
 
 
     override fun identifyFunctions(context: AstBlock) {
         // resolve the types of the parameters. Add local variables to the symbol table
-        type.constructorParameters = parameters.map { it.resolveParameter(context) }
-        type.constructorParameters.filterIsInstance<SymbolLocalVar>().forEach { add(it) }
+        val constructorParameters = parameters.map { it.resolveParameter(context) }
+        constructorParameters.filterIsInstance<SymbolLocalVar>().forEach { add(it) }
         val thisSymbol = SymbolLocalVar(location, "this", type, false)
         add(thisSymbol)
 
         // If we have a superclass then check the arguments to the super class constructor
         val superclassConstructorArgs = superClassConstructorArgs.map { it.typeCheck(this) }
         if (superClass != null) {
-            val superclassParams = superClass.constructorParameters
+            val superclassParams = superClass.tcClass.constructorParameters
             checkArgListSymbol(location, superclassParams, superclassConstructorArgs)
 
             // import all fields and methods from the super class into the current class
-            println(superClass.fields)
-            superClass.fields.forEach { add(it) }
-            superClass.methods.forEach { add(it) }
+            for(sym in superClass.symbolTable.values)
+                if (sym is SymbolFunctionName)
+                    add(sym.clone())
+                else
+                    add(sym)
+
+            for (method in superClass.methods)
+                type.methods += method
         }
 
-        tcClass = TcClass(
-            location, name, type, thisSymbol,
-            superClass, superclassConstructorArgs
-        )
+        type.tcClass = TcClass(
+            location, name, type, constructorParameters, thisSymbol,
+            superClass, superclassConstructorArgs)
 
         // Add the rest of our parameters to the symbol table
-        type.constructorParameters.forEach { if (it !is SymbolLocalVar) add(it) }
+        constructorParameters.forEach { if (it !is SymbolLocalVar) add(it) }
 
         // Resolve any other fields in the class and complete building the constructor
         for (stmt in body)
             when (stmt) {
-                is AstDeclaration -> tcClass.add(stmt.typeCheck(this))
+                is AstDeclaration -> type.tcClass.add(stmt.typeCheck(this))
                 is AstBlock -> stmt.identifyFunctions(this)
                 else -> error("Unexpected statement in class ${stmt.javaClass}")
             }
@@ -114,6 +104,8 @@ class AstClass(
         for ((index, field) in fields.withIndex()) {
             field.offset = index
         }
+
+        println("Class $name symbol table ${symbolTable.values}")
     }
 
     private fun resolveSuperClass(context: AstBlock) : ClassType? {
@@ -136,16 +128,14 @@ class AstClass(
     override fun typeCheck(context: AstBlock) : TcClass {
         for (statement in body)
             if (statement !is AstDeclaration)
-                tcClass.add(statement.typeCheck(this))
+                type.tcClass.add(statement.typeCheck(this))
 
-        if (!isAbstract) {
-            getMethods()
-                .forEach {
-                    if (it.methodKind == MethodKind.ABSTRACT_METHOD)
-                        Log.error(it.location, "No override provided for abstract function '$it'")
-                }
-        }
-        return tcClass
+        if (!isAbstract)
+            for (function in symbolTable.values.filterIsInstance<SymbolFunctionName>())
+                for(overload in function.overloads)
+                    if (overload.methodKind== MethodKind.ABSTRACT_METHOD)
+                        Log.error(function.location, "Abstract method ${function.name} is not implemented")
+        return type.tcClass
     }
 }
 
@@ -153,6 +143,7 @@ class TcClass(
     location: Location,
     val name: String,
     val type: ClassType,
+    val constructorParameters : List<Symbol>,
     private val thisSymbol : SymbolLocalVar,
     private val superClass: ClassType?,
     private val superClassConstructorArgs: List<TcExpr>,
@@ -177,7 +168,7 @@ class TcClass(
         currentFunction.thisReg = currentFunction.getReg(thisSymbol)
         currentFunction.instrMove( currentFunction.getThis(), allMachineRegs[argno++])
 
-        for (param in type.constructorParameters)
+        for (param in constructorParameters)
             when (param) {
                 is SymbolLocalVar -> currentFunction.instrMove( currentFunction.getReg(param), allMachineRegs[argno++])
                 is SymbolField -> currentFunction.instrStore(allMachineRegs[argno++], currentFunction.getThis(), param )

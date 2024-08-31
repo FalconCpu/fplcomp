@@ -13,7 +13,7 @@ class AstExprStmt(
 
     override fun typeCheck(context: AstBlock) : TcStmt {
         val expr = expr.typeCheck(context)
-        if (expr !is TcFuncCall)
+        if (expr !is TcFuncCall && expr.type!= ErrorType)
             Log.warning(location, "Expression has no effect")
         return TcExprStmt(location, expr)
     }

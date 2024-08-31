@@ -1,7 +1,7 @@
 package frontend
 
 sealed class AstBlock(location: Location, val parent:AstBlock?) : AstStmt(location) {
-    protected val symbolTable = mutableMapOf<String, Symbol>()
+    val symbolTable = mutableMapOf<String, Symbol>()
     protected val body = mutableListOf<AstStmt>()
 
     // --------------------------------------------------------
@@ -19,16 +19,6 @@ sealed class AstBlock(location: Location, val parent:AstBlock?) : AstStmt(locati
 
     fun lookupNoHierarchy(name: String): Symbol? = symbolTable[name]
 
-    fun replace(symbol: Symbol) {
-        val old = symbolTable[symbol.name]
-        check(old!=null)
-        if (symbol is SymbolFunctionName) {
-            check(old is SymbolFunctionName)
-            symbol.funcNo = old.funcNo
-        }
-        symbolTable[symbol.name] = symbol
-    }
-
     fun import(other:AstBlock) {
         symbolTable.clear()
         for (sym in other.symbolTable.values)
@@ -39,8 +29,6 @@ sealed class AstBlock(location: Location, val parent:AstBlock?) : AstStmt(locati
         val locals = symbolTable.values.filterIsInstance<SymbolLocalVar>()
         locals.forEach { symbolTable.remove(it.name) }
     }
-
-    fun getMethods() = symbolTable.values.filterIsInstance<SymbolFunctionName>()
 
     fun getFields() = symbolTable.values.filterIsInstance<SymbolField>()
 

@@ -1,8 +1,8 @@
 package backend
 
 import frontend.SymbolField
-import frontend.SymbolFunctionName
 import frontend.SymbolGlobalVar
+import frontend.TcFunction
 import frontend.currentFunction
 
 open class Function(val name:String, isStdLib:Boolean=false) {
@@ -115,7 +115,7 @@ open class Function(val name:String, isStdLib:Boolean=false) {
         return ret
     }
 
-    fun instrVirtCall(instance:Reg, target: SymbolFunctionName) : Reg {
+    fun instrVirtCall(instance:Reg, target: TcFunction) : Reg {
         add(InstrVirtCall(instance, target))
         val ret = newTemp()
         add(InstrMov(ret, regResult))

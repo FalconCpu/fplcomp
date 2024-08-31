@@ -6,7 +6,7 @@ sealed class Type (val name:String) {
     /**
      * Test to see if a value of type rhsType can be assigned to a variable of this type
      */
-    fun isAssignCompatible(rhsType: Type) : Boolean {
+    fun isAssignableFrom(rhsType: Type) : Boolean {
 
         if (this == rhsType) return true
 
@@ -14,7 +14,7 @@ sealed class Type (val name:String) {
 
         if (this is NullableType && rhsType is NullType) return true // Allow null to be assigned to T?
 
-        if (this is NullableType) return base.isAssignCompatible(rhsType) // Allow T to be assigned to T?
+        if (this is NullableType) return base.isAssignableFrom(rhsType) // Allow T to be assigned to T?
 
         if (this is ClassType && rhsType is ClassType) return rhsType.isSubTypeOf(this)
 
@@ -22,7 +22,7 @@ sealed class Type (val name:String) {
     }
 
     fun checkAssignCompatible(location: Location, type: Type) {
-        if (!isAssignCompatible(type))
+        if (!isAssignableFrom(type))
             Log.error(location, "Got type $type when expecting $this")
     }
 
@@ -99,11 +99,12 @@ fun makeFunctionType(paramTypes: List<Type>, retType: Type): FunctionType {
 //                           Class Types
 // ---------------------------------------------------------------------
 
-class ClassType(name: String, val superClass: ClassType?, val isAbstract: Boolean) : Type(name) {
-    val fields = mutableListOf<SymbolField>()
-    val methods = mutableListOf<SymbolFunctionName>()
+class ClassType(name: String, val superClass: ClassType?, val isAbstract:Boolean) : Type(name) {
+    lateinit var tcClass:TcClass
+    val symbolTable = mutableMapOf<String,Symbol>()
     lateinit var constructor : backend.Function
-    lateinit var constructorParameters : List<Symbol>
+    val methods = mutableListOf<TcFunction>()
+    var numFields = 0
 
     fun isSubTypeOf(superclass: ClassType): Boolean {
         if (this == superclass) return true
@@ -111,18 +112,12 @@ class ClassType(name: String, val superClass: ClassType?, val isAbstract: Boolea
         return superClass.isSubTypeOf(superclass)
     }
 
-    fun lookup(name: String) : Symbol? = fields.find { it.name == name } ?: methods.find { it.name == name }
-
-    fun override(symbolFunctionName: SymbolFunctionName) {
-        methods.replaceAll {
-            if (it.name==symbolFunctionName.name) symbolFunctionName  else it
-        }
-    }
+    fun lookup(name: String) : Symbol? = symbolTable[name]
 }
 
 val allClassTypes = mutableListOf<ClassType>()
 
-fun makeClassType(name: String, definition: AstClass, superClass: ClassType?, isAbstract: Boolean): ClassType {
+fun makeClassType(name: String, superClass: ClassType?, isAbstract: Boolean): ClassType {
     val new = ClassType(name, superClass, isAbstract)
     allClassTypes.add(new)
     return new

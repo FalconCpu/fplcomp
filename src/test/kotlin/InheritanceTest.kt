@@ -53,7 +53,7 @@ class InheritanceTest {
             TOP
             . CLASS Animal
             . CLASS Dog
-            . FUNCTION main ()->Unit
+            . FUNCTION main()->Unit
             . . DECL LOCALVAR a Animal
             . . . CONSTRUCTOR Dog
             . . . . STRINGLIT Fido String
@@ -96,7 +96,7 @@ class InheritanceTest {
             TOP
             . CLASS Animal
             . CLASS Dog
-            . FUNCTION main (Dog)->String
+            . FUNCTION main(Dog)->String
             . . RETURN
             . . . MEMBERACCESS name String
             . . . . IDENTIFIER LOCALVAR d Dog
@@ -140,7 +140,7 @@ class InheritanceTest {
             TOP
             . CLASS Animal
             . CLASS Dog
-            . FUNCTION main (Animal)->String
+            . FUNCTION main(Animal)->String
             . . IF
             . . . CLAUSE
             . . . . IS Dog
@@ -174,7 +174,7 @@ class InheritanceTest {
             TOP
             . CLASS Animal
             . CLASS Dog
-            . FUNCTION main (Animal)->String
+            . FUNCTION main(Animal)->String
             . . IF
             . . . CLAUSE
             . . . . IS Dog
@@ -225,7 +225,7 @@ class InheritanceTest {
             TOP
             . CLASS Animal
             . CLASS Dog
-            . FUNCTION main (Animal,Int)->String
+            . FUNCTION main(Animal,Int)->String
             . . IF
             . . . CLAUSE
             . . . . AND Bool
@@ -261,7 +261,7 @@ class InheritanceTest {
             TOP
             . CLASS Animal
             . CLASS Dog
-            . FUNCTION main (Animal?)->String
+            . FUNCTION main(Animal?)->String
             . . IF
             . . . CLAUSE
             . . . . IS Dog
@@ -293,13 +293,13 @@ class InheritanceTest {
         val expected = """
             TOP
             . CLASS Animal
-            . . FUNCTION Animal/speak ()->String
+            . . FUNCTION Animal/speak()->String
             . . . RETURN
             . . . . STRINGLIT I am an animal String
             . CLASS Dog
-            . FUNCTION main (Dog)->String
+            . FUNCTION main(Dog)->String
             . . RETURN
-            . . . FUNCCALL Animal/speak String
+            . . . FUNCCALL Animal/speak() String
             . . . . IDENTIFIER LOCALVAR d Dog
 
         """.trimIndent()
@@ -347,16 +347,16 @@ class InheritanceTest {
         val expected = """
             TOP
             . CLASS Animal
-            . . FUNCTION Animal/speak ()->String
+            . . FUNCTION Animal/speak()->String
             . . . RETURN
             . . . . STRINGLIT I am an animal String
             . CLASS Dog
-            . . FUNCTION Dog/speak ()->String
+            . . FUNCTION Dog/speak()->String
             . . . RETURN
             . . . . STRINGLIT I am a dog String
-            . FUNCTION main (Dog)->String
+            . FUNCTION main(Dog)->String
             . . RETURN
-            . . . FUNCCALL Dog/speak String
+            . . . FUNCCALL Dog/speak() String
             . . . . IDENTIFIER LOCALVAR d Dog
 
         """.trimIndent()
@@ -405,18 +405,18 @@ class InheritanceTest {
         val expected = """
             TOP
             . CLASS Animal
-            . . FUNCTION Animal/speak ()->String
+            . . FUNCTION Animal/speak()->String
             . CLASS Dog
-            . . FUNCTION Dog/speak ()->String
+            . . FUNCTION Dog/speak()->String
             . . . RETURN
             . . . . STRINGLIT I am a dog String
-            . FUNCTION main ()->Unit
+            . FUNCTION main()->Unit
             . . DECL LOCALVAR a Dog
             . . . CONSTRUCTOR Dog
             . . . . STRINGLIT Fred String
             . . . . STRINGLIT Simon String
             . . EXPR
-            . . . FUNCCALL Dog/speak String
+            . . . FUNCCALL Dog/speak() String
             . . . . IDENTIFIER LOCALVAR a Dog
 
         """.trimIndent()
@@ -438,7 +438,7 @@ class InheritanceTest {
         """.trimIndent()
 
         val expected = """
-            test.txt 2.18:- No override provided for abstract function 'speak'
+            test.txt 2.18:- Abstract method speak is not implemented
         """.trimIndent()
 
         runTest(prog, expected)
@@ -483,21 +483,21 @@ class InheritanceTest {
         val expected = """
             TOP
             . CLASS Animal
-            . . FUNCTION Animal/greet ()->Unit
+            . . FUNCTION Animal/greet()->Unit
             . . . PRINT
             . . . . IDENTIFIER FIELD name String
             . . . . STRINGLIT  says grunt String
             . CLASS Cat
-            . . FUNCTION Cat/greet ()->Unit
+            . . FUNCTION Cat/greet()->Unit
             . . . PRINT
             . . . . IDENTIFIER FIELD name String
             . . . . STRINGLIT  says meow String
-            . FUNCTION main ()->Unit
+            . FUNCTION main()->Unit
             . . DECL LOCALVAR cat Cat
             . . . CONSTRUCTOR Cat
             . . . . STRINGLIT Whiskers String
             . . EXPR
-            . . . FUNCCALL Cat/greet Unit
+            . . . FUNCCALL Cat/greet() Unit
             . . . . IDENTIFIER LOCALVAR cat Cat
 
         """.trimIndent()

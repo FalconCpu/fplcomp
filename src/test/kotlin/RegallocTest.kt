@@ -21,6 +21,26 @@ class RegallocTest {
         """.trimIndent()
 
         val expected = """
+            Function <top>
+            start
+            call main(Array<Int>)
+            end
+
+            Function main(Array<Int>)
+            start
+            mov %8, 0
+            ldw %2, %1->size
+            mov %3, 0
+            jmp @2
+            @1:
+            ldw %4, %1[%3]
+            add %8, %8, %4
+            add %3, %3, 1
+            @2:
+            blt, %3, %2, @1
+            end
+
+
         """.trimIndent()
 
         runTest(prog, expected)

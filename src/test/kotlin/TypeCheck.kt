@@ -86,7 +86,7 @@ class TypeCheck {
 
         val expected = """
             TOP
-            . FUNCTION count (Int)->Unit
+            . FUNCTION count(Int)->Unit
             . . DECL LOCALVAR sum Int
             . . . INTLIT 0 Int
             . . DECL LOCALVAR count Int
@@ -118,14 +118,14 @@ class TypeCheck {
 
         val expected = """
             TOP
-            . FUNCTION double (Int)->Int
+            . FUNCTION double(Int)->Int
             . . RETURN
             . . . BINARYOP mul Int
             . . . . IDENTIFIER LOCALVAR a Int
             . . . . INTLIT 2 Int
-            . FUNCTION main ()->Unit
+            . FUNCTION main()->Unit
             . . DECL LOCALVAR x Int
-            . . . FUNCCALL double Int
+            . . . FUNCCALL double(Int) Int
             . . . . INTLIT 10 Int
 
         """.trimIndent()
@@ -144,7 +144,8 @@ class TypeCheck {
         """.trimIndent()
 
         val expected = """
-            test.txt 5.13:- Got 2 arguments when expecting 1
+            test.txt 5.13:- No functions match double(Int, Int). Possibilities are:-
+                              double(Int)
         """.trimIndent()
 
         runTest(prog, expected)
@@ -161,7 +162,8 @@ class TypeCheck {
         """.trimIndent()
 
         val expected = """
-            test.txt 5.20:- Got type String when expecting Int
+            test.txt 5.13:- No functions match double(String). Possibilities are:-
+                              double(Int)
         """.trimIndent()
 
         runTest(prog, expected)
@@ -181,7 +183,7 @@ class TypeCheck {
 
         val expected = """
             TOP
-            . FUNCTION sum (Array<Int>)->Int
+            . FUNCTION sum(Array<Int>)->Int
             . . DECL LOCALVAR sum Int
             . . . INTLIT 0 Int
             . . DECL LOCALVAR count Int
@@ -251,7 +253,7 @@ class TypeCheck {
         """.trimIndent()
 
         val expected = """
-            test.txt 2.5:- Function foo should return a value of type Int
+            test.txt 2.5:- Function foo() should return a value of type Int
         """.trimIndent()
 
         runTest(prog, expected)
@@ -302,7 +304,7 @@ class TypeCheck {
             . CLASS Cat
             . . DECL FIELD legs Int
             . . . INTLIT 4 Int
-            . FUNCTION main ()->Int
+            . FUNCTION main()->Int
             . . DECL LOCALVAR cat Cat
             . . . CONSTRUCTOR Cat
             . . . . STRINGLIT Fluffy String
@@ -393,7 +395,7 @@ class TypeCheck {
         """.trimIndent()
 
         val expected = """
-            test.txt 2.13:- Got type 'Int' when expecting a function
+            test.txt 2.13:- Not a function to call
         """.trimIndent()
 
         runTest(prog, expected)
@@ -412,12 +414,12 @@ class TypeCheck {
 
         val expected = """
             TOP
-            . FUNCTION foo ()->Unit
+            . FUNCTION foo()->Unit
             . . DECL LOCALVAR x Int
             . . . INTLIT 6 Int
-            . FUNCTION main ()->Unit
+            . FUNCTION main()->Unit
             . . EXPR
-            . . . FUNCCALL foo Unit
+            . . . FUNCCALL foo() Unit
             
         """.trimIndent()
 
@@ -436,7 +438,7 @@ class TypeCheck {
             TOP
             . DECL GLOBALVAR x Int
             . . INTLIT 5 Int
-            . FUNCTION main ()->Int
+            . FUNCTION main()->Int
             . . RETURN
             . . . IDENTIFIER GLOBALVAR x Int
 
@@ -495,19 +497,19 @@ class TypeCheck {
         val expected = """
             TOP
             . CLASS Cat
-            . . FUNCTION Cat/timePasses ()->Unit
+            . . FUNCTION Cat/timePasses()->Unit
             . . . ASSIGN
             . . . . IDENTIFIER FIELD age Int
             . . . . BINARYOP add Int
             . . . . . IDENTIFIER FIELD age Int
             . . . . . INTLIT 1 Int
-            . FUNCTION main ()->Int
+            . FUNCTION main()->Int
             . . DECL LOCALVAR c Cat
             . . . CONSTRUCTOR Cat
             . . . . STRINGLIT Fluffy String
             . . . . INTLIT 2 Int
             . . EXPR
-            . . . FUNCCALL Cat/timePasses Unit
+            . . . FUNCCALL Cat/timePasses() Unit
             . . . . IDENTIFIER LOCALVAR c Cat
             . . RETURN
             . . . MEMBERACCESS age Int
@@ -557,7 +559,7 @@ class TypeCheck {
             . . . BINARYOP mul Int
             . . . . IDENTIFIER LOCALVAR age Int
             . . . . INTLIT 365 Int
-            . FUNCTION main ()->Int
+            . FUNCTION main()->Int
             . . DECL LOCALVAR c Cat
             . . . CONSTRUCTOR Cat
             . . . . STRINGLIT Fluffy String
@@ -586,7 +588,7 @@ class TypeCheck {
 
         val expected = """
             TOP
-            . FUNCTION main (Bool)->Int
+            . FUNCTION main(Bool)->Int
             . . IF
             . . . CLAUSE
             . . . . NOT Bool
@@ -611,7 +613,7 @@ class TypeCheck {
 
         val expected = """
             TOP
-            . FUNCTION main (Int)->Int
+            . FUNCTION main(Int)->Int
             . . RETURN
             . . . NEG Int
             . . . . IDENTIFIER LOCALVAR a Int
@@ -630,7 +632,7 @@ class TypeCheck {
 
         val expected = """
             TOP
-            . FUNCTION main (Real)->Real
+            . FUNCTION main(Real)->Real
             . . RETURN
             . . . NEG Real
             . . . . IDENTIFIER LOCALVAR a Real
@@ -702,7 +704,7 @@ class TypeCheck {
         val expected = """
             TOP
             . CLASS Cat
-            . FUNCTION getName (Cat)->String
+            . FUNCTION getName(Cat)->String
             . . RETURN
             . . . ELVIS String
             . . . . MEMBERACCESS name String?
@@ -758,7 +760,7 @@ class TypeCheck {
 
         val expected = """
             TOP
-            . FUNCTION main (Int)->String
+            . FUNCTION main(Int)->String
             . . RETURN
             . . . IF_EXPR String
             . . . . EQ Bool
@@ -786,7 +788,7 @@ class TypeCheck {
 
         val expected = """
             TOP
-            . FUNCTION main (String,String)->String
+            . FUNCTION main(String,String)->String
             . . IF
             . . . CLAUSE
             . . . . COMPARE clt Bool
@@ -839,7 +841,7 @@ class TypeCheck {
 
         val expected = """
             TOP
-            . FUNCTION main (Real,Real)->String
+            . FUNCTION main(Real,Real)->String
             . . IF
             . . . CLAUSE
             . . . . COMPARE clt Bool
@@ -874,7 +876,7 @@ class TypeCheck {
 
         val expected = """
             TOP
-            . FUNCTION main (Int,Int)->String
+            . FUNCTION main(Int,Int)->String
             . . IF
             . . . CLAUSE
             . . . . OR Bool
@@ -912,7 +914,7 @@ class TypeCheck {
         val expected = """  
             TOP
             . CLASS Cat
-            . FUNCTION main ()->Int
+            . FUNCTION main()->Int
             . . DECL LOCALVAR c Cat
             . . . CAST Cat
             . . . . INTLIT 123456 Int
@@ -937,7 +939,7 @@ class TypeCheck {
         val expected = """
             TOP
             . ENUM Color
-            . FUNCTION main ()->Color
+            . FUNCTION main()->Color
             . . RETURN
             . . . IDENTIFIER LITERAL RED Color
 
@@ -959,7 +961,7 @@ class TypeCheck {
 
         val expected = """  
             TOP
-            . FUNCTION main ()->Int
+            . FUNCTION main()->Int
             . . DECL LOCALVAR i Int
             . . . INTLIT 0 Int
             . . REPEAT
@@ -988,7 +990,7 @@ class TypeCheck {
 
         val expected = """  
             TOP
-            . FUNCTION main ()->Array<Int>
+            . FUNCTION main()->Array<Int>
             . . RETURN
             . . . ARRAYCONSTRUCTOR Array<Int>
             . . . . INTLIT 10 Int
@@ -1007,7 +1009,7 @@ class TypeCheck {
 
         val expected = """  
             TOP
-            . FUNCTION main ()->Array<Int>
+            . FUNCTION main()->Array<Int>
             . . RETURN
             . . . ARRAYOF Array<Int>
             . . . . INTLIT 1 Int
@@ -1059,7 +1061,7 @@ class TypeCheck {
 
         val expected = """
             TOP
-            . FUNCTION main ()->Unit
+            . FUNCTION main()->Unit
             . . PRINT
             . . . STRINGLIT Hello, world! String
 
@@ -1078,7 +1080,7 @@ class TypeCheck {
 
         val expected = """
             TOP
-            . FUNCTION main ()->Unit
+            . FUNCTION main()->Unit
             . . FOR_RANGE i
             . . . INTLIT 1 Int
             . . . INTLIT 10 Int

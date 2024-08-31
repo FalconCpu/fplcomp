@@ -20,10 +20,10 @@ class IrgenTest {
         val expected = """
             Function <top>
             start
-            call main
+            call main()
             end
 
-            Function main
+            Function main()
             start
             mov t0, 10
             mov x, t0
@@ -47,10 +47,10 @@ class IrgenTest {
         val expected = """
             Function <top>
             start
-            call main
+            call main()
             end
 
-            Function main
+            Function main()
             start
             mov t0, 10
             mov x, t0
@@ -78,10 +78,10 @@ class IrgenTest {
         val expected = """
             Function <top>
             start
-            call main
+            call main()
             end
 
-            Function main
+            Function main()
             start
             mov t0, 0
             mov x, t0
@@ -114,10 +114,10 @@ class IrgenTest {
         val expected = """
             Function <top>
             start
-            call main
+            call main()
             end
 
-            Function main
+            Function main()
             start
             lea t0, "Hello, world!"
             mov %1, t0
@@ -154,10 +154,10 @@ class IrgenTest {
         val expected = """
             Function <top>
             start
-            call main
+            call main()
             end
 
-            Function sum
+            Function sum(Array<Int>)
             start
             mov array, %1
             mov t0, 0
@@ -182,7 +182,7 @@ class IrgenTest {
             @0:
             end
 
-            Function main
+            Function main()
             start
             mov %1, 5
             mov %2, 4
@@ -200,7 +200,7 @@ class IrgenTest {
             stw t5, t0[4]
             mov arr, t0
             mov %1, arr
-            call sum
+            call sum(Array<Int>)
             mov t6, %8
             mov %1, t6
             call StdlibPrintInt
@@ -234,10 +234,10 @@ class IrgenTest {
         val expected = """
             Function <top>
             start
-            call main
+            call main()
             end
 
-            Function compare_to_10
+            Function compare_to_10(Int)
             start
             mov x, %1
             mov t0, 5
@@ -245,7 +245,7 @@ class IrgenTest {
             jmp @3
             @3:
             jmp @4
-            @1:
+            jmp @1
             @2:
             mov %1, x
             call StdlibPrintInt
@@ -266,14 +266,14 @@ class IrgenTest {
             @0:
             end
 
-            Function main
+            Function main()
             start
             mov t0, 0
             mov count, t0
             jmp @2
             @1:
             mov %1, count
-            call compare_to_10
+            call compare_to_10(Int)
             mov t1, %8
             mov t2, 1
             add t3, count, t2
@@ -303,10 +303,10 @@ class IrgenTest {
         val expected = """
             Function <top>
             start
-            call main
+            call main()
             end
 
-            Function main
+            Function main()
             start
             mov t0, 1
             mov t1, 10
@@ -344,10 +344,10 @@ class IrgenTest {
         val expected = """
             Function <top>
             start
-            call main
+            call main()
             end
 
-            Function Cat/greet
+            Function Cat/greet()
             start
             mov this, %1
             ldw t0, this->name
@@ -360,7 +360,7 @@ class IrgenTest {
             @0:
             end
 
-            Function main
+            Function main()
             start
             lea %1, Cat
             call StdlibMallocObject
@@ -374,7 +374,7 @@ class IrgenTest {
             mov t3, %8
             mov cat, t0
             mov %1, cat
-            call Cat/greet
+            call Cat/greet()
             mov t4, %8
             @0:
             end
@@ -394,7 +394,7 @@ class IrgenTest {
     }
 
     @Test
-    fun methodCalls3(){
+    fun methodCalls3() {
         val prog = """
            class Animal(val name:String)
                 open fun greet()
@@ -412,10 +412,10 @@ class IrgenTest {
         val expected = """
             Function <top>
             start
-            call main
+            call main()
             end
 
-            Function Animal/greet
+            Function Animal/greet()
             start
             mov this, %1
             ldw t0, this->name
@@ -428,7 +428,7 @@ class IrgenTest {
             @0:
             end
 
-            Function Cat/greet
+            Function Cat/greet()
             start
             mov this, %1
             ldw t0, this->name
@@ -441,7 +441,7 @@ class IrgenTest {
             @0:
             end
 
-            Function main
+            Function main()
             start
             lea %1, Cat
             call StdlibMallocObject
@@ -453,7 +453,7 @@ class IrgenTest {
             mov t2, %8
             mov cat, t0
             mov %1, cat
-            virtcall cat, greet
+            virtcall cat, Cat/greet()
             mov t3, %8
             @0:
             end
@@ -483,7 +483,7 @@ class IrgenTest {
     }
 
     @Test
-    fun boolAndTest(){
+    fun boolAndTest() {
         val prog = """
            fun main(a:Int, b:Int) -> Bool
                val bool = (a = 1) and (b = 2)
@@ -493,10 +493,10 @@ class IrgenTest {
         val expected = """
             Function <top>
             start
-            call main
+            call main(Int,Int)
             end
 
-            Function main
+            Function main(Int,Int)
             start
             mov a, %1
             mov b, %2
@@ -521,7 +521,7 @@ class IrgenTest {
     }
 
     @Test
-    fun boolOrTest(){
+    fun boolOrTest() {
         val prog = """
            fun main(a:Int, b:Int) -> Bool
                val bool = (a = 1) or (b = 2)
@@ -531,10 +531,10 @@ class IrgenTest {
         val expected = """
             Function <top>
             start
-            call main
+            call main(Int,Int)
             end
 
-            Function main
+            Function main(Int,Int)
             start
             mov a, %1
             mov b, %2
@@ -559,7 +559,7 @@ class IrgenTest {
     }
 
     @Test
-    fun negTest(){
+    fun negTest() {
         val prog = """
            fun main(a:Int) -> Int
                return -a
@@ -568,10 +568,10 @@ class IrgenTest {
         val expected = """
             Function <top>
             start
-            call main
+            call main(Int)
             end
 
-            Function main
+            Function main(Int)
             start
             mov a, %1
             sub t0, 0, a
@@ -587,7 +587,7 @@ class IrgenTest {
     }
 
     @Test
-    fun arrayConstructor(){
+    fun arrayConstructor() {
         val prog = """
            fun main(size:Int) -> Array<Int>
                return Array<Int>(size)
@@ -596,10 +596,10 @@ class IrgenTest {
         val expected = """
             Function <top>
             start
-            call main
+            call main(Int)
             end
 
-            Function main
+            Function main(Int)
             start
             mov size, %1
             mov %1, size
@@ -617,7 +617,7 @@ class IrgenTest {
     }
 
     @Test
-    fun compareRvalue(){
+    fun compareRvalue() {
         val prog = """
            fun main(a:Int, b:Int) -> Bool
                return a<=b
@@ -626,10 +626,10 @@ class IrgenTest {
         val expected = """
             Function <top>
             start
-            call main
+            call main(Int,Int)
             end
 
-            Function main
+            Function main(Int,Int)
             start
             mov a, %1
             mov b, %2
@@ -647,7 +647,7 @@ class IrgenTest {
 
 
     @Test
-    fun globalVar(){
+    fun globalVar() {
         val prog = """
            var count = 0
             
@@ -661,10 +661,10 @@ class IrgenTest {
             start
             mov t0, 0
             stw t0, GLOBAL->count
-            call main
+            call main()
             end
 
-            Function main
+            Function main()
             start
             ldw t0, GLOBAL->count
             mov t1, 1
@@ -683,4 +683,77 @@ class IrgenTest {
     }
 
 
+    @Test
+    fun fibonacciTest() {
+        val prog = """
+            fun fib(n:Int) -> Int   
+                if n <= 2
+                    return n
+                return fib(n - 1) + fib(n - 2)
+
+            fun main()
+                for i in 1 to 10
+                    println fib(i)
+            """.trimIndent()
+
+        val expected = """
+            Function <top>
+            start
+            call main()
+            end
+
+            Function fib(Int)
+            start
+            mov n, %1
+            mov t0, 2
+            ble, n, t0, @2
+            jmp @3
+            @3:
+            jmp @1
+            @2:
+            mov %8, n
+            jmp @0
+            jmp @1
+            @1:
+            mov t1, 1
+            sub t2, n, t1
+            mov %1, t2
+            call fib(Int)
+            mov t3, %8
+            mov t4, 2
+            sub t5, n, t4
+            mov %1, t5
+            call fib(Int)
+            mov t6, %8
+            add t7, t3, t6
+            mov %8, t7
+            jmp @0
+            @0:
+            end
+
+            Function main()
+            start
+            mov t0, 1
+            mov t1, 10
+            mov i, t0
+            jmp @2
+            @1:
+            mov %1, i
+            call fib(Int)
+            mov t2, %8
+            mov %1, t2
+            call StdlibPrintInt
+            call StdlibNewline
+            add t3, i, 1
+            mov i, t3
+            @2:
+            ble, i, t1, @1
+            @0:
+            end
+
+
+            """.trimIndent()
+
+        runTest(prog, expected)
+    }
 }

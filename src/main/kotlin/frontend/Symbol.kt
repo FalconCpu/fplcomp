@@ -47,11 +47,14 @@ class SymbolGlobalVar(
 class SymbolFunctionName(
     location: Location,
     name: String,
-    type: Type,
-    val methodKind: MethodKind
-) : Symbol(location, name, type) {
-    lateinit var function : TcFunction
-    var funcNo = UNDEFINED_OFFSET;
+) : Symbol(location, name, UnitType) {
+    val overloads = mutableListOf<TcFunction>()
+
+    fun clone() : SymbolFunctionName {
+        val clone = SymbolFunctionName(location, name)
+        clone.overloads.addAll(overloads)
+        return clone
+    }
 }
 
 class SymbolTypeName(
@@ -73,7 +76,7 @@ class SymbolField(
     type: Type,
     val mutable : Boolean
 ) : Symbol(location, name, type) {
-    var offset = UNDEFINED_OFFSET;
+    var offset = UNDEFINED_OFFSET
 }
 
 // Symbol used to track smartcasts through member accesses

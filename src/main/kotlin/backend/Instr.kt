@@ -1,8 +1,8 @@
 package backend
 
 import frontend.SymbolField
-import frontend.SymbolFunctionName
 import frontend.SymbolGlobalVar
+import frontend.TcFunction
 
 sealed class Instr {
     var index = 0
@@ -105,8 +105,8 @@ class InstrCall(val target: Function) : Instr() {
     override fun toString() = "call $target"
 }
 
-class InstrVirtCall(val arg: Reg, val func: SymbolFunctionName) : Instr() {
-    override fun toString() = "virtcall $arg, $func"
+class InstrVirtCall(val arg: Reg, val target:TcFunction) : Instr() {
+    override fun toString() = "virtcall $arg, $target"
 }
 
 

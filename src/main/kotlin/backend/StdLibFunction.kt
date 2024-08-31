@@ -43,7 +43,7 @@ data object StdlibMallocArray : StdLibFunction("mallocArray") {
 data object StdlibMallocObject: StdLibFunction("mallocObject") {
     fun execute(arg: Value) : Value {
         val type = (arg as ClassRefValue).classRef
-        return ClassValue(arg.classRef, Array(type.fields.size){ UndefinedValue})
+        return ClassValue(arg.classRef, Array(type.numFields){ UndefinedValue})
     }
 }
 

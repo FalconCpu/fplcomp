@@ -28,31 +28,43 @@ class AstFunction (
     }
 
 
-    private fun checkOverride(context: AstBlock, newSymbol: SymbolFunctionName) {
-        check(methodOf!=null)
-        val overridenSymbol = methodOf.lookupNoHierarchy(newSymbol.name) ?:
-            return Log.error(location, "No method to override")
-        if (overridenSymbol !is SymbolFunctionName)
-            return Log.error(location, "Cannot override non-function")
-        if (overridenSymbol.methodKind == MethodKind.NONE)
-            return Log.error(location, "Cannot override closed method")
-        if (overridenSymbol.type != newSymbol.type)
-            return Log.error(location, "Type mismatch in overriding method. Got ${overridenSymbol.type} but expected ${newSymbol.type}")
-        context.replace(newSymbol)
-        methodOf.type.override(newSymbol)
+    private fun checkOverride(symbol: SymbolFunctionName,   function: TcFunction, methodOf: ClassType) {
+        val paramTypes = function.params.map { it.type }
+        val superclassMethod = symbol.overloads.find { it.exactMatchParams(paramTypes) }
+        if (superclassMethod == null)
+            return Log.error(location, "No function to override")
+        if (superclassMethod.methodKind == MethodKind.NONE)
+            Log.error(location, "Cannot override closed method")
+
+        function.methodId = superclassMethod.methodId
+        methodOf.methods[ function.methodId ] = function
+        symbol.overloads.replaceAll { if (it == superclassMethod) function else it }
+    }
+
+    private fun addFunctionToSymbol(symbol: SymbolFunctionName, function: TcFunction, methodOf: ClassType?) {
+        val paramTypes = function.params.map { it.type }
+        val duplicate = symbol.overloads.find { it.exactMatchParams(paramTypes) }
+        if (duplicate != null)
+            return Log.error(location, "Duplicate overload")
+        if (methodOf!=null) {
+            function.methodId = methodOf.methods.size
+            methodOf.methods += function
+        }
+        symbol.overloads.add(function)
     }
 
     override fun identifyFunctions(context: AstBlock) {
         val params = astParams.map { it.resolveParameter(context) }
+        val paramTypes = params.map { it.type }
         val retType = returnType?.resolveType(context) ?: UnitType
 
-        val funcType = makeFunctionType(params.map{it.type}, retType)
-        val symbol = SymbolFunctionName(location, name, funcType, methodKind)
+        val symbol = context.lookupNoHierarchy(name) ?: run {
+            SymbolFunctionName(location, name). also {context.add(it) }
+        }
 
-        if (methodKind==MethodKind.OVERRIDE_METHOD)
-            checkOverride(context, symbol)
-        else
-            context.add(symbol)
+        if (symbol !is SymbolFunctionName)
+            return Log.error(location, "Conflict between variable and function name")
+
 
         for(param in params)
             add(param)
@@ -63,10 +75,15 @@ class AstFunction (
             else
                 null
 
-        val funcName = if (methodOf!=null) "$methodOf/$name" else name
+        val nameWithTypes = name+paramTypes.joinToString(separator = ",", prefix = "(", postfix = ")")
+        val funcName = if (methodOf!=null) "$methodOf/$nameWithTypes" else nameWithTypes
 
-        tcFunction = TcFunction(location, funcName, params, retType, methodKind, thisSymbol, symbol)
-        symbol.function = tcFunction
+        tcFunction = TcFunction(location, funcName, params, retType, methodKind, thisSymbol)
+
+        if (methodKind==MethodKind.OVERRIDE_METHOD)
+            checkOverride(symbol, tcFunction, methodOf!!.type)
+        else
+            addFunctionToSymbol(symbol, tcFunction, methodOf?.type)
     }
 
     override fun typeCheck(context: AstBlock) : TcFunction {
@@ -90,23 +107,44 @@ enum class MethodKind {
 class TcFunction (
     location: Location,
     val name: String,
-    private val params: List<Symbol>,
+    val params: List<Symbol>,
     val returnType: Type,
     val methodKind: MethodKind,
-    val thisSymbol : SymbolLocalVar?,
-    private val functionSymbol : SymbolFunctionName
+    val thisSymbol : SymbolLocalVar?
 ) : TcBlock(location) {
 
     val backendFunction = Function(name)
+    var methodId = 0
 
     override fun dump(sb: StringBuilder, indent: Int) {
         sb.append(". ".repeat(indent))
-        sb.append("FUNCTION $name ${functionSymbol.type}\n")
+        sb.append("FUNCTION $name->$returnType\n")
         for (stmt in body)
             stmt.dump(sb, indent + 1)
     }
 
-    override fun toString() = backendFunction.name
+    override fun toString() = name
+
+    fun matchParams(args:List<Type>) : Boolean {
+        if (args.size != params.size)
+            return false
+
+        for (i in args.indices)
+            if (!params[i].type.isAssignableFrom(args[i]))
+                return false
+        return true
+    }
+
+    fun exactMatchParams(args:List<Type>) : Boolean {
+        if (args.size != params.size)
+            return false
+
+        for (i in args.indices)
+            if (params[i] != args[i])
+                return false
+        return true
+    }
+
 
     override fun codeGen() {
         val oldCurrentFunction = currentFunction
@@ -133,14 +171,6 @@ class TcFunction (
     }
 }
 
-fun checkArgList(location: Location, params:List<Type>, args:List<TcExpr>) {
-    val argTypes = args.map { it.type }
-    if (params.size != argTypes.size)
-        return Log.error(location, "Got ${argTypes.size} arguments when expecting ${params.size}")
-    for (index in args.indices) {
-        params[index].checkAssignCompatible(args[index].location, argTypes[index])
-    }
-}
 
 fun checkArgListSymbol(location: Location, params:List<Symbol>, args:List<TcExpr>) {
     val argTypes = args.map { it.type }

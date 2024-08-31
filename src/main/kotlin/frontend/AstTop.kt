@@ -66,7 +66,7 @@ class TcTop : TcBlock(nullLocation) {
         for(stmt in body)
             stmt.codeGen()
 
-        val main = allFunctions.find { it.name == "main" }
+        val main = allFunctions.find { it.name.startsWith("main(") }
         if (main != null)
             currentFunction.add(backend.InstrCall(main))
 

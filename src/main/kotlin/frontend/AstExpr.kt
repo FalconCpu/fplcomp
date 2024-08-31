@@ -15,9 +15,17 @@ sealed class AstExpr(location: Location) : Ast(location) {
         return TcError(location, "Not an lvalue")
     }
 
-    open fun typeCheckAllowTypeName(context: AstBlock) : TcExpr {
+    open fun typeCheckAllowType(context:AstBlock) : TcExpr {
         return typeCheck(context)
     }
+
+//    open fun evaluateAsTypeName(context: AstBlock) : Type? {
+//        return null
+//    }
+//
+//    open fun evaluateAsFunctionName(context: AstBlock) : List<TcFunction>? {
+//        return null
+//    }
 
 }
 
@@ -50,14 +58,5 @@ sealed class TcExpr(location: Location, val type: Type) : Tc(location){
             returns(true) implies (this@TcExpr is TcIdentifier)
         }
         return this is TcIdentifier && this.symbol is SymbolTypeName
-    }
-
-    fun isFunctionName() : SymbolFunctionName? {
-        if (this !is TcIdentifier)
-            return null
-        val symbol = this.symbol
-        if (symbol !is SymbolFunctionName)
-            return null
-        return symbol
     }
 }

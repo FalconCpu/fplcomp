@@ -37,7 +37,7 @@ class PathContextTest {
 
         val expected = """
             TOP
-            . FUNCTION main ()->Int
+            . FUNCTION main()->Int
             . . DECL LOCALVAR x Int
             . . ASSIGN
             . . . IDENTIFIER LOCALVAR x Int
@@ -79,7 +79,7 @@ class PathContextTest {
 
         val expected = """
             TOP
-            . FUNCTION main ()->Int
+            . FUNCTION main()->Int
             . . DECL LOCALVAR x Int
             . . ASSIGN
             . . . IDENTIFIER LOCALVAR x Int
@@ -144,7 +144,7 @@ class PathContextTest {
 
         val expected = """
             TOP
-            . FUNCTION main (Int)->Int
+            . FUNCTION main(Int)->Int
             . . DECL LOCALVAR x Int
             . . IF
             . . . CLAUSE
@@ -183,7 +183,7 @@ class PathContextTest {
 
         val expected = """
             TOP
-            . FUNCTION main (Int)->Int
+            . FUNCTION main(Int)->Int
             . . DECL LOCALVAR x Int
             . . IF
             . . . CLAUSE
@@ -234,7 +234,7 @@ class PathContextTest {
 
         val expected = """
             TOP
-            . FUNCTION main (Int)->Int
+            . FUNCTION main(Int)->Int
             . . IF
             . . . CLAUSE
             . . . . EQ Bool
@@ -283,7 +283,7 @@ class PathContextTest {
         val expected = """
             TOP
             . CLASS Cat
-            . FUNCTION foo (Cat?)->Int
+            . FUNCTION foo(Cat?)->Int
             . . IF
             . . . CLAUSE
             . . . . NEQ Bool
@@ -315,7 +315,7 @@ class PathContextTest {
         val expected = """
             TOP
             . CLASS Cat
-            . FUNCTION foo (Cat?)->Int
+            . FUNCTION foo(Cat?)->Int
             . . IF
             . . . CLAUSE
             . . . . EQ Bool
@@ -346,7 +346,7 @@ class PathContextTest {
         val expected = """
             TOP
             . CLASS Cat
-            . FUNCTION foo (Cat?)->Int
+            . FUNCTION foo(Cat?)->Int
             . . IF
             . . . CLAUSE
             . . . . EQ Bool
@@ -395,7 +395,7 @@ class PathContextTest {
         val expected = """
             TOP
             . CLASS Cat
-            . FUNCTION foo (Cat?,Cat)->Int
+            . FUNCTION foo(Cat?,Cat)->Int
             . . IF
             . . . CLAUSE
             . . . . EQ Bool
@@ -467,7 +467,7 @@ class PathContextTest {
         val expected = """
             TOP
             . CLASS Cat
-            . FUNCTION foo ()->Int
+            . FUNCTION foo()->Int
             . . DECL LOCALVAR c Cat?
             . . . IDENTIFIER LITERAL null Null
             . . DECL LOCALVAR d Int
@@ -500,7 +500,7 @@ class PathContextTest {
         val expected = """
             TOP
             . CLASS Cat
-            . FUNCTION foo (Cat?,Int)->Int
+            . FUNCTION foo(Cat?,Int)->Int
             . . IF
             . . . CLAUSE
             . . . . AND Bool
@@ -554,7 +554,7 @@ class PathContextTest {
         val expected = """
                     TOP
                     . CLASS LinkedListNode
-                    . FUNCTION nextValue (LinkedListNode)->Int
+                    . FUNCTION nextValue(LinkedListNode)->Int
                     . . IF
                     . . . CLAUSE
                     . . . . NEQ Bool
@@ -622,7 +622,7 @@ class PathContextTest {
         val expected = """
             TOP
             . CLASS LinkedListNode
-            . FUNCTION nextValue (LinkedListNode)->Int
+            . FUNCTION nextValue(LinkedListNode)->Int
             . . ASSIGN
             . . . MEMBERACCESS next LinkedListNode?
             . . . . IDENTIFIER LOCALVAR a LinkedListNode
@@ -650,7 +650,7 @@ class PathContextTest {
         val expected = """
             TOP
             . CLASS Cat
-            . FUNCTION main (Cat?)->String
+            . FUNCTION main(Cat?)->String
             . . RETURN
             . . . IF_EXPR String
             . . . . NEQ Bool

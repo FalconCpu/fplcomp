@@ -300,6 +300,36 @@ class InterpreterTest {
 
     }
 
+    @Test
+    fun fibonacciTest() {
+        val prog = """
+            fun fib(n:Int) -> Int   
+                if n < 2
+                    return n
+                return fib(n - 1) + fib(n - 2)
+
+            fun main()
+                for i in 0 to 10
+                    println fib(i)
+            """.trimIndent()
+
+        val expected = """
+            0
+            1
+            1
+            2
+            3
+            5
+            8
+            13
+            21
+            34
+            55
+
+            """.trimIndent()
+
+        runTest(prog, expected)
+    }
 
 
 }

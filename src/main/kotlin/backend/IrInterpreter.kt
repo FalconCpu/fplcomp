@@ -60,8 +60,9 @@ private fun Function.run() {
 
             is InstrVirtCall -> {
                 val instance = instr.arg.getValue() as ClassValue
-                val func = instance.classRef.methods[instr.func.funcNo].function
-                func.backendFunction.run()
+                val methodIndex = instr.target.methodId
+                val method = instance.classRef.methods[methodIndex].backendFunction
+                method.run()
             }
 
 

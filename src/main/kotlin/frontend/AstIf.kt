@@ -77,7 +77,7 @@ class TcIf(
             } else
                 currentFunction.instrJump(clauseLabel)
         }
-        currentFunction.instrLabel(labelEnd)
+        currentFunction.instrJump(labelEnd)
 
         // Generate the code for the body of each clause
         for ((index,clause) in clauses.withIndex()) {

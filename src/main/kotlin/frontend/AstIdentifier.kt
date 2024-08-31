@@ -12,6 +12,8 @@ class AstIdentifier (
         sb.append("IDENTIFIER $name\n")
     }
 
+    override fun toString() = name
+
     private fun makeNewSymbol(symbolTable: AstBlock): Symbol {
         Log.error(location,"Undefined identifier: $name")
         val symbol = SymbolLocalVar(location, name, ErrorType, true)
@@ -19,7 +21,15 @@ class AstIdentifier (
         return symbol
     }
 
-    override fun typeCheckAllowTypeName(context: AstBlock) : TcIdentifier {
+//    override fun evaluateAsTypeName(context: AstBlock): Type? {
+//        val symbol = predefinedSymbols.lookup(name) ?: context.lookup(name) ?: makeNewSymbol(context)
+//        if (symbol is SymbolTypeName)
+//            return symbol.type
+//        return null
+//    }
+
+    override fun typeCheckAllowType(context: AstBlock): TcExpr {
+        // Symbol has been used as an rvalue
         val symbol = predefinedSymbols.lookup(name) ?: context.lookup(name) ?: makeNewSymbol(context)
         val type = currentPathContext.smartCasts[symbol] ?: symbol.type
 
@@ -28,17 +38,24 @@ class AstIdentifier (
         else if (symbol in currentPathContext.maybeUninitializedVariables)
             Log.error(location, "Variable '$name' might not be initialized")
 
-        return TcIdentifier(location, type, symbol)
+        val ret = TcIdentifier(location, type, symbol)
+        return ret
     }
 
+
     override fun typeCheck(context:AstBlock) : TcExpr {
-        // Symbol has been used as an rvalue
-        val ret = typeCheckAllowTypeName(context)
-        if (ret.symbol is SymbolTypeName)
+        val ret = typeCheckAllowType(context)
+        if (ret is TcIdentifier && ret.symbol is SymbolTypeName)
             Log.error(location, "Got type name '$ret' when expecting a value")
         return ret
     }
 
+//    override fun evaluateAsFunctionName(context: AstBlock): List<TcFunction>? {
+//        val symbol = predefinedSymbols.lookup(name) ?: context.lookup(name) ?: makeNewSymbol(context)
+//        if (symbol is SymbolFunctionName)
+//            return symbol.overloads
+//        return null
+//    }
 
     override fun typeCheckLvalue(context: AstBlock) : TcExpr {
         // Symbol has been used as an lvalue
@@ -90,7 +107,7 @@ class TcIdentifier(
         return when(symbol) {
             is SymbolLocalVar -> currentFunction.getReg(symbol)
             is SymbolField -> currentFunction.instrLoad(currentFunction.getThis(), symbol)
-            is SymbolFunctionName -> TODO("Function names as rvalues")
+            is SymbolFunctionName -> error("Got kind ${symbol.javaClass} in codeGenRvalue")
             is SymbolGlobalVar -> currentFunction.instrLoad(symbol)
             is SymbolLiteral -> currentFunction.instrInt(symbol.value)
             is SymbolMemberAccess,

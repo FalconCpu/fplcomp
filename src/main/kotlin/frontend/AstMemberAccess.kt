@@ -69,7 +69,7 @@ class AstMemberAccess (
     }
 
     override fun typeCheck(context:AstBlock) : TcExpr {
-        val lhs = lhs.typeCheckAllowTypeName(context)
+        val lhs = lhs.typeCheckAllowType(context)
 
         return if (lhs.isTypeName()) {
             when (lhs.type) {
