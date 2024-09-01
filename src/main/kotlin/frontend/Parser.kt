@@ -18,6 +18,14 @@ class Parser(private val lexer: Lexer) {
             throw ParseError(lookahead.location, "Got '${lookahead}' when expecting '$kind'")
     }
 
+    private fun expect(kind1: TokenKind, kind2: TokenKind) : Token {
+        if (lookahead.kind == kind1 || lookahead.kind == kind2)
+            return nextToken()
+        else
+            throw ParseError(lookahead.location, "Got '${lookahead}' when expecting '$kind1'")
+    }
+
+
     private fun canTake(kind: TokenKind) : Boolean {
         if (lookahead.kind == kind) {
             nextToken()
@@ -50,7 +58,9 @@ class Parser(private val lexer: Lexer) {
     private fun parseIntLit() : AstIntLiteral {
         val lit = expect(INTLIT)
         try {
-            return AstIntLiteral(lit.location, lit.text.toInt())
+            if (lit.text.startsWith("0x"))
+                return AstIntLiteral(lit.location, IntType, lit.text.substring(2).toLong(16).toInt())
+            return AstIntLiteral(lit.location, IntType, lit.text.toLong().toInt())
         } catch (e : NumberFormatException) {
             throw ParseError(lit.location, "Invalid integer literal: $lit")
         }
@@ -59,6 +69,11 @@ class Parser(private val lexer: Lexer) {
     private fun parseStringLit(): AstStringLiteral {
         val lit = expect(STRINGLIT)
         return AstStringLiteral(lit.location, lit.text)
+    }
+
+    private fun parseCharLit() : AstIntLiteral {
+        val lit = expect(CHARLIT)
+        return AstIntLiteral(lit.location, CharType, lit.text[0].code)
     }
 
     private fun parseBracketExpression() : AstExpr {
@@ -106,6 +121,7 @@ class Parser(private val lexer: Lexer) {
             ID -> parseIdentifier()
             INTLIT -> parseIntLit()
             STRINGLIT -> parseStringLit()
+            CHARLIT -> parseCharLit()
             OPENB -> parseBracketExpression()
             ARRAY -> parseArrayConstructor()
             ARRAYOF -> parseArrayOf()
@@ -166,7 +182,7 @@ class Parser(private val lexer: Lexer) {
 
     private fun parseMult() : AstExpr {
         var ret = parsePrefix()
-        while(lookahead.kind in listOf(STAR, SLASH, PERCENT, AMPERSAND)) {
+        while(lookahead.kind in listOf(STAR, SLASH, PERCENT, AMPERSAND, SHL, SHR, USHR)) {
             val op = nextToken()
             val rhs = parsePrefix()
             ret = AstBinop(op.location, op.kind, ret, rhs)
@@ -361,7 +377,7 @@ class Parser(private val lexer: Lexer) {
             Log.error(lookahead.location, "Cannot have method outside class")
 
         val tok = expect(FUN)
-        val id = expect(ID)
+        val id = expect(ID, PRINT)
         val args = parseParamList(false)
         val retType = if (canTake(ARROW)) parseType() else null
         expectEol()
@@ -446,13 +462,23 @@ class Parser(private val lexer: Lexer) {
         }
     }
 
+    private fun parseConst(block: AstBlock) {
+        expect(CONST)
+        val id = expect(ID)
+        expect(EQ)
+        val expr = parseExpression()
+        expectEol()
+
+        block.add(AstConst(id.location, id.text, expr))
+    }
+
     private fun parseIndent(block: AstBlock) {
         // Code to handle an unexpected indentation
         // Pretend it's a while loop,
         if (!followingError)
             Log.error(lookahead.location, "Unexpected indentation")
         expect(INDENT)
-        val dummy = AstWhile(lookahead.location, block, AstIntLiteral(lookahead.location, 0))
+        val dummy = AstWhile(lookahead.location, block, AstIntLiteral(lookahead.location, IntType, 0))
         parseBody(dummy)
         checkEnd(INDENT)
     }
@@ -570,6 +596,7 @@ class Parser(private val lexer: Lexer) {
                 INDENT -> parseIndent(block)
                 PRINT, PRINTLN -> parsePrint(block)
                 FOR -> parseFor(block)
+                CONST -> parseConst(block)
                 else -> throw ParseError(lookahead.location, "Got '${lookahead}' when expecting statement")
             }
 

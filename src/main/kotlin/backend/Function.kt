@@ -17,10 +17,11 @@ open class Function(val name:String, isStdLib:Boolean=false) {
     private val labels = mutableListOf<Label>()
     val endLabel = newLabel()
     var thisReg : Reg? = null
+    var makesCalls = false
 
     // Values to be filled in by the backend
     var maxRegister = 0    // The highest register number used
-
+    var stackFrameSize = 0
 
 
     override fun toString() = name
@@ -112,6 +113,7 @@ open class Function(val name:String, isStdLib:Boolean=false) {
         add(InstrCall(target))
         val ret = newTemp()
         add(InstrMov(ret, regResult))
+        makesCalls = true
         return ret
     }
 
@@ -119,6 +121,7 @@ open class Function(val name:String, isStdLib:Boolean=false) {
         add(InstrVirtCall(instance, target))
         val ret = newTemp()
         add(InstrMov(ret, regResult))
+        makesCalls = true
         return ret
     }
 
@@ -131,32 +134,32 @@ open class Function(val name:String, isStdLib:Boolean=false) {
     }
 
     fun instrStore(size:Int, data:Reg, addr:Reg, offset: Int) {
-        add(InstrStoreArrayLit(size, data, addr, offset))
+        add(InstrStoreArray(MemSize.toSize(size), data, addr, offset))
     }
 
-    fun instrLoad(size:Int, addr:Reg, offset: Reg) : Reg {
+    fun instrLoad(size:Int, addr:Reg, offset: Int) : Reg {
         val ret = newTemp()
-        add(InstrLoadArray(size, ret, addr, offset))
+        add(InstrLoadArray(MemSize.toSize(size), ret, addr, offset))
         return ret
     }
 
     fun instrStore(data:Reg, addr:Reg, offset: SymbolField) {
-        add(InstrStoreField(offset.type.getSize(), data, addr, offset))
+        add(InstrStoreField(MemSize.toSize(offset.type.getSize()), data, addr, offset))
     }
 
     fun instrLoad(addr:Reg, offset: SymbolField) : Reg {
         val ret = newTemp()
-        add(InstrLoadField(offset.type.getSize() , ret, addr, offset))
+        add(InstrLoadField(MemSize.toSize(offset.type.getSize()) , ret, addr, offset))
         return ret
     }
 
     fun instrStore(data:Reg, offset: SymbolGlobalVar) {
-        add(InstrStoreGlobal(offset.type.getSize(), data, offset))
+        add(InstrStoreGlobal(MemSize.toSize(offset.type.getSize()), data, offset))
     }
 
     fun instrLoad(offset: SymbolGlobalVar) : Reg {
         val ret = newTemp()
-        add(InstrLoadGlobal(offset.type.getSize() , ret, offset))
+        add(InstrLoadGlobal(MemSize.toSize(offset.type.getSize()) , ret, offset))
         return ret
     }
 
@@ -205,5 +208,6 @@ fun initialize() {
     frontend.predefinedSymbols
 
     allFunctions.clear()
+    allGlobalVars.clear()
 }
 

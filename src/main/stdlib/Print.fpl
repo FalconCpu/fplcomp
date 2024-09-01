@@ -1,0 +1,14 @@
+
+fun printHex(in_value: Int)
+    var value = in_value
+    for i in 0 to 7
+        val digit = value ushr 28
+        if digit<10
+            uart_transmit(digit+('0' : Int))
+        else
+            uart_transmit(digit+('A' : Int)-10)
+        value = value shl 4
+
+fun print(str:String)
+    for i in 0 to str.length-1
+        uart_transmit((str[i] : Int))

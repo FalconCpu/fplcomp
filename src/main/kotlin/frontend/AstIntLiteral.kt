@@ -4,6 +4,7 @@ import backend.Reg
 
 class AstIntLiteral(
     location: Location,
+    val type : Type,
     private val value: Int
 ) : AstExpr(location) {
 
@@ -13,7 +14,7 @@ class AstIntLiteral(
     }
 
     override fun typeCheck(context:AstBlock) : TcExpr {
-        return TcIntLiteral(location, IntType, value)
+        return TcIntLiteral(location, type, value)
     }
 
 }
@@ -33,4 +34,7 @@ class TcIntLiteral(
         return currentFunction.instrInt(value)
     }
 
+    override fun hasConstantValue() = true
+
+    override fun getConstantValue() = value
 }

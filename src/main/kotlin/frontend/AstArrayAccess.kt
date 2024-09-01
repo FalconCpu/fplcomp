@@ -1,5 +1,6 @@
 package frontend
 
+import backend.AluOp
 import backend.Reg
 
 class AstArrayAccess(
@@ -23,13 +24,17 @@ class AstArrayAccess(
         if (lhs.type is ErrorType) return lhs
         if (index.type is ErrorType) return index
 
-        if (lhs.type !is ArrayType)
-            return TcError(location, "Cannot index into type '${lhs.type}'")
-
         IntType.checkAssignCompatible(index.location, index.type)
-        return TcArrayAccess(location, lhs.type.elementType, lhs, index)
+        return when(lhs.type) {
+            is ArrayType -> TcArrayAccess(location, lhs.type.elementType, lhs, index)
+            is StringType -> TcArrayAccess(location, CharType, lhs, index)
+            else -> TcError(location, "Cannot index into type '${lhs.type}'")
+        }
     }
 
+    override fun typeCheckLvalue(context: AstBlock): TcExpr {
+        return typeCheck(context)
+    }
 }
 
 class TcArrayAccess(
@@ -49,7 +54,33 @@ class TcArrayAccess(
     override fun codeGenRvalue(): Reg {
         val addr = lhs.codeGenRvalue()
         val index = index.codeGenRvalue()
-        return currentFunction.instrLoad(type.getSize(), addr, index)
+        val size = type.getSize()
+        val indexScaled = when(size) {
+            1 -> index
+            2 -> currentFunction.instrAlu(AluOp.LSL_I, index, 1)
+            4 -> currentFunction.instrAlu(AluOp.LSL_I, index, 2)
+            else -> error("Invalid array size $size")
+        }
+        val addrFinal = currentFunction.instrAlu(AluOp.ADD_I, addr, indexScaled)
+
+        return currentFunction.instrLoad(type.getSize(), addrFinal, 0)
     }
+
+    override fun codeGenLvalue(reg: Reg) {
+        val addr = lhs.codeGenRvalue()
+        val index = index.codeGenRvalue()
+        val size = type.getSize()
+        val indexScaled = when(size) {
+            1 -> index
+            2 -> currentFunction.instrAlu(AluOp.LSL_I, index, 1)
+            4 -> currentFunction.instrAlu(AluOp.LSL_I, index, 2)
+            else -> error("Invalid array size $size")
+        }
+        val addrFinal = currentFunction.instrAlu(AluOp.ADD_I, addr, indexScaled)
+
+        return currentFunction.instrStore(type.getSize(), reg, addrFinal, 0)
+    }
+
+
 
 }

@@ -1,0 +1,83 @@
+
+const HEAP_START = 0x1000
+const HEAP_END = 0x3f80000
+
+const systemVars = (0x100 : SystemVars)     # Allocate a block of memory at 0x100 to act as system variable space
+
+class SystemVars
+    var freeList : MemChunk?
+
+
+# Memory chunks are always allocated in multiples of 8 bytes. Thus the lower 3 bits of the size would always
+# be zero. We can use this to store allocation status.
+# 0 = free
+# 1 = allocated
+# 2..7 = reserved
+
+class MemChunk
+    var size : Int         # Size of this chunk in bytes, including header.
+    var next : MemChunk?   # For a free chunk, this is the next free chunk.
+                           # For an allocated chunk, this is the user data
+
+fun initializeMemory()
+    # Initialise the free list
+    val freeChunk = (HEAP_START : MemChunk)
+    freeChunk.size = HEAP_END - HEAP_START
+    freeChunk.next = null
+    systemVars.freeList = freeChunk
+
+fun malloc(size: Int) -> Int   # Returns address of allocated memory. Returns 0 if no memory available
+                               # This routine will usually be called by the compiler - which will cast the return value to a pointer type
+    val roundedSize = (size+7) & 0xfffffff8     # round up to nearest multiple of 8
+
+    # find the first free chunk that is big enough
+    var chunk = systemVars.freeList
+    var prevChunk : MemChunk? = null
+    while chunk!=null and chunk.size<roundedSize
+        prevChunk = chunk
+        chunk = chunk.next
+
+    if chunk=null
+        return 0
+
+    # remove the chunk from the free list
+    if prevChunk=null
+        systemVars.freeList = chunk.next
+    else
+        prevChunk.next = chunk.next
+
+    # See if the chunk is big enough to split
+    val remainder = chunk.size - roundedSize
+    if remainder>=8
+        val remainderChunk = ((chunk:Int)+roundedSize : MemChunk)
+        remainderChunk.size = remainder
+        addToFreeList(remainderChunk)
+
+    # return the address of the user data
+    chunk.size = roundedSize + 1    # Add 1 to size to indicate that this is an allocated chunk
+    return (chunk:Int)+4            # Add 4 to get address of user data
+
+fun addToFreeList(chunk: MemChunk)
+    # Insert the chunk into the free list in order of increasing size
+    var prevChunk : MemChunk? = null
+    var currChunk = systemVars.freeList
+    val size = chunk.size & 0xfffffff8    # Strip off allocation status
+    while currChunk!=null and currChunk.size<size
+        prevChunk = currChunk
+        currChunk = currChunk.next
+
+    # Insert the chunk
+    if prevChunk=null
+        systemVars.freeList = chunk
+    else
+        prevChunk.next = chunk
+    chunk.next = currChunk
+
+fun free(addr:Int)
+    # Find the chunk
+    val chunk = (addr-4 : MemChunk)
+    addToFreeList(chunk)
+
+
+
+

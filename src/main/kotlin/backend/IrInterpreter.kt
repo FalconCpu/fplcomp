@@ -78,45 +78,31 @@ private fun Function.run() {
             is InstrLea ->
                 instr.dest.setValue(instr.src)
 
-            is InstrLoadArrayLit -> {
-                check(instr.size==4)
-                val array = instr.addr.getArrayValue()
-                instr.dest.setValue( array[instr.offset] )
-            }
-
             is InstrLoadArray -> {
-                check(instr.size==4)
                 val array = instr.addr.getArrayValue()
-                instr.dest.setValue( array[instr.offset.getIntValue()])
+                instr.dest.setValue( array[instr.offset])
             }
 
             is InstrMov -> instr.dest.setValue(instr.src.getValue())
 
             is InstrStart -> {}
 
-            is InstrStoreArrayLit -> {
-                check(instr.size==4)
-                val array = instr.addr.getArrayValue()
-                array[instr.offset] = instr.data.getValue()
-            }
-
             is InstrLit ->
                 instr.dest.setValue(IntValue(instr.value))
 
 
             is InstrStoreArray -> {
-                check(instr.size==4)
                 val array = instr.addr.getArrayValue()
-                val offset = instr.offset.getIntValue()
+                val offset = instr.offset
                 array[offset] = instr.data.getValue()
             }
 
             is InstrLoadField -> {
                 val addr = instr.addr.getValue()
-                if (addr is ArrayValue && instr.offset== sizeSymbol)
+                if (addr is ArrayValue && instr.field== sizeSymbol)
                     instr.dest.setValue(IntValue(addr.value.size))
                 else if (addr is ClassValue)
-                    instr.dest.setValue( addr.fields[instr.offset.offset] )
+                    instr.dest.setValue( addr.fields[instr.field.offset] )
                 else
                     error("Illegal type in InstrLoadField ${addr.javaClass}")
             }
@@ -124,7 +110,7 @@ private fun Function.run() {
             is InstrStoreField -> {
                 val addr = instr.addr.getValue()
                 check(addr is ClassValue)
-                addr.fields[instr.offset.offset] = instr.data.getValue()
+                addr.fields[instr.field.offset] = instr.data.getValue()
             }
 
             is InstrLoadGlobal -> instr.dest.setValue( globalVariables.getValue(instr.globalVar) )

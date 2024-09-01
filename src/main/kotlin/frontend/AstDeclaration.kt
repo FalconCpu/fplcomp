@@ -1,5 +1,8 @@
 package frontend
 
+import backend.allGlobalVars
+import com.sun.org.apache.xalan.internal.xsltc.compiler.sym
+
 class AstDeclaration (
     location: Location,
     private val op : TokenKind,
@@ -28,6 +31,11 @@ class AstDeclaration (
             else             -> SymbolLocalVar(location, name, type, mutable)
         }
         context.add(symbol)
+
+        if (symbol is SymbolGlobalVar) {
+            symbol.offset = allGlobalVars.size
+            allGlobalVars.add(symbol)
+        }
 
         if (value != null)
             type.checkAssignCompatible(value.location, value.type)

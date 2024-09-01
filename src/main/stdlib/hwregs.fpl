@@ -1,0 +1,44 @@
+
+
+# Class to represent the memory map of the hardware registers
+# These are located at address 0E0000000H
+const HWREGS_BASE = (0xE0000000:Hwregs)
+
+class Hwregs
+    var sevenSegmentDisplay : Int   # Write - value to display on 7 segment display (6 digit hex)
+    var leds : Int                  # Write - value to display on leds (10 bit)
+    var mouse_x : Int               # Read - mouse x position
+    var mouse_y : Int               # Read - mouse y position
+    var mouse_buttons : Int         # Read - mouse buttons 1= left, 2=right, 4=middle
+    var uart_tx : Int               # WRITE=byte to transmit,   READ=number of slots free in fifo
+    var uart_rx : Int               # READ = Byte of data from uart fifo, -1 if fifo empty
+    var screen_blank : Int          # 0 = unblank, otherwise color to blank screen with + 256
+    var screen_addr : Int           # WRITE = Address of screen buffer
+    var seven_segment_brightness : Int
+    var keyboard : Int              # READ = keyboard data from fifo, 0 if fifo empty
+    var reserved0 : Int
+    var reserved1 : Int
+    var reserved2 : Int
+    var reserved3 : Int
+    var reserved4 : Int
+    var gpu_x : Int
+    var gpu_y : Int
+    var gpu_width : Int
+    var gpu_height : Int
+    var gpu_pattern_offset : Int
+    var gpu_pattern_width : Int
+    var gpu_pattern_depth : Int
+    var gpu_color0 : Int
+    var gpu_color1 : Int
+    var gpu_busy : Int
+    var gpu_clip_x1 : Int
+    var gpu_clip_y1 : Int
+    var gpu_clip_x2 : Int
+    var gpu_clip_y2 : Int
+
+fun uart_transmit(char: Int)
+    val hwregs = HWREGS_BASE
+    # Wait until there is space in the fifo
+    while hwregs.uart_tx=0
+        val dummy = 1
+    hwregs.uart_tx = char

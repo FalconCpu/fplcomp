@@ -42,7 +42,9 @@ class SymbolGlobalVar(
     name: String,
     type: Type,
     val mutable: Boolean
-) : Symbol(location, name, type)
+) : Symbol(location, name, type) {
+    var offset = UNDEFINED_OFFSET
+}
 
 class SymbolFunctionName(
     location: Location,

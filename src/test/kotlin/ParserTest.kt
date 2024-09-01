@@ -837,4 +837,27 @@ class ParserTest {
         runTest(prog, expected)
     }
 
+    @Test
+    fun constTest() {
+        val prog = """
+            const TWO = 2
+            
+            fun main()
+                print TWO
+        """.trimIndent()
+
+        val expected = """
+            TOP
+            . CONST TWO
+            . . INTLIT 2
+            . FUNCTION main
+            . . PRINT
+            . . . IDENTIFIER TWO
+
+        """.trimIndent()
+
+        runTest(prog, expected)
+    }
+
+
 }

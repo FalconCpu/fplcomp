@@ -1,13 +1,15 @@
 package backend
 
+import frontend.SymbolGlobalVar
+
 val allFunctions = mutableListOf<Function>()
+val allGlobalVars = mutableListOf<SymbolGlobalVar>()
 
 fun Function.runBackend(currentFunction: Function) {
 
     Peephole(currentFunction).run()
 
     val livemap = Livemap(currentFunction)
-    livemap.dump()
     RegisterAllocator(currentFunction, livemap).run()
 
     Peephole(currentFunction).run()

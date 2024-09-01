@@ -4,25 +4,25 @@ sealed class StdLibFunction (
     name : String,
 ) : Function(name, true)
 
-data object StdlibPrintInt    : StdLibFunction("printInt") {
+data object StdlibPrintInt    : StdLibFunction("print(Int)") {
     fun execute(arg:Value, programOutput: StringBuilder) {
         programOutput.append(arg.getIntValue())
     }
 }
 
-data object StdlibPrintChar   : StdLibFunction("printChar") {
+data object StdlibPrintChar   : StdLibFunction("print(Char)") {
     fun execute(arg:Value, programOutput: StringBuilder) {
         programOutput.append(arg.getIntValue().toChar())
     }
 }
 
-data object StdlibPrintString : StdLibFunction("printString") {
+data object StdlibPrintString : StdLibFunction("print(String)") {
     fun execute(arg: Value, programOutput: StringBuilder) {
         programOutput.append(arg.getStringValue())
     }
 }
 
-data object StdlibPrintBool   : StdLibFunction("printBool") {
+data object StdlibPrintBool   : StdLibFunction("print(Bool)") {
     fun execute(arg: Value, programOutput: StringBuilder) {
         programOutput.append(if (arg.getIntValue() == 0) "false" else "true")
     }

@@ -756,4 +756,35 @@ class IrgenTest {
 
         runTest(prog, expected)
     }
+
+    @Test
+    fun constTest() {
+        val prog = """
+            const TWO = 2
+            
+            fun main()
+                print TWO
+        """.trimIndent()
+
+        val expected = """
+            Function <top>
+            start
+            call main()
+            end
+
+            Function main()
+            start
+            mov t0, 2
+            mov %1, t0
+            call StdlibPrintInt
+            @0:
+            end
+
+    
+        """.trimIndent()
+
+        runTest(prog, expected)
+    }
+
+
 }

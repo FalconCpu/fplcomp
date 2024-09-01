@@ -1092,5 +1092,27 @@ class TypeCheck {
         runTest(prog, expected)
     }
 
+    @Test
+    fun constTest() {
+        val prog = """
+            const TWO = 2
+            
+            fun main()
+                print TWO
+        """.trimIndent()
+
+        val expected = """
+            TOP
+            . CONST TWO
+            . . INTLIT 2 Int
+            . FUNCTION main()->Unit
+            . . PRINT
+            . . . IDENTIFIER LITERAL TWO Int
+
+        """.trimIndent()
+
+        runTest(prog, expected)
+    }
+
 
 }

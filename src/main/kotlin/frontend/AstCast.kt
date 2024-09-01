@@ -40,4 +40,6 @@ class TcCast(
         return expr.codeGenRvalue()
     }
 
+    override fun hasConstantValue() = expr.hasConstantValue()
+    override fun getConstantValue() = expr.getConstantValue()
 }

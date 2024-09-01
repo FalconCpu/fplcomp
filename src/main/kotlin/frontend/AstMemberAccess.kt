@@ -35,7 +35,6 @@ class AstMemberAccess (
                 null
     }
 
-
     override fun typeCheckLvalue(context: AstBlock) : TcExpr {
         return typeCheck(context)
     }
@@ -52,6 +51,14 @@ class AstMemberAccess (
         else
             TcError(location, "Cannot access field $name of array type ${lhs.type}")
     }
+
+    private fun accessString(lhs:TcExpr) : TcExpr {
+        return if (name=="length")
+            TcMemberAccess(location, IntType, lhs, sizeSymbol, null)
+        else
+            TcError(location, "Cannot access field $name of string type ${lhs.type}")
+    }
+
 
     private fun accessClass(lhs: TcExpr) : TcExpr {
         require(lhs.type is ClassType)
@@ -83,6 +90,7 @@ class AstMemberAccess (
                 is ClassType -> accessClass(lhs)
                 is NullableType -> TcError(location, "Member access is not allowed on nullable type ${lhs.type}")
                 is ArrayType -> accessArray(lhs)
+                is StringType -> accessString(lhs)
                 else -> TcError(location, "Cannot access field $name of non-class type ${lhs.type}")
             }
         }
@@ -114,6 +122,14 @@ class TcMemberAccess (
         check(sym is SymbolField)
         val addr = lhs.codeGenRvalue()
         return currentFunction.instrLoad(addr, sym)
+    }
+
+
+    override fun codeGenLvalue(rhs: Reg) {
+        val sym = symbol
+        check(sym is SymbolField)
+        val addr = lhs.codeGenRvalue()
+        currentFunction.instrStore(rhs, addr, sym)
     }
 
 }

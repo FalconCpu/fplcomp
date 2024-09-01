@@ -43,8 +43,9 @@ private val operatorTable = listOf(
     Operator(TokenKind.AMPERSAND,IntType,IntType, AluOp.AND_I, IntType),
     Operator(TokenKind.BAR,     IntType, IntType, AluOp.OR_I, IntType),
     Operator(TokenKind.CARET,   IntType, IntType, AluOp.XOR_I, IntType),
-//    Operator(TokenKind.LEFT,    IntType, IntType, AluOp.SHL_I, IntType),
-//    Operator(TokenKind.RIGHT,   IntType, IntType, AluOp.SHR_I, IntType),
+    Operator(TokenKind.SHL,     IntType, IntType, AluOp.LSL_I, IntType),
+    Operator(TokenKind.SHR,     IntType, IntType, AluOp.ASR_I, IntType),
+    Operator(TokenKind.USHR,    IntType, IntType, AluOp.LSR_I, IntType)
 )
 
 class TcBinop(

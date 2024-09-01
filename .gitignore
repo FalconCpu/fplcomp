@@ -40,3 +40,11 @@ bin/
 
 ### Mac OS ###
 .DS_Store
+
+### Project-specific ###
+out.bin
+out.f32
+labels.txt
+rom.hex
+sim_regs.log
+sim_uart.log

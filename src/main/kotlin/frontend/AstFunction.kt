@@ -30,6 +30,7 @@ class AstFunction (
 
     private fun checkOverride(symbol: SymbolFunctionName,   function: TcFunction, methodOf: ClassType) {
         val paramTypes = function.params.map { it.type }
+        println("In checkOverride: ${symbol.overloads}")
         val superclassMethod = symbol.overloads.find { it.exactMatchParams(paramTypes) }
         if (superclassMethod == null)
             return Log.error(location, "No function to override")
@@ -140,7 +141,7 @@ class TcFunction (
             return false
 
         for (i in args.indices)
-            if (params[i] != args[i])
+            if (params[i].type != args[i])
                 return false
         return true
     }

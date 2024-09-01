@@ -1,0 +1,18 @@
+
+abstract class File
+    abstract fun putchar(char: Int)
+
+
+class UartFile() : File()
+
+    override fun putchar(char: Int)
+        val hwregs = HWREGS_BASE
+        while hwregs.uart_tx=0
+            val dummy = 1
+        hwregs.uart_tx = char
+
+
+val stdout = UartFile()
+
+fun foo()
+    stdout.putchar(65)

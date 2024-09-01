@@ -34,7 +34,7 @@ sealed class TcExpr(location: Location, val type: Type) : Tc(location){
     abstract fun codeGenRvalue() : Reg
 
     open fun codeGenLvalue(reg: Reg) {
-        error("codeGenLvalue called on non lvalue")
+        error("${location} codeGenLvalue called on non lvalue $javaClass")
     }
 
     open fun codeGenBool(trueLabel: Label, falseLabel:Label) {
@@ -59,4 +59,8 @@ sealed class TcExpr(location: Location, val type: Type) : Tc(location){
         }
         return this is TcIdentifier && this.symbol is SymbolTypeName
     }
+
+    open fun hasConstantValue() : Boolean = false
+
+    open fun getConstantValue(): Int = 0
 }

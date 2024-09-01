@@ -19,13 +19,11 @@ sealed class Instr {
         is InstrLea -> dest
         is InstrLit -> dest
         is InstrLoadArray -> dest
-        is InstrLoadArrayLit -> dest
         is InstrLoadField -> dest
         is InstrLoadGlobal -> dest
         is InstrMov -> dest
         is InstrStart -> null
         is InstrStoreArray -> null
-        is InstrStoreArrayLit -> null
         is InstrStoreField -> null
         is InstrStoreGlobal -> null
         is InstrVirtCall -> null
@@ -42,14 +40,12 @@ sealed class Instr {
         is InstrLabel -> emptyList()
         is InstrLea -> emptyList()
         is InstrLit -> emptyList()
-        is InstrLoadArray -> listOf(addr, offset)
-        is InstrLoadArrayLit -> listOf(addr)
+        is InstrLoadArray -> listOf(addr)
         is InstrLoadField -> listOf(addr)
         is InstrLoadGlobal -> emptyList()
         is InstrMov -> listOf(src)
         is InstrStart -> emptyList()
-        is InstrStoreArray -> listOf(addr, data, offset)
-        is InstrStoreArrayLit -> listOf(addr, data)
+        is InstrStoreArray -> listOf(addr, data)
         is InstrStoreField -> listOf(addr, data)
         is InstrStoreGlobal -> listOf(data)
         is InstrVirtCall -> emptyList()
@@ -118,36 +114,29 @@ class InstrEnd() : Instr() {
     override fun toString() = "end"
 }
 
-class InstrLoadArrayLit(val size:Int, val dest: Reg, val addr: Reg, val offset:Int) : Instr() {
-    override fun toString() = "ldw $dest, $addr[$offset]"
+
+class InstrLoadArray(val size:MemSize, val dest: Reg, val addr: Reg, val offset:Int) : Instr() {
+    override fun toString() = "${size.load} $dest, $addr[$offset]"
 }
 
-class InstrStoreArrayLit(val size:Int, val data: Reg, val addr: Reg, val offset:Int) : Instr() {
-    override fun toString() = "stw $data, $addr[$offset]"
+class InstrStoreArray(val size:MemSize, val data: Reg, val addr: Reg, val offset:Int) : Instr() {
+    override fun toString() = "${size.store} $data, $addr[$offset]"
 }
 
-class InstrLoadArray(val size:Int, val dest: Reg, val addr: Reg, val offset:Reg) : Instr() {
-    override fun toString() = "ldw $dest, $addr[$offset]"
+class InstrLoadField(val size: MemSize, val dest: Reg, val addr: Reg, val field:SymbolField) : Instr() {
+    override fun toString() = "${size.load} $dest, $addr->$field"
 }
 
-class InstrStoreArray(val size:Int, val data: Reg, val addr: Reg, val offset:Reg) : Instr() {
-    override fun toString() = "stw $data, $addr[$offset]"
+class InstrStoreField(val size:MemSize, val data: Reg, val addr: Reg, val field:SymbolField) : Instr() {
+    override fun toString() = "${size.store} $data, $addr->$field"
 }
 
-class InstrLoadField(val size:Int, val dest: Reg, val addr: Reg, val offset:SymbolField) : Instr() {
-    override fun toString() = "ldw $dest, $addr->$offset"
+class InstrLoadGlobal(val size:MemSize, val dest: Reg, val globalVar: SymbolGlobalVar) : Instr() {
+    override fun toString() = "${size.load} $dest, GLOBAL->$globalVar"
 }
 
-class InstrStoreField(val size:Int, val data: Reg, val addr: Reg, val offset:SymbolField) : Instr() {
-    override fun toString() = "stw $data, $addr->$offset"
-}
-
-class InstrLoadGlobal(val size:Int, val dest: Reg, val globalVar: SymbolGlobalVar) : Instr() {
-    override fun toString() = "ldw $dest, GLOBAL->$globalVar"
-}
-
-class InstrStoreGlobal(val  size:Int, val data: Reg, val globalVar: SymbolGlobalVar) : Instr() {
-    override fun toString() = "stw $data, GLOBAL->$globalVar"
+class InstrStoreGlobal(val  size: MemSize, val data: Reg, val globalVar: SymbolGlobalVar) : Instr() {
+    override fun toString() = "${size.store} $data, GLOBAL->$globalVar"
 }
 
 class InstrLea(val dest:Reg, val src:Value) : Instr() {
@@ -174,18 +163,37 @@ enum class AluOp(val text:String) {
     GE_I ("cgt"),
     LTU_I ("cltu");
 
+    fun forBranch() = when (this) {
+        EQ_I -> "beq"
+        NE_I -> "bne"
+        LT_I -> "blt"
+        LE_I -> "ble"
+        GT_I -> "bgt"
+        GE_I -> "bge"
+        LTU_I -> "bltu"
+        else -> error("Invalid op for branch $this")
+    }
+
     override fun toString() = text
 }
 
-enum class MemSize(val text: String) {
-    BYTE("byte"),
-    HALF("halfword"),
-    WORD("word"),
-    DWORD("dword");
+enum class MemSize(val load: String, val store:String) {
+    BYTE("ldb", "stb"),
+    HALF("ldh", "sth"),
+    WORD("ldw", "stw"),
+    DWORD("ldx", "stx");
 
-    override fun toString() = text
-
+    companion object {
+        fun toSize(value: Int): MemSize = when (value) {
+            1 -> BYTE
+            2 -> HALF
+            4 -> WORD
+            8 -> DWORD
+            else -> error("Invalid size $value ")
+        }
+    }
 }
+
 
 
 class Label (val name:String) {

@@ -25,7 +25,7 @@ class RegisterAllocator(private val cf: Function, private val livemap: Livemap) 
     // List of MOV statements in the prog, where both operands are variables
     private val movStatements = cf.prog.filterIsInstance<InstrMov>() // .filter{it.src.isVar() && it.dest.isVar()}
 
-    private val debug = true
+    private val debug = false
 
 
     /**
@@ -123,16 +123,14 @@ class RegisterAllocator(private val cf: Function, private val livemap: Livemap) 
             is InstrJump -> this
             is InstrLabel -> this
             is InstrLea -> InstrLea(replace(dest), src)
-            is InstrLoadArray -> InstrLoadArray(size, replace(dest), replace(addr), replace(offset))
-            is InstrLoadArrayLit -> InstrLoadArrayLit(size, replace(dest), replace(addr), offset)
+            is InstrLoadArray -> InstrLoadArray(size, replace(dest), replace(addr), offset)
             is InstrLoadGlobal -> InstrLoadGlobal(size, replace(dest), globalVar)
-            is InstrLoadField -> InstrLoadField(size, replace(dest), replace(addr), offset)
+            is InstrLoadField -> InstrLoadField(size, replace(dest), replace(addr), field)
             is InstrMov -> InstrMov(replace(dest), replace(src))
             is InstrStart -> this
-            is InstrStoreArray -> InstrStoreArray(size, replace(data), replace(addr), replace(offset))
-            is InstrStoreArrayLit -> InstrStoreArrayLit(size, replace(data), replace(addr), offset)
+            is InstrStoreArray -> InstrStoreArray(size, replace(data), replace(addr), offset)
             is InstrStoreGlobal -> InstrStoreGlobal(size, replace(data), globalVar)
-            is InstrStoreField -> InstrStoreField(size, replace(data), replace(addr), offset)
+            is InstrStoreField -> InstrStoreField(size, replace(data), replace(addr), field)
             is InstrLit -> InstrLit(replace(dest), value)
             is InstrNop -> this
         }

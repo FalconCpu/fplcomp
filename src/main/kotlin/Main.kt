@@ -1,6 +1,9 @@
 import frontend.AstTop
 import frontend.Lexer
 import frontend.Parser
+import java.io.File
+import java.io.IOException
+import java.util.concurrent.TimeUnit
 
 fun main() {
     println("Hello World!")
@@ -11,8 +14,7 @@ enum class StopAt {
     TYPECHECK,
     IRGEN,
     REGALLOC,
-    ASMGEN,
-    ALL
+    ASMGEN
 }
 
 fun compile(files:List<Lexer>, stopAt: StopAt) : String {
@@ -50,5 +52,25 @@ fun compile(files:List<Lexer>, stopAt: StopAt) : String {
     if (stopAt == StopAt.REGALLOC)
         return backend.dumpAllFunctions()
 
-    TODO()
+    // AsmGen
+    val asm = backend.asmGen()
+    if (Log.anyError())
+        return Log.dump()
+    return asm
+}
+
+fun String.runCommand(): String? {
+    try {
+        val parts = this.split("\\s".toRegex())
+        val proc = ProcessBuilder(*parts.toTypedArray())
+            .redirectOutput(ProcessBuilder.Redirect.PIPE)
+            .redirectError(ProcessBuilder.Redirect.PIPE)
+            .start()
+
+        proc.waitFor(60, TimeUnit.MINUTES)
+        return proc.inputStream.bufferedReader().readText()
+    } catch(e: IOException) {
+        e.printStackTrace()
+        return null
+    }
 }

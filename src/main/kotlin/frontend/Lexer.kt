@@ -34,7 +34,8 @@ class Lexer (val fineName:String, val reader: Reader) {
     }
 
     private fun skipWhitespaceAndComments() {
-        while (lookahead == ' ' || lookahead == '\t' || lookahead == '#' || (lookahead == '\n' && lineContinues && !atEof)) {
+        while (lookahead == ' ' || lookahead == '\t' || lookahead=='\r' || lookahead == '#' ||
+            (lookahead == '\n' && lineContinues && !atEof)) {
             if (lookahead == '#')
                 while (lookahead != '\n' && !atEof)
                     nextChar()
