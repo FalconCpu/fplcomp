@@ -16,14 +16,14 @@ class AstAssign(
     override fun typeCheck(context:AstBlock) : TcStmt {
         val lhs = lhs.typeCheckLvalue(context)
         val rhs = rhs.typeCheck(context)
-        lhs.type.checkAssignCompatible(rhs.location, rhs.type)
+        lhs.type.checkAssignCompatible(rhs.location, rhs)
 
         val lhsSym = lhs.getSmartCastSymbol()
         if (lhsSym!=null) {
-            if (lhsSym.type != rhs.type)
-                currentPathContext = currentPathContext.addSmartCast(lhsSym, rhs.type)
+            currentPathContext = if (lhsSym.type != rhs.type)
+                currentPathContext.addSmartCast(lhsSym, rhs.type)
             else
-                currentPathContext = currentPathContext.removeSmartcast(lhsSym)
+                currentPathContext.removeSmartcast(lhsSym)
         }
         return TcAssign(location, lhs, rhs)
     }

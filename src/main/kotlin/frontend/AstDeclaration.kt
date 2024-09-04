@@ -38,7 +38,7 @@ class AstDeclaration (
         }
 
         if (value != null)
-            type.checkAssignCompatible(value.location, value.type)
+            type.checkAssignCompatible(value.location, value)
         else
             currentPathContext = currentPathContext.addUninitializedVariable(symbol)
         return TcDeclaration(location, symbol, value)

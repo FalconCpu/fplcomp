@@ -121,11 +121,11 @@ class IrgenTest {
             start
             lea t0, "Hello, world!"
             mov %1, t0
-            call StdlibPrintString
+            call print(String)
             mov t1, 42
             mov %1, t1
-            call StdlibPrintInt
-            call StdlibNewline
+            call print(Int)
+            call printNewline()
             @0:
             end
 
@@ -148,6 +148,7 @@ class IrgenTest {
                 
             fun main()
                 val arr = arrayOf(1, 2, 3, 4, 5)
+                val arr2 = mutableArrayOf(1, 2, 3, 4, 5)
                 println sum(arr)
         """.trimIndent()
 
@@ -166,15 +167,17 @@ class IrgenTest {
             mov index, t1
             jmp @2
             @1:
-            ldw t2, array[index]
-            add t3, sum, t2
-            mov sum, t3
-            mov t4, 1
-            add t5, index, t4
-            mov index, t5
+            lsl t2, index, 2
+            add t3, array, t2
+            ldw t4, t3[0]
+            add t5, sum, t4
+            mov sum, t5
+            mov t6, 1
+            add t7, index, t6
+            mov index, t7
             @2:
-            ldw t6, array->size
-            blt, index, t6, @1
+            ldw t8, array->size
+            blt, index, t8, @1
             jmp @3
             @3:
             mov %8, sum
@@ -184,27 +187,29 @@ class IrgenTest {
 
             Function main()
             start
+            lea t0, Array|0
+            mov arr, t0
             mov %1, 5
             mov %2, 4
-            call StdlibMallocArray
-            mov t0, %8
-            mov t1, 1
-            stw t1, t0[0]
-            mov t2, 2
-            stw t2, t0[1]
-            mov t3, 3
-            stw t3, t0[2]
-            mov t4, 4
-            stw t4, t0[3]
-            mov t5, 5
-            stw t5, t0[4]
-            mov arr, t0
+            call mallocArray(Int,Int)
+            mov t1, %8
+            mov t2, 1
+            stw t2, t1[0]
+            mov t3, 2
+            stw t3, t1[4]
+            mov t4, 3
+            stw t4, t1[8]
+            mov t5, 4
+            stw t5, t1[12]
+            mov t6, 5
+            stw t6, t1[16]
+            mov arr2, t1
             mov %1, arr
             call sum(Array<Int>)
-            mov t6, %8
-            mov %1, t6
-            call StdlibPrintInt
-            call StdlibNewline
+            mov t7, %8
+            mov %1, t7
+            call print(Int)
+            call printNewline()
             @0:
             end
 
@@ -248,19 +253,19 @@ class IrgenTest {
             jmp @1
             @2:
             mov %1, x
-            call StdlibPrintInt
+            call print(Int)
             lea t1, " is less than 5"
             mov %1, t1
-            call StdlibPrintString
-            call StdlibNewline
+            call print(String)
+            call printNewline()
             jmp @1
             @4:
             mov %1, x
-            call StdlibPrintInt
+            call print(Int)
             lea t2, " is greater than or equal to 5"
             mov %1, t2
-            call StdlibPrintString
-            call StdlibNewline
+            call print(String)
+            call printNewline()
             jmp @1
             @1:
             @0:
@@ -314,8 +319,8 @@ class IrgenTest {
             jmp @2
             @1:
             mov %1, i
-            call StdlibPrintInt
-            call StdlibNewline
+            call print(Int)
+            call printNewline()
             add t2, i, 1
             mov i, t2
             @2:
@@ -352,18 +357,18 @@ class IrgenTest {
             mov this, %1
             ldw t0, this->name
             mov %1, t0
-            call StdlibPrintString
+            call print(String)
             lea t1, " says hello"
             mov %1, t1
-            call StdlibPrintString
-            call StdlibNewline
+            call print(String)
+            call printNewline()
             @0:
             end
 
             Function main()
             start
             lea %1, Cat
-            call StdlibMallocObject
+            call mallocObject(ClassDescriptor)
             mov t0, %8
             lea t1, "Whiskers"
             mov t2, 4
@@ -420,11 +425,11 @@ class IrgenTest {
             mov this, %1
             ldw t0, this->name
             mov %1, t0
-            call StdlibPrintString
+            call print(String)
             lea t1, " says grunt"
             mov %1, t1
-            call StdlibPrintString
-            call StdlibNewline
+            call print(String)
+            call printNewline()
             @0:
             end
 
@@ -433,18 +438,18 @@ class IrgenTest {
             mov this, %1
             ldw t0, this->name
             mov %1, t0
-            call StdlibPrintString
+            call print(String)
             lea t1, " says meow"
             mov %1, t1
-            call StdlibPrintString
-            call StdlibNewline
+            call print(String)
+            call printNewline()
             @0:
             end
 
             Function main()
             start
             lea %1, Cat
-            call StdlibMallocObject
+            call mallocObject(ClassDescriptor)
             mov t0, %8
             lea t1, "Whiskers"
             mov %1, t0
@@ -603,7 +608,8 @@ class IrgenTest {
             start
             mov size, %1
             mov %1, size
-            call StdlibMallocArray
+            mov %2, 4
+            call mallocArray(Int,Int)
             mov t0, %8
             mov %8, t0
             jmp @0
@@ -742,8 +748,8 @@ class IrgenTest {
             call fib(Int)
             mov t2, %8
             mov %1, t2
-            call StdlibPrintInt
-            call StdlibNewline
+            call print(Int)
+            call printNewline()
             add t3, i, 1
             mov i, t3
             @2:
@@ -776,15 +782,81 @@ class IrgenTest {
             start
             mov t0, 2
             mov %1, t0
-            call StdlibPrintInt
+            call print(Int)
             @0:
             end
 
-    
+
         """.trimIndent()
 
         runTest(prog, expected)
     }
+
+    @Test
+    fun constArray() {
+        val prog = """    
+            val myArray = arrayOf(5,8,10,12)
+            
+            fun printArray(a:Array<Int>)
+                for i in 0 to <a.size
+                    print a[i]," "
+                print "\n"
+                    
+            fun main()
+                printArray(myArray)
+        """.trimIndent()
+
+
+        val expected = """
+            Function <top>
+            start
+            lea t0, Array|0
+            stw t0, GLOBAL->myArray
+            call main()
+            end
+
+            Function printArray(Array<Int>)
+            start
+            mov a, %1
+            mov t0, 0
+            ldw t1, a->size
+            mov i, t0
+            jmp @2
+            @1:
+            lsl t2, i, 2
+            add t3, a, t2
+            ldw t4, t3[0]
+            mov %1, t4
+            call print(Int)
+            lea t5, " "
+            mov %1, t5
+            call print(String)
+            add t6, i, 1
+            mov i, t6
+            @2:
+            blt, i, t1, @1
+            lea t7, "\n"
+            mov %1, t7
+            call print(String)
+            @0:
+            end
+
+            Function main()
+            start
+            ldw t0, GLOBAL->myArray
+            mov %1, t0
+            call printArray(Array<Int>)
+            mov t1, %8
+            @0:
+            end            
+
+
+        """.trimIndent()
+
+
+        runTest(prog, expected)
+    }
+
 
 
 }

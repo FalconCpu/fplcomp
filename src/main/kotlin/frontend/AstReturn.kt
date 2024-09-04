@@ -16,11 +16,11 @@ class AstReturn(
         val valueType = value?.type ?: UnitType
         currentPathContext = currentPathContext.setUnreachable()
 
-        if (value==null && enclosingFunction.returnType != UnitType)
-            Log.error(location, "Function ${enclosingFunction.name} should return a value of type ${enclosingFunction.returnType}")
-        else
-            enclosingFunction.returnType.checkAssignCompatible(location, valueType)
-
+        if (value==null) {
+            if (enclosingFunction.returnType != UnitType)
+                Log.error(location,"Function ${enclosingFunction.name} should return a value of type ${enclosingFunction.returnType}")
+        } else
+            enclosingFunction.returnType.checkAssignCompatible(location, value)
         return TcReturn(location, value)
     }
 

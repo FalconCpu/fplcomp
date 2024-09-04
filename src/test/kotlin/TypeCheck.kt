@@ -1115,4 +1115,20 @@ class TypeCheck {
     }
 
 
+    @Test
+    fun writeToConstArray() {
+        val prog = """
+            fun main()
+                val a = arrayOf(1,2,3)
+                a[1] = 4        # Error: cannot assign to const array
+        """.trimIndent()
+
+        val expected = """
+            test.txt 3.5:- Cannot write to immutable array
+        """.trimIndent()
+
+        runTest(prog, expected)
+    }
+
+
 }

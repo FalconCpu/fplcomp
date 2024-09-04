@@ -1,0 +1,30 @@
+
+# report a fatal error, by flashing a code on the LED display
+const FATAL_ERROR_ALL_COMPLETE    = 0x0000
+const FATAL_ERROR_DOUBLE_FREE     = 0x0001
+const FATAL_ERROR_OUT_OF_MEMORY   = 0x0002
+const FATAL_ERROR_INVALID_ADDRESS = 0x0003
+
+fun fatal(kind:Int, data:Int)
+    val hwregs = HWREGS_BASE
+
+    while true
+        # turn the LED display off
+        hwregs.seven_segment_brightness = 0
+        var delay = 0
+        while delay < 40000000
+            delay = delay + 1
+
+        if kind!=0
+            # display the code
+            hwregs.seven_segment_brightness = 255
+            hwregs.sevenSegmentDisplay = kind
+            delay = 0
+            while delay < 40000000
+                delay = delay + 1
+
+            # display the data
+            hwregs.sevenSegmentDisplay = data
+            delay = 0
+            while delay < 40000000
+                delay = delay + 1

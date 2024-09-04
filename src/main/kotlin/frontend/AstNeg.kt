@@ -1,6 +1,7 @@
 package frontend
 
 import backend.AluOp
+import backend.IntValue
 import backend.Reg
 import backend.regZero
 
@@ -18,7 +19,11 @@ class AstNeg(
     override fun typeCheck(context: AstBlock) : TcExpr {
         val expr = expr.typeCheck(context)
         return when (expr.type) {
-            IntType -> TcNeg(location, IntType, expr)
+            IntType ->
+                if (expr is TcIntLiteral)
+                    TcIntLiteral(expr.location, IntType, -expr.value)
+                else
+                    TcNeg(location, IntType, expr)
             RealType -> TcNeg(location, RealType, expr)
             else -> TcError(location, "No operation defined for unary minus ${expr.type}")
         }

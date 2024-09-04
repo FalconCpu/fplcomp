@@ -1,0 +1,9 @@
+
+fun boot()
+    # Initialise the system
+    initializeMemory()
+
+    # Run the user program
+    premain()
+    main()
+    fatal(0,0)

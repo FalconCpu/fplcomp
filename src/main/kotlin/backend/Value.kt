@@ -1,5 +1,6 @@
 package backend
 
+import frontend.ArrayImage
 import frontend.ClassType
 import frontend.SymbolField
 
@@ -15,7 +16,24 @@ class IntValue(val value: Int) : Value()  {
 }
 
 class StringValue(val value: String) : Value() {
-    override fun toString() = "\"$value\""
+    override fun toString() : String {
+        val stringBuilder = StringBuilder()
+        stringBuilder.append("\"")
+        for (c in value) {
+            when (c) {
+                '\n' -> stringBuilder.append("\\n")
+                '\t' -> stringBuilder.append("\\t")
+                '\r' -> stringBuilder.append("\\r")
+                '\b' -> stringBuilder.append("\\b")
+                '\'' -> stringBuilder.append("\\'")
+                '\"' -> stringBuilder.append("\\\"")
+                '\\' -> stringBuilder.append("\\\\")
+                else -> stringBuilder.append(c)
+            }
+        }
+        stringBuilder.append("\"")
+        return stringBuilder.toString()
+    }
 }
 
 class ArrayValue(val value: Array<Value>) : Value()
@@ -25,6 +43,12 @@ class ClassValue(val classRef: ClassType, val fields: Array<Value>) : Value()
 class ClassRefValue(val classRef: ClassType) : Value() {
     override fun toString() = classRef.name
 }
+
+class ArrayRefValue(val arrayRef: ArrayImage) : Value() {
+    override fun toString() = "Array|${arrayRef.id}"
+}
+
+
 
 object UndefinedValue : Value()
 

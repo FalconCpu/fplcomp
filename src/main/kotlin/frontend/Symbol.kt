@@ -1,5 +1,7 @@
 package frontend
 
+import backend.Value
+
 sealed class Symbol(
     val location: Location,
     val name: String,
@@ -80,6 +82,7 @@ class SymbolField(
 ) : Symbol(location, name, type) {
     var offset = UNDEFINED_OFFSET
 }
+
 
 // Symbol used to track smartcasts through member accesses
 class SymbolMemberAccess(

@@ -154,11 +154,13 @@ private fun executeStdlibCall(target: StdLibFunction) {
         is StdlibPrintBool -> target.execute(arg1, programOutput)
         is StdlibPrintChar -> target.execute(arg1, programOutput)
         is StdlibPrintInt -> target.execute(arg1, programOutput)
+        is StdlibPrintHex -> target.execute(arg1, programOutput)
         is StdlibPrintString -> target.execute(arg1, programOutput)
         is StdlibNewline -> target.execute(programOutput)
         is StdlibMallocArray -> regResult.setValue( target.execute(arg1) )
         is StdlibMallocObject -> regResult.setValue( target.execute(arg1) )
         is StdlibStrcat -> regResult.setValue( target.execute(arg1, allRegisters.getValue(allMachineRegs[2])) )
+        StdlibPremain -> TODO()
     }
 }
 

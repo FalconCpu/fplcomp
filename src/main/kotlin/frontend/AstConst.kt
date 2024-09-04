@@ -8,6 +8,7 @@ class AstConst(
 
     override fun typeCheck(context: AstBlock): TcStmt {
         val value = value.typeCheck(context)
+
         if (!value.hasConstantValue())
             Log.error(location, "value of const must be constant")
         val v = value.getConstantValue()
@@ -16,6 +17,8 @@ class AstConst(
         context.add(sym)
         return TcConst(location, name, value)
     }
+
+
 
     override fun dump(sb: StringBuilder, indent: Int) {
         sb.append(". ".repeat(indent))

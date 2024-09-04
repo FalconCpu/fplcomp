@@ -48,6 +48,10 @@ class AstEquals(
             return true
         }
 
+        // Comparing small int literal with a char
+        if (aType is IntType && bType is CharType && a.hasConstantValue() && a.getConstantValue() in -128..127)
+            return true
+
         return false
     }
 

@@ -33,7 +33,10 @@ class AstArrayAccess(
     }
 
     override fun typeCheckLvalue(context: AstBlock): TcExpr {
-        return typeCheck(context)
+        val ret = typeCheck(context)
+        if (ret is TcArrayAccess && ret.isImmutable())
+            Log.error(location, "Cannot write to immutable array")
+        return ret
     }
 }
 
@@ -64,6 +67,12 @@ class TcArrayAccess(
         val addrFinal = currentFunction.instrAlu(AluOp.ADD_I, addr, indexScaled)
 
         return currentFunction.instrLoad(type.getSize(), addrFinal, 0)
+    }
+
+    fun isImmutable() : Boolean {
+        // Do not allow assignment to immutable array
+        val lhsType = lhs.type
+        return lhsType is ArrayType && !lhsType.mutable
     }
 
     override fun codeGenLvalue(reg: Reg) {

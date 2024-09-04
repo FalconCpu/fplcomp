@@ -102,6 +102,9 @@ class TcIdentifier(
 
     override fun isMutable() = symbol.isMutable()
 
+    override fun hasConstantValue() = symbol is SymbolLiteral
+
+    override fun getConstantValue() = if (symbol is SymbolLiteral) symbol.value else 0
 
     override fun codeGenRvalue(): Reg {
         return when(symbol) {

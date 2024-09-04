@@ -47,6 +47,7 @@ enum class TokenKind (val text: String, val lineContinues : Boolean) {
     SHL      ("shl", true),
     SHR      ("shr", true),
     USHR     ("ushr", true),
+    TILDE    ("~", true),
     SEMICOLON(";", false),
     COMMA    (",", true),
     DOT      (".", true),
@@ -56,8 +57,11 @@ enum class TokenKind (val text: String, val lineContinues : Boolean) {
     CLOSECL  ("}", false),
     OPENSQ   ("[", true),
     CLOSESQ  ("]", false),
+    MUTABLEARRAY    ("MutableArray", false),
+    MUTABLEARRAYOF  ("mutableArrayOf", false),
     ARRAY    ("Array", false),
     ARRAYOF  ("arrayOf", false),
+    LOCAL    ("local", false),
     VAR      ("var", false),
     VAL      ("val", false),
     CONST    ("const", false),
@@ -75,9 +79,11 @@ enum class TokenKind (val text: String, val lineContinues : Boolean) {
     ABSTRACT ("abstract", false),
     OPEN     ("open", false),
     ENUM     ("enum", false),
-    PRINT    ("print", false),
     FOR      ("for", false),
+    PRINT    ("print", false),
     PRINTLN  ("println", false),
+    PRINTHEX ("printhex", false),
+    PRINTHEXLN ("printhexln", false),
     ERROR    ("<ERROR>", false);
 
     override fun toString() = text

@@ -18,6 +18,18 @@ sealed class Type (val name:String) {
 
         if (this is ClassType && rhsType is ClassType) return rhsType.isSubTypeOf(this)
 
+        if (this is ArrayType && rhsType is ArrayType) {
+            if (this.mutable && !rhsType.mutable) return false
+            return elementType == rhsType.elementType
+        }
+
+        return false
+    }
+
+    fun isAssignableFrom(rhs: TcExpr) : Boolean {
+        if (isAssignableFrom(rhs.type)) return true
+        if (this is CharType && rhs.type is IntType && rhs.hasConstantValue() && rhs.getConstantValue() in -128..127)
+            return true
         return false
     }
 
@@ -25,6 +37,12 @@ sealed class Type (val name:String) {
         if (!isAssignableFrom(type))
             Log.error(location, "Got type $type when expecting $this")
     }
+
+    fun checkAssignCompatible(location: Location, expr: TcExpr) {
+        if (!isAssignableFrom(expr))
+            Log.error(location, "Got type ${expr.type} when expecting $this")
+    }
+
 
     fun makeNonNull(): Type = when (this) {
         is NullableType -> base
@@ -65,21 +83,21 @@ object ErrorType : Type("Error")
 //                           Arrays
 // ---------------------------------------------------------------------
 
-class ArrayType(val elementType: Type) :
-    Type("Array<$elementType>")
+class ArrayType(val elementType: Type, val mutable:Boolean) :
+    Type(if (mutable) "MutableArray<$elementType>" else "Array<$elementType>")
 
 val allArrayTypes = mutableListOf<ArrayType>()
 
-fun makeArrayType(elementType: Type): ArrayType {
-    return allArrayTypes.find { it.elementType == elementType} ?: run {
-        val new = ArrayType(elementType)
+fun makeArrayType(elementType: Type,mutable: Boolean): ArrayType {
+    return allArrayTypes.find { it.elementType == elementType && it.mutable==mutable} ?: run {
+        val new = ArrayType(elementType, mutable)
         allArrayTypes.add(new)
         new
     }
 }
 
 // ---------------------------------------------------------------------
-//                           backend.Function Types
+//                           Function Types
 // ---------------------------------------------------------------------
 
 class FunctionType(val paramTypes: List<Type>, val retType: Type) :
@@ -113,6 +131,8 @@ class ClassType(name: String, val superClass: ClassType?, val isAbstract:Boolean
     }
 
     fun lookup(name: String) : Symbol? = symbolTable[name]
+
+    fun getStructSize() = numFields*4
 }
 
 val allClassTypes = mutableListOf<ClassType>()

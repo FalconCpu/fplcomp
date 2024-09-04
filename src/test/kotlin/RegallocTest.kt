@@ -33,7 +33,9 @@ class RegallocTest {
             mov %3, 0
             jmp @2
             @1:
-            ldw %4, %1[%3]
+            lsl %4, %3, 2
+            add %4, %1, %4
+            ldw %4, %4[0]
             add %8, %8, %4
             add %3, %3, 1
             @2:

@@ -47,7 +47,7 @@ class PolymorphTest {
             mov b, %2
             mov %1, a
             mov %2, b
-            call StdlibStrcat
+            call strcat
             mov t0, %8
             mov %8, t0
             jmp @0
@@ -63,8 +63,8 @@ class PolymorphTest {
             call add(String,String)
             mov t2, %8
             mov %1, t2
-            call StdlibPrintString
-            call StdlibNewline
+            call print(String)
+            call printNewline()
             mov t3, 1
             mov t4, 2
             mov %1, t3
@@ -72,8 +72,8 @@ class PolymorphTest {
             call add(Int,Int)
             mov t5, %8
             mov %1, t5
-            call StdlibPrintInt
-            call StdlibNewline
+            call print(Int)
+            call printNewline()
             @0:
             end
 

@@ -22,7 +22,7 @@ class AstIntLiteral(
 class TcIntLiteral(
     location: Location,
     type : Type,
-    private val value: Int
+    val value: Int
 ) : TcExpr(location, type) {
 
     override fun dump(sb: StringBuilder, indent: Int) {

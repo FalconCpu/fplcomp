@@ -45,7 +45,13 @@ class TcRepeat(
     }
 
     override fun codeGen() {
-        TODO("Not yet implemented")
+        val labelStart = currentFunction.newLabel()
+        val labelEnd = currentFunction.newLabel()
+
+        currentFunction.instrLabel(labelStart)
+        body.forEach { it.codeGen() }
+        condition.codeGenBool(labelEnd, labelStart)
+        currentFunction.instrLabel(labelEnd)
     }
 
 }

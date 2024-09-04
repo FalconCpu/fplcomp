@@ -1,8 +1,11 @@
 package backend
 
+import frontend.ArrayImage
 import frontend.SymbolField
 import frontend.SymbolGlobalVar
 import frontend.TcFunction
+import frontend.allClassTypes
+import frontend.allConstantArrays
 import frontend.currentFunction
 
 open class Function(val name:String, isStdLib:Boolean=false) {
@@ -109,12 +112,16 @@ open class Function(val name:String, isStdLib:Boolean=false) {
         add(InstrJump(target))
     }
 
-    fun instrCall(target: Function) : Reg {
+    fun instrCall(target: Function, getResult: Boolean=true) : Reg {
         add(InstrCall(target))
-        val ret = newTemp()
-        add(InstrMov(ret, regResult))
         makesCalls = true
-        return ret
+
+        if (getResult) {
+            val ret = newTemp()
+            add(InstrMov(ret, regResult))
+            return ret
+        } else
+            return regZero
     }
 
     fun instrVirtCall(instance:Reg, target: TcFunction) : Reg {
@@ -193,6 +200,15 @@ open class Function(val name:String, isStdLib:Boolean=false) {
                 use.uses.add(instr)
         }
     }
+
+
+    // Allocate space on the stack of size (pre+post)
+    // and returns a pointer 'pre' bytes into the allocated region
+    fun alloca(pre:Int, post: Int): Reg {
+        val offset = stackFrameSize + pre
+        stackFrameSize += post + pre
+        return instrAlu(AluOp.ADD_I, regSp, offset)
+    }
 }
 
 fun dumpAllFunctions(): String {
@@ -209,5 +225,7 @@ fun initialize() {
 
     allFunctions.clear()
     allGlobalVars.clear()
+    allClassTypes.clear()
+    allConstantArrays.clear()
 }
 

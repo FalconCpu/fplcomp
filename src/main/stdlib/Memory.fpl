@@ -4,18 +4,35 @@ const HEAP_END = 0x3f80000
 
 const systemVars = (0x100 : SystemVars)     # Allocate a block of memory at 0x100 to act as system variable space
 
+# Pre-allocate a chunk of memory for system variables
 class SystemVars
-    var freeList : MemChunk?
+    var freeList : MemChunk?        # Pointer to the first free chunk
+    var freeMemory : Int            # Total amount of free memory
 
+# The compiler will generate this structure for each class
+class ClassDescriptor
+    val name : String
+    val size : Int                  # This is the size of the user data, in bytes
+    # vtable goes here
+
+# We generate an instance of this class for every memory allocation
+class ClassObject
+    var classDescriptor : ClassDescriptor
+    # class fields go here
+
+class ArrayObject
+    var numElements : Int
+    # class fields go here
 
 # Memory chunks are always allocated in multiples of 8 bytes. Thus the lower 3 bits of the size would always
 # be zero. We can use this to store allocation status.
-# 0 = free
-# 1 = allocated
-# 2..7 = reserved
+const MEM_CHUNK_FREE    = 0
+const MEM_CHUNK_GENERIC = 1
+const MEM_CHUNK_OBJECT  = 2
+const MEM_CHUNK_ARRAY   = 3
 
 class MemChunk
-    var size : Int         # Size of this chunk in bytes, including header.
+    var size : Int         # Size of this chunk in bytes(including header) | allocation status.
     var next : MemChunk?   # For a free chunk, this is the next free chunk.
                            # For an allocated chunk, this is the user data
 
@@ -25,10 +42,17 @@ fun initializeMemory()
     freeChunk.size = HEAP_END - HEAP_START
     freeChunk.next = null
     systemVars.freeList = freeChunk
+    systemVars.freeMemory = HEAP_END - HEAP_START
 
-fun malloc(size: Int) -> Int   # Returns address of allocated memory. Returns 0 if no memory available
-                               # This routine will usually be called by the compiler - which will cast the return value to a pointer type
-    val roundedSize = (size+7) & 0xfffffff8     # round up to nearest multiple of 8
+# ###########################################################################################
+#                          malloc
+# ###########################################################################################
+#
+# Allocate a chunk of memory.
+# size = size of allocation in bytes
+
+fun malloc(size: Int, purpose:Int ) -> Int
+    val roundedSize = (size+11) & 0xfffffff8     # Add 4 bytes for the size field and round up to nearest multiple of 8
 
     # find the first free chunk that is big enough
     var chunk = systemVars.freeList
@@ -38,7 +62,8 @@ fun malloc(size: Int) -> Int   # Returns address of allocated memory. Returns 0 
         chunk = chunk.next
 
     if chunk=null
-        return 0
+        fatal(FATAL_ERROR_OUT_OF_MEMORY, 0)
+        return 0 # Should never get here
 
     # remove the chunk from the free list
     if prevChunk=null
@@ -50,18 +75,16 @@ fun malloc(size: Int) -> Int   # Returns address of allocated memory. Returns 0 
     val remainder = chunk.size - roundedSize
     if remainder>=8
         val remainderChunk = ((chunk:Int)+roundedSize : MemChunk)
-        remainderChunk.size = remainder
-        addToFreeList(remainderChunk)
+        addToFreeList(remainderChunk, remainder)
 
-    # return the address of the user data
-    chunk.size = roundedSize + 1    # Add 1 to size to indicate that this is an allocated chunk
-    return (chunk:Int)+4            # Add 4 to get address of user data
+    chunk.size = roundedSize | purpose
+    return (chunk:Int) + 4
 
-fun addToFreeList(chunk: MemChunk)
+fun addToFreeList(chunk: MemChunk, size:Int)
     # Insert the chunk into the free list in order of increasing size
     var prevChunk : MemChunk? = null
     var currChunk = systemVars.freeList
-    val size = chunk.size & 0xfffffff8    # Strip off allocation status
+    chunk.size =  size
     while currChunk!=null and currChunk.size<size
         prevChunk = currChunk
         currChunk = currChunk.next
@@ -76,7 +99,56 @@ fun addToFreeList(chunk: MemChunk)
 fun free(addr:Int)
     # Find the chunk
     val chunk = (addr-4 : MemChunk)
-    addToFreeList(chunk)
+    val sizeField = chunk.size
+    val kind = sizeField & 0x7           # Get allocation status
+    val size = sizeField & 0xfffffff8    # Strip off allocation status
+
+    if kind=MEM_CHUNK_OBJECT or kind=MEM_CHUNK_ARRAY or kind=MEM_CHUNK_GENERIC
+        addToFreeList(chunk, size)
+    else if kind=0
+        fatal(FATAL_ERROR_DOUBLE_FREE, (chunk:Int))
+    else
+        fatal(FATAL_ERROR_INVALID_ADDRESS, (chunk:Int))
+
+fun mallocObject(classDescriptor: ClassDescriptor) -> Int
+    val size = classDescriptor.size  + 4 # Size of user data + 4 bytes for the class descriptor
+    val addr = malloc(size, MEM_CHUNK_OBJECT)
+
+    val object = (addr : ClassObject)
+    object.classDescriptor = classDescriptor
+
+    return addr + 4    # Add 4 to get address of user data
+
+fun mallocArray(numElements:Int, elementSize:Int ) -> Int
+    val size = numElements * elementSize + 4 # Size of user data + 4 bytes for storing length
+    val addr = malloc(size, MEM_CHUNK_ARRAY)
+    val array = (addr : ArrayObject)
+    array.numElements = numElements
+    return addr + 4    # Add 4 to get address of user data
+
+
+
+fun dumpMemory()
+    println "ADDRESS  SIZE     STATUS"
+    var addr = HEAP_START
+    while addr<HEAP_END
+        val chunk = (addr : MemChunk)
+        val sizeField = chunk.size
+        val kind = sizeField & 0x7           # Get allocation status
+        val size = sizeField & 0xfffffff8    # Strip off allocation status
+        if kind=0
+            printhexln addr," ",size," free"
+        else if kind=MEM_CHUNK_GENERIC
+            printhexln addr," ",size," generic"
+        else if kind=MEM_CHUNK_OBJECT
+            val object = (addr+4 : ClassObject)
+            printhexln addr," ",size," ", object.classDescriptor.name
+        else if kind=MEM_CHUNK_ARRAY
+            val array = (addr+4 : ArrayObject)
+            printhexln addr," ",size," Array[", array.numElements,"]"
+        else
+            printhexln addr," ",size," invalid"
+        addr = addr + size
 
 
 

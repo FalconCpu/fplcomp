@@ -90,14 +90,14 @@ class Parser(private val lexer: Lexer) {
     }
 
     private fun parseArrayConstructor() : AstExpr {
-        val tok = expect(ARRAY)
+        val tok = expect(MUTABLEARRAY, ARRAY)
         expect(LT)
         val astType = parseType()
         expect(GT)
         expect(OPENB)
         val size = parseExpression()
         expect(CLOSEB)
-        return AstArrayConstructor(tok.location, astType, size)
+        return AstArrayConstructor(tok.location, astType, size, tok.kind==MUTABLEARRAY)
     }
 
     private fun parseOptGeneric() : AstType? {
@@ -110,10 +110,10 @@ class Parser(private val lexer: Lexer) {
     }
 
     private fun parseArrayOf() : AstExpr {
-        val tok = expect(ARRAYOF)
+        val tok = expect(MUTABLEARRAYOF, ARRAYOF)
         val astType = parseOptGeneric()
         val elements = parseExpressionList()
-        return AstArrayOf(tok.location, astType, elements)
+        return AstArrayOf(tok.location, astType, elements, tok.kind == MUTABLEARRAYOF)
     }
 
     private fun parsePrimaryExpression() : AstExpr {
@@ -123,8 +123,8 @@ class Parser(private val lexer: Lexer) {
             STRINGLIT -> parseStringLit()
             CHARLIT -> parseCharLit()
             OPENB -> parseBracketExpression()
-            ARRAY -> parseArrayConstructor()
-            ARRAYOF -> parseArrayOf()
+            MUTABLEARRAY, ARRAY -> parseArrayConstructor()
+            MUTABLEARRAYOF, ARRAYOF -> parseArrayOf()
             else -> throw ParseError(lookahead.location, "Got '$lookahead' when expecting primary expression")
         }
     }
@@ -176,6 +176,12 @@ class Parser(private val lexer: Lexer) {
         } else if (lookahead.kind == MINUS) {
             val op = nextToken()
             return AstNeg(op.location, parsePrefix())
+        } else if (lookahead.kind == TILDE) {
+            val op = nextToken()
+            return AstBitwiseInvert(op.location, parsePrefix())
+        } else if (lookahead.kind == LOCAL) {
+            val op = nextToken()
+            return AstLocal(op.location, parsePrefix())
         } else
             return parsePostfix()
     }
@@ -292,18 +298,18 @@ class Parser(private val lexer: Lexer) {
     }
 
     private fun parseTypeArray(): AstType {
-        expect(ARRAY)
+        val tok = expect(MUTABLEARRAY, ARRAY)
         expect(LT)
         val type = parseType()
         expect(GT)
-        return AstTypeArray(type.location, type)
+        return AstTypeArray(type.location, type, tok.kind == MUTABLEARRAY)
     }
 
     private fun parseType() : AstType {
         val ret = when(lookahead.kind) {
             ID -> parseTypeId()
             OPENB -> parseTypeBracket()
-            ARRAY -> parseTypeArray()
+            ARRAY, MUTABLEARRAY -> parseTypeArray()
             else -> throw ParseError(lookahead.location, "Expected type, got ${lookahead.kind}")
         }
 
@@ -556,7 +562,9 @@ class Parser(private val lexer: Lexer) {
             exprs += parseExpression()
         } while (canTake(COMMA))
         expectEol()
-        block.add(AstPrint(tok.location,exprs, tok.kind == PRINTLN))
+        val newline = tok.kind == PRINTLN || tok.kind == PRINTHEXLN
+        val hexFormat = tok.kind == PRINTHEX || tok.kind == PRINTHEXLN
+        block.add(AstPrint(tok.location,exprs, newline, hexFormat))
     }
 
     private fun parseFor(block: AstBlock) {
@@ -594,7 +602,7 @@ class Parser(private val lexer: Lexer) {
                 REPEAT -> parseRepeat(block)
                 EOF -> {}
                 INDENT -> parseIndent(block)
-                PRINT, PRINTLN -> parsePrint(block)
+                PRINT, PRINTLN, PRINTHEX, PRINTHEXLN -> parsePrint(block)
                 FOR -> parseFor(block)
                 CONST -> parseConst(block)
                 else -> throw ParseError(lookahead.location, "Got '${lookahead}' when expecting statement")

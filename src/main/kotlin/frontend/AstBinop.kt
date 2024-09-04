@@ -23,10 +23,14 @@ class AstBinop(
         if (lhs.type==ErrorType) return lhs
         if (rhs.type==ErrorType) return rhs
 
+        // Do type promotion of char to Int
+        val lhsType = if (lhs.type == CharType) IntType else lhs.type
+        val rhsType = if (rhs.type == CharType) IntType else rhs.type
+
         if (lhs.type==StringType && rhs.type==StringType && op==TokenKind.PLUS)
             return TcStringCat(location, lhs, rhs)
 
-        val match = operatorTable.find { it.kind == op && it.lhsType == lhs.type && it.rhsType == rhs.type }
+        val match = operatorTable.find { it.kind == op && it.lhsType == lhsType && it.rhsType == rhsType }
         if (match == null)
             return TcError(location, "No operation defined for ${lhs.type} $op ${rhs.type}")
         return TcBinop(location, match.resultType, match.op, lhs, rhs)

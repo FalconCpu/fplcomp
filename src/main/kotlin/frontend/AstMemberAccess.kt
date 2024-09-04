@@ -98,7 +98,7 @@ class AstMemberAccess (
 
 }
 
-val sizeSymbol = SymbolField(nullLocation, "size", IntType, false)
+val sizeSymbol = SymbolField(nullLocation, "size", IntType, false).also{ it.offset=-1}
 
 
 class TcMemberAccess (

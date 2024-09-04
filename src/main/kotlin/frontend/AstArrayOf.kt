@@ -1,13 +1,18 @@
 package frontend
 
+import backend.ArrayRefValue
 import backend.InstrLit
 import backend.Reg
 import backend.StdlibMallocArray
+import sun.net.www.content.text.PlainTextInputStream
+
+val allConstantArrays = mutableListOf<ArrayImage>()
 
 class AstArrayOf(
     location: Location,
     private val astElementType: AstType?,
-    private val elements : List<AstExpr>
+    private val elements : List<AstExpr>,
+    private val mutable: Boolean
 ) : AstExpr(location) {
 
     override fun dump(sb: StringBuilder, indent: Int) {
@@ -27,9 +32,9 @@ class AstArrayOf(
         val elementType = astElementType?.resolveType(context) ?: elements[0].type
 
         for (element in elements)
-            elementType.checkAssignCompatible (element.location, element.type)
+            elementType.checkAssignCompatible (element.location, element)
 
-        val type = makeArrayType(elementType)
+        val type = makeArrayType(elementType, mutable)
         return TcArrayOf(location, type, elementType, elements)
     }
 
@@ -42,6 +47,8 @@ class TcArrayOf(
     private val elements : List<TcExpr>
 ) : TcExpr(location, type) {
 
+    var localAlloc = false
+
     override fun dump(sb: StringBuilder, indent: Int) {
         sb.append(". ".repeat(indent))
         sb.append("ARRAYOF $type\n")
@@ -52,14 +59,52 @@ class TcArrayOf(
     override fun codeGenRvalue(): Reg {
         val numElements = elements.size
         val elementSize = elementType.getSize()
-        currentFunction.add(InstrLit(backend.regArg1, numElements))
-        currentFunction.add(InstrLit(backend.regArg2, elementSize))
-        val ret = currentFunction.instrCall(StdlibMallocArray)
+        val immutable = type is ArrayType && !type.mutable
+
+        // If we can build the array at compile time, do it
+        if (immutable && elements.all{ it.hasConstantValue()}) {
+            val values = elements.map { it.getConstantValue() }
+            val image = ArrayImage(allConstantArrays.size, elementType, values)
+            allConstantArrays.add(image)
+            return currentFunction.instrLea(ArrayRefValue(image))
+        }
+
+        val ret : Reg
+        if (localAlloc) {
+            ret = currentFunction.alloca(4, numElements * elementSize)   // 4 for the length field
+            val numEl = currentFunction.instrInt(numElements)
+            currentFunction.instrStore(numEl, ret, sizeSymbol)
+        } else {
+            currentFunction.add(InstrLit(backend.regArg1, numElements))
+            currentFunction.add(InstrLit(backend.regArg2, elementSize))
+            ret = currentFunction.instrCall(StdlibMallocArray)
+        }
+
         for ((index, element) in elements.withIndex()) {
             val value = element.codeGenRvalue()
-            currentFunction.instrStore(elementSize, value, ret, index)
+            currentFunction.instrStore(elementSize, value, ret, index * elementSize)
         }
         return ret
     }
+}
+
+class ArrayImage(
+    val id : Int,
+    val elementType: Type,
+    val elements: List<Int>
+) {
+    fun asmGen(sb: StringBuilder) {
+        sb.append("dcw ${elements.size}\n")
+        sb.append("Array|$id:\n")
+        if (elementType is CharType) {
+            for(e in elements.chunked(4))
+                sb.append("dcb ${e.joinToString(",")}\n")
+        } else {
+            for (e in elements)
+                sb.append("dcw $e\n")
+        }
+        sb.append("\n")
+    }
+
 
 }

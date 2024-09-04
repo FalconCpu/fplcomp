@@ -1,6 +1,9 @@
 package backend
 
+import frontend.ClassType
 import frontend.Symbol.Companion.UNDEFINED_OFFSET
+import frontend.allClassTypes
+import frontend.allConstantArrays
 
 private val sb = StringBuilder()
 lateinit var currentFunction : Function
@@ -13,43 +16,48 @@ private fun Int.checkIsSmall() {
     check(this in -0x400..0x3ff) { "Value $this is not a small integer" }
 }
 
-private fun genPreambleTop() {
-    sb.append("ld %sp, 04000000H \n")
-    sb.append("jmp main()\n")
-}
-
-private fun genPostambleTop() {
-    sb.append("ld %30,0\n")
-    sb.append("jmp %30[0]\n")
-}
-
-
 private fun genPreamble(function: Function) {
-    if (function.name == "<top>")
-        return genPreambleTop()
+    if (function.name == "<top>") {
+        sb.append("org 0FFFF8000H\n")
+        sb.append("ld %sp, 4000000H\n")
+        sb.append("jsr initializeMemory()\n")
+        return
+    }
 
     sb.append("${function.name}:\n")
+
     val stackFrameSize = function.stackFrameSize + (if (function.maxRegister>8) 4*(function.maxRegister - 8) else 0) +
                       if (function.makesCalls) 4 else 0
     if (stackFrameSize > 0) {
         sb.append("sub %sp, %sp, $stackFrameSize\n")
-        for(index in 9..function.maxRegister)
-            sb.append("stw %$index, %sp[${function.stackFrameSize + ((index - 9) * 4)}]\n")
+        var offset = function.stackFrameSize
+        for(index in 9..function.maxRegister) {
+            sb.append("stw %$index, %sp[$offset]\n")
+            offset += 4
+        }
         if (function.makesCalls)
-            sb.append("stw %30, %sp[${function.stackFrameSize + 4 * (function.maxRegister - 8)}]\n")
+            sb.append("stw %30, %sp[$offset]\n")
     }
 }
 
 private fun genPostamble(function: Function) {
-    if (function.name == "<top>")
-        return genPostambleTop()
+    if (function.name == "<top>") {
+        sb.append("ld %1, 0\n")
+        sb.append("ld %2, 0\n")
+        sb.append("jsr fatal(Int,Int)\n\n")
+        return
+    }
+
     val stackFrameSize = function.stackFrameSize + (if (function.maxRegister>8) 4*(function.maxRegister - 8) else 0) +
             if (function.makesCalls) 4 else 0
     if (stackFrameSize > 0) {
-        for(index in 9..function.maxRegister)
-            sb.append("ldw %$index, %sp[${function.stackFrameSize + ((index-9) * 4)}]\n")
+        var offset = function.stackFrameSize
+        for(index in 9..function.maxRegister) {
+            sb.append("ldw %$index, %sp[$offset]\n")
+            offset += 4
+        }
         if (function.makesCalls)
-            sb.append("ldw %30, %sp[${function.stackFrameSize + 4 * (function.maxRegister - 8)}]\n")
+            sb.append("ldw %30, %sp[$offset]\n")
         sb.append("add %sp, %sp, $stackFrameSize\n")
     }
     sb.append("ret\n\n")
@@ -106,7 +114,10 @@ fun Instr.asmGen() {
 
         is InstrLea -> {
             dest.checkIsReg()
-            sb.append("ld $dest, $src\n")
+            if (src is ClassRefValue)
+                sb.append("ld $dest, $src|class\n")
+            else
+                sb.append("ld $dest, $src\n")
         }
 
         is InstrLit -> {
@@ -127,7 +138,7 @@ fun Instr.asmGen() {
         is InstrLoadGlobal -> {
             dest.checkIsReg()
             check(globalVar.offset != UNDEFINED_OFFSET)
-            sb.append("ldw $dest, $regGlobal[${globalVar.offset}]\n")
+            sb.append("ldw $dest, $regGlobal[${globalVar.offset*4}]\n")
         }
 
         is InstrMov -> {
@@ -157,7 +168,7 @@ fun Instr.asmGen() {
         is InstrStoreGlobal -> {
             data.checkIsReg()
             check(globalVar.offset != UNDEFINED_OFFSET)
-            sb.append("stw $data, $regGlobal[${globalVar.offset}]\n")
+            sb.append("stw $data, $regGlobal[${globalVar.offset*4}]\n")
         }
 
         is InstrVirtCall -> {
@@ -166,20 +177,35 @@ fun Instr.asmGen() {
             sb.append("ldw %30, %30[${methodId*4}]\n") // Get the function's address
             sb.append("jmp %30, %30[0]\n")
         }
-
     }
 }
 
-fun Function.asmGen() {
+private fun Function.asmGen() {
     currentFunction = this
     for(instr in prog)
         instr.asmGen()
 }
 
+private fun ClassType.asmGen() {
+    sb.append("$name|class:\n")
+    sb.append("dcw \"$name\"\n")             // Class name
+    sb.append("dcw ${this.numFields*4}\n")   // Size of the class's fields
+    for(method in methods)                   // Vtable
+        sb.append("dcw ${method.name}\n")
+    sb.append("\n")
+}
+
 fun asmGen(): String {
     sb.clear()
-    for(func in allFunctions) {
+
+    for(func in allFunctions)
         func.asmGen()
-    }
+
+    for (cls in allClassTypes)
+        cls.asmGen()
+
+    for (ary in allConstantArrays)
+        ary.asmGen(sb)
+
     return sb.toString()
 }

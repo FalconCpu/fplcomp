@@ -106,6 +106,8 @@ class TcConstructor(
     private val args: List<TcExpr>
 ) : TcExpr(location, type) {
 
+    var localAlloc = false      // true value gets poked in here if we are instancing a local object
+
     override fun dump(sb: StringBuilder, indent: Int) {
         sb.append(". ".repeat(indent))
         sb.append("CONSTRUCTOR $type\n")
@@ -117,9 +119,16 @@ class TcConstructor(
     override fun codeGenRvalue(): Reg {
         require(type is ClassType)
 
-        // Malloc the memory
+        val ret : Reg
         currentFunction.instrLea(regArg1, ClassRefValue(type))
-        val ret = currentFunction.instrCall(StdlibMallocObject)
+        if (localAlloc) {
+            // Allocate memory for the object on the stack
+            ret = currentFunction.alloca(4, type.getStructSize())
+            currentFunction.instrStore(4, regArg1, ret, -4)
+        } else {
+            // Malloc the memory
+            ret = currentFunction.instrCall(StdlibMallocObject)
+        }
 
         // Call the constructor
         val args = args.map { it.codeGenRvalue() }

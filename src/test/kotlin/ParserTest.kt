@@ -765,7 +765,7 @@ class ParserTest {
             . FUNCTION main
             . . TYPEID Int
             . . val a
-            . . . ARRAYCONSTRUCTOR
+            . . . ARRAYCONSTRUCTOR false
             . . . . TYPEID Int
             . . . . INTLIT 10
 

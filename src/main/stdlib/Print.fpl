@@ -10,5 +10,36 @@ fun printHex(in_value: Int)
         value = value shl 4
 
 fun print(str:String)
-    for i in 0 to str.length-1
+    for i in 0 to <str.length
         uart_transmit((str[i] : Int))
+
+fun print(c:Char)
+    uart_transmit((c : Int))
+
+fun printNewline()
+    uart_transmit(10)
+
+fun print(value: Int)
+    var v = value
+
+    if v<0
+        uart_transmit(('-' : Int))
+        v = -v
+
+    # allocate a buffer on the stack to hold the digits
+    val buffer = local MutableArray<Char>(10)
+    var i = 0
+
+    # generate the digits in reverse order
+    repeat
+        val digit = v % 10
+        buffer[i] = (digit + '0' : Char)
+        v = v / 10
+        i = i + 1
+    until v = 0
+
+    # print the digits in correct order
+    while i>0
+        i = i - 1
+        uart_transmit((buffer[i]:Int))
+end fun

@@ -1,5 +1,6 @@
 package backend
 
+import frontend.ArrayImage
 import frontend.SymbolField
 import frontend.SymbolGlobalVar
 import frontend.TcFunction
@@ -147,8 +148,8 @@ enum class AluOp(val text:String) {
     ADD_I ("add"),
     SUB_I ("sub"),
     MUL_I ("mul"),
-    DIV_I ("div"),
-    MOD_I ("mod"),
+    DIV_I ("divs"),
+    MOD_I ("mods"),
     AND_I ("and"),
     OR_I ("or"),
     XOR_I ("xor"),

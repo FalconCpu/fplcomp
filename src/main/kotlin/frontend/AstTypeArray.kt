@@ -2,7 +2,8 @@ package frontend
 
 class AstTypeArray (
     location: Location,
-    private val type: AstType
+    private val type: AstType,
+    private val mutable: Boolean
 ) : AstType(location) {
 
     override fun dump(sb: StringBuilder, indent: Int) {
@@ -13,6 +14,6 @@ class AstTypeArray (
 
     override fun resolveType(context: AstBlock): Type {
         val elementType = type.resolveType(context)
-        return makeArrayType(elementType)
+        return makeArrayType(elementType, mutable)
     }
 }
