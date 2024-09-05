@@ -365,20 +365,6 @@ class ParserTest {
     }
 
     @Test
-    fun badMultipleTypes() {
-        val prog = """
-            fun main(a:(Int,Int))->Int
-                return 1
-        """.trimIndent()
-
-        val expected = """ 
-             test.txt 1.12:- Cannot have multiple types
-        """.trimIndent()
-
-        runTest(prog, expected)
-    }
-
-    @Test
     fun badTypeExpression() {
         val prog = """
             fun main(a:4)->Int
@@ -858,6 +844,34 @@ class ParserTest {
 
         runTest(prog, expected)
     }
+
+    @Test
+    fun tupleTest() {
+        val prog = """
+            fun foo(a:Int,b:Int)->(Int,Int)
+                return b,a
+        """.trimIndent()
+
+        val expected = """
+            TOP
+            . FUNCTION foo
+            . . PARAMETER a
+            . . . TYPEID Int
+            . . PARAMETER b
+            . . . TYPEID Int
+            . . TUPLE
+            . . . TYPEID Int
+            . . . TYPEID Int
+            . . RETURN
+            . . . TUPLE
+            . . . . IDENTIFIER b
+            . . . . IDENTIFIER a
+
+        """.trimIndent()
+
+        runTest(prog, expected)
+    }
+
 
 
 }

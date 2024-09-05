@@ -30,6 +30,7 @@ const MEM_CHUNK_FREE    = 0
 const MEM_CHUNK_GENERIC = 1
 const MEM_CHUNK_OBJECT  = 2
 const MEM_CHUNK_ARRAY   = 3
+const MEM_CHUNK_STRING  = 4
 
 class MemChunk
     var size : Int         # Size of this chunk in bytes(including header) | allocation status.
@@ -129,7 +130,18 @@ fun mallocArray(numElements:Int, elementSize:Int ) -> Int
     array.numElements = numElements
     return addr + 4    # Add 4 to get address of user data
 
+fun mallocString(size:Int) -> Int
+    val addr = malloc(size+4, MEM_CHUNK_STRING)
+    val array = (addr : ArrayObject)
+    array.numElements = size
+    return addr + 4    # Add 4 to get address of user data
 
+
+fun dumpMemoryString(s1:String)
+    val len = if s1.length<20 then s1.length else 20
+    for i in 0 to <len
+        print s1[i]
+    println ""
 
 fun dumpMemory()
     println "ADDRESS  SIZE     STATUS"
@@ -139,16 +151,21 @@ fun dumpMemory()
         val sizeField = chunk.size
         val kind = sizeField & 0x7           # Get allocation status
         val size = sizeField & 0xfffffff8    # Strip off allocation status
+        printhex addr," ",size," "
         if kind=0
-            printhexln addr," ",size," free"
+            printhexln "free"
         else if kind=MEM_CHUNK_GENERIC
-            printhexln addr," ",size," generic"
+            printhexln "generic"
         else if kind=MEM_CHUNK_OBJECT
             val object = (addr+4 : ClassObject)
-            printhexln addr," ",size," ", object.classDescriptor.name
+            printhexln object.classDescriptor.name
         else if kind=MEM_CHUNK_ARRAY
             val array = (addr+4 : ArrayObject)
-            printhexln addr," ",size," Array[", array.numElements,"]"
+            println "Array[", array.numElements,"]"
+        else if kind=MEM_CHUNK_STRING
+            val string = (addr+4 : ArrayObject)
+            print "String  "
+            dumpMemoryString((addr+8:String))
         else
             printhexln addr," ",size," invalid"
         addr = addr + size

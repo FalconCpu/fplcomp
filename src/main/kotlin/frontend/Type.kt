@@ -63,6 +63,7 @@ sealed class Type (val name:String) {
         RealType -> 4
         StringType -> 4
         is EnumType -> 4
+        is TupleType -> elementTypes.sumOf { it.getSize() }
     }
 }
 
@@ -95,6 +96,24 @@ fun makeArrayType(elementType: Type,mutable: Boolean): ArrayType {
         new
     }
 }
+
+// ---------------------------------------------------------------------
+//                           Tuples
+// ---------------------------------------------------------------------
+
+class TupleType(val elementTypes: List<Type>) :
+    Type(elementTypes.joinToString(prefix = "(", postfix = ")"))
+
+val allTupleTypes = mutableListOf<TupleType>()
+
+fun makeTupleType(elementTypes: List<Type>,): TupleType {
+    return allTupleTypes.find { it.elementTypes == elementTypes} ?: run {
+        val new = TupleType(elementTypes)
+        allTupleTypes.add(new)
+        new
+    }
+}
+
 
 // ---------------------------------------------------------------------
 //                           Function Types

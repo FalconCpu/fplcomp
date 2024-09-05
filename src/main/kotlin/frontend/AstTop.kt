@@ -2,7 +2,7 @@ package frontend
 
 import backend.allFunctions
 
-var currentFunction = backend.Function("<dummy>")
+var currentFunction = backend.Function("<dummy>", UnitType)
 
 class AstTop : AstBlock(nullLocation, null) {
 
@@ -43,7 +43,7 @@ class AstTop : AstBlock(nullLocation, null) {
 
 class TcTop : TcBlock(nullLocation) {
 
-    private val backendFunction = backend.Function("<top>")
+    private val backendFunction = backend.Function("<top>", UnitType)
 
     override fun dump(sb: StringBuilder, indent: Int) {
         sb.append(". ".repeat(indent))

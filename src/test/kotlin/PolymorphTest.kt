@@ -47,7 +47,7 @@ class PolymorphTest {
             mov b, %2
             mov %1, a
             mov %2, b
-            call strcat
+            call strcat(String,String)
             mov t0, %8
             mov %8, t0
             jmp @0

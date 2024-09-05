@@ -77,6 +77,7 @@ enum class TokenKind (val text: String, val lineContinues : Boolean) {
     CLASS    ("class", false),
     OVERRIDE ("override", false),
     ABSTRACT ("abstract", false),
+    EXTERNAL ("@external", false),
     OPEN     ("open", false),
     ENUM     ("enum", false),
     FOR      ("for", false),

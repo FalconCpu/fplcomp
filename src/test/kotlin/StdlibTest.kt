@@ -7,8 +7,8 @@ import java.io.StringReader
 
 class StdlibTest {
 
-    val stdLibFiles = listOf("hwregs.fpl", "Fatal.fpl", "Memory.fpl", "Print.fpl", "Keyboard.fpl", "Graphics.fpl",
-        "StringBuffer.fpl", "LineEditor.fpl")
+    val stdLibFiles = listOf("hwregs.fpl", "Fatal.fpl", "Memory.fpl", "String.fpl", "Print.fpl",
+        "Keyboard.fpl", "Graphics.fpl", "StringBuffer.fpl", "LineEditor.fpl")
 
     private fun runTest(prog: String, expected: String) {
         val lexers = stdLibFiles.map { Lexer(it , FileReader("src/main/stdlib/$it")) }
@@ -99,7 +99,7 @@ class StdlibTest {
             00000004
             00000001
             ADDRESS  SIZE     STATUS
-            00001000 00000018 Array[00000004]
+            00001000 00000018 Array[4]
             00001018 03F7EFE8 free
             
         """.trimIndent()
@@ -170,7 +170,7 @@ class StdlibTest {
             
             fun main()
                 while  true
-                    val key = readKeyboard()
+                    val (key,qualifier) = readKeyboard()
                     if key = KEY_UP
                         print "UP"
                     else if key = KEY_DOWN
@@ -241,37 +241,6 @@ class StdlibTest {
         """.trimIndent()
 
         runTest(prog, expected)
-
-    }
-
-    @Test
-    fun osTest() {
-        // FPGA only
-        val prog = """
-            fun main()
-                outputChannel = PrintChannel.SCREEN
-                clearScreen()
-                setFgColor(10)
-                println "Falcon Computer System"
-                setFgColor(8)
-                println systemVars.freeMemory, " bytes free\n"
-                setFgColor(11)
-                print "> "
-                setFgColor(15)
-                while true
-                    val key = readKeyboard()
-                    if key != 0
-                        print key
-            """.trimIndent()
-
-
-        val expected = """
-            Timeout
-            
-        """.trimIndent()
-
-        runTest(prog, expected)
-
     }
 
     @Test
@@ -294,7 +263,7 @@ class StdlibTest {
             ADDRESS  SIZE     STATUS
             00001000 00000010 StringBuffer
             00001010 00000010 free
-            00001020 00000018 Array[00000010]
+            00001020 00000018 Array[16]
             00001038 03F7EFC8 free
             
         """.trimIndent()
@@ -303,26 +272,70 @@ class StdlibTest {
 
     }
 
+
+
     @Test
-    fun lineEditorTest() {
+    fun stringsTest() {
         val prog = """
             fun main()
-                outputChannel = PrintChannel.SCREEN
-                clearScreen()
-                val le = LineEditor()
-                le.run()
+                val a = "Hello world"
+                val b = "Goodbye"
+                val c = a + b
+                println c
+                println a<b
+                println a>b
+                println a!=b
+                dumpMemory()
             """.trimIndent()
 
 
         val expected = """
-            Timeout
-            
+            Hello worldGoodbye
+            true
+            false
+            true
+            ADDRESS  SIZE     STATUS
+            00001000 00000020 String  Hello worldGoodbye
+            00001020 03F7EFE0 free
+
         """.trimIndent()
 
         runTest(prog, expected)
 
     }
 
+    @Test
+    fun stringsEqTest() {
+        val prog = """
+            fun comp(a:String)->Int
+                if a="zero"
+                    return 0
+                else if a="one"
+                    return 1
+                else if a="two"
+                    return 2
+                else
+                    return 3
+                    
+            fun main() 
+                println comp("zero")
+                println comp("on"+"e")
+                println comp("two")
+                println comp("three")
+            """.trimIndent()
+
+
+        val expected = """
+            0
+            1
+            2
+            3
+
+        """.trimIndent()
+
+        runTest(prog, expected)
+
+    }
 
 
 

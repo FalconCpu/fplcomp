@@ -19,6 +19,8 @@ fun clearScreen()
     while hwregs.blit_command!=BLIT_CMD_IDLE
         val dummy = 1
     hwregs.blit_command = BLIT_CMD_SOLID_RECT
+    cursorX = 0
+    cursorY = 0
 
 fun drawRectangle(x1: Int, y1: Int, x2: Int, y2: Int, color: Int)
     val hwregs = HWREGS_BASE

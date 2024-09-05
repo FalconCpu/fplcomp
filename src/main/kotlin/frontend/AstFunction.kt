@@ -11,7 +11,8 @@ class AstFunction (
     private val astParams: List<AstParameter>,
     private val returnType: AstType?,
     val methodKind: MethodKind,
-    private val methodOf : AstClass?
+    private val methodOf : AstClass?,
+    private val isExternal : Boolean
 ) : AstBlock(location, parent) {
 
     var endLocation = nullLocation   // value gets poked in by Parser
@@ -67,8 +68,11 @@ class AstFunction (
             return Log.error(location, "Conflict between variable and function name")
 
 
-        for(param in params)
+        for(param in params) {
+            if (param.type is TupleType)
+                Log.error(param.location, "Tuple parameters not supported")
             add(param)
+        }
 
         val thisSymbol =
             if (methodOf!=null)
@@ -79,7 +83,7 @@ class AstFunction (
         val nameWithTypes = name+paramTypes.joinToString(separator = ",", prefix = "(", postfix = ")")
         val funcName = if (methodOf!=null) "$methodOf/$nameWithTypes" else nameWithTypes
 
-        tcFunction = TcFunction(location, funcName, params, retType, methodKind, thisSymbol)
+        tcFunction = TcFunction(location, funcName, params, retType, methodKind, thisSymbol, isExternal)
 
         if (methodKind==MethodKind.OVERRIDE_METHOD)
             checkOverride(symbol, tcFunction, methodOf!!.type)
@@ -111,10 +115,11 @@ class TcFunction (
     val params: List<Symbol>,
     val returnType: Type,
     val methodKind: MethodKind,
-    val thisSymbol : SymbolLocalVar?
+    val thisSymbol : SymbolLocalVar?,
+    isExternal : Boolean
 ) : TcBlock(location) {
 
-    val backendFunction = Function(name)
+    val backendFunction = Function(name, returnType, isExternal = isExternal)
     var methodId = 0
 
     override fun dump(sb: StringBuilder, indent: Int) {

@@ -1,35 +1,79 @@
 package frontend
 
+import backend.TupleReg
 import backend.allGlobalVars
-import com.sun.org.apache.xalan.internal.xsltc.compiler.sym
 
 class AstDeclaration (
     location: Location,
     private val op : TokenKind,
-    private val name: String,
+    private val names: List<AstIdentifier>,
     private val type: AstType?,
     private val value: AstExpr?
 ) : AstStmt(location) {
 
     override fun dump(sb: StringBuilder, indent: Int) {
         sb.append(". ".repeat(indent))
-        sb.append("$op $name\n")
+        if (names.size==1)
+            sb.append("$op ${names[0]}\n")
+        else
+            sb.append("$op $names\n")
         type?.dump(sb, indent + 1)
         value?.dump(sb, indent + 1)
     }
 
+    private fun errorDeclaration(context: AstBlock, message:String) : TcStmt {
+        Log.error(location, message)
+        val symbols = names.map { SymbolLocalVar(it.location, it.name, ErrorType, true) }
+        symbols.forEach{ context.add(it)}
+        return TcDeclaration(location, symbols, null)
+    }
+
+    private fun genSymbol(location: Location, name:String, type: Type, mutable: Boolean, context: AstBlock) =
+        when (context) {
+            is AstTop   -> SymbolGlobalVar(location, name, type, mutable)
+            is AstClass -> SymbolField(location, name, type, mutable)
+            else             -> SymbolLocalVar(location, name, type, mutable)
+        }
+
+    private fun typeCheckDestructuringDecl(context: AstBlock) : TcStmt {
+        if (type!=null)
+            Log.error(location, "Explicit types not supported for destructuring declarations")
+        if (value==null)
+            return errorDeclaration(context, "Destructuring declarations must have an initializer")
+
+        val value = value.typeCheck(context)
+        if (value.type !is TupleType)
+            return errorDeclaration(context, "Destructuring declarations must have a tuple initializer")
+        if (names.size != value.type.elementTypes.size)
+            return errorDeclaration(context,
+                "Destructuring declarations must have the same number of elements as the tuple initializer")
+
+        val mutable = (op == TokenKind.VAR)
+        val symbols = names.mapIndexed { index, name ->
+            genSymbol(name.location, name.name, value.type.elementTypes[index], mutable, context)
+        }
+
+        symbols.forEach{ context.add(it) }
+        return TcDeclaration(location, symbols, value)
+    }
+
     override fun typeCheck(context:AstBlock) : TcStmt {
+        if (names.size!=1)
+            return typeCheckDestructuringDecl(context)
+
+        // Handle the case of a single declaration
+
+        val name = names[0].name
         val value = value?.typeCheck(context)
         val type =  type?.resolveType(context) ?:
                     value?.type ?:
                     makeTypeError(location, "Unknown type for $name")
         val mutable = (op == TokenKind.VAR)
 
-        val symbol = when (context) {
-            is AstTop   -> SymbolGlobalVar(location, name, type, mutable)
-            is AstClass -> SymbolField(location, name, type, mutable)
-            else             -> SymbolLocalVar(location, name, type, mutable)
-        }
+        if (type is TupleType)
+            Log.error(location, "Variables are not allowed to have tuple types")
+
+        val symbol = genSymbol(location, name, type, mutable, context)
         context.add(symbol)
 
         if (symbol is SymbolGlobalVar) {
@@ -41,20 +85,23 @@ class AstDeclaration (
             type.checkAssignCompatible(value.location, value)
         else
             currentPathContext = currentPathContext.addUninitializedVariable(symbol)
-        return TcDeclaration(location, symbol, value)
+        return TcDeclaration(location, listOf(symbol), value)
     }
 
 }
 
 class TcDeclaration (
     location: Location,
-    private val symbol: Symbol,
+    private val symbol: List<Symbol>,
     private val value: TcExpr?
 ) : TcStmt(location) {
 
     override fun dump(sb: StringBuilder, indent: Int) {
         sb.append(". ".repeat(indent))
-        sb.append("DECL ${symbol.description()} ${symbol.type}\n")
+        if (symbol.size == 1)
+            sb.append("DECL ${symbol[0].description()} ${symbol[0].type}\n")
+        else
+            sb.append("DECL $symbol\n")
         value?.dump(sb, indent + 1)
     }
 
@@ -62,17 +109,21 @@ class TcDeclaration (
         if (value==null)
             return
 
-        val rhs = value.codeGenRvalue()
+        val value = value.codeGenRvalue()
 
-        when(symbol) {
-            is SymbolLocalVar -> currentFunction.instrMove( currentFunction.getReg(symbol), rhs)
-            is SymbolField -> currentFunction.instrStore(rhs, currentFunction.thisReg!!, symbol)
-            is SymbolGlobalVar -> currentFunction.instrStore(rhs, symbol)
-            is SymbolFunctionName,
-            is SymbolLiteral,
-            is SymbolMemberAccess,
-            is SymbolTypeName -> error("Got ${this.javaClass} in AstDeclaration")
+        for(index in symbol.indices) {
+            val sym = symbol[index]
+            val rhs = if (value is TupleReg) value.regs[index] else value
+
+            when (sym) {
+                is SymbolLocalVar -> currentFunction.instrMove(currentFunction.getReg(sym), rhs)
+                is SymbolField -> currentFunction.instrStore(rhs, currentFunction.thisReg!!, sym)
+                is SymbolGlobalVar -> currentFunction.instrStore(rhs, sym)
+                is SymbolFunctionName,
+                is SymbolLiteral,
+                is SymbolMemberAccess,
+                is SymbolTypeName -> error("Got ${this.javaClass} in AstDeclaration")
+            }
         }
-
     }
 }

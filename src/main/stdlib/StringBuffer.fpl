@@ -42,6 +42,8 @@ class StringBuffer
     fun clear()
         length = 0
 
+    fun toString() -> String
+        return makeString((buffer:Int), length)
 
 fun prnt(sb:StringBuffer)
     for i in 0 to<sb.length

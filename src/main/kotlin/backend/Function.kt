@@ -4,11 +4,13 @@ import frontend.ArrayImage
 import frontend.SymbolField
 import frontend.SymbolGlobalVar
 import frontend.TcFunction
+import frontend.TupleType
+import frontend.Type
 import frontend.allClassTypes
 import frontend.allConstantArrays
 import frontend.currentFunction
 
-open class Function(val name:String, isStdLib:Boolean=false) {
+open class Function(val name:String, val retType:Type, isStdLib:Boolean=false, val isExternal: Boolean=false) {
     init {
         if (!isStdLib)
             allFunctions.add(this)
@@ -117,17 +119,42 @@ open class Function(val name:String, isStdLib:Boolean=false) {
         makesCalls = true
 
         if (getResult) {
-            val ret = newTemp()
-            add(InstrMov(ret, regResult))
-            return ret
+            if (target.retType is TupleType) {
+                val regs = mutableListOf<Reg>()
+                check(target.retType.elementTypes.size <= 4)
+                for(index in target.retType.elementTypes.indices) {
+                    val reg = newTemp()
+                    instrMove(reg, allMachineRegs[8-index])
+                    regs += reg
+                }
+                return TupleReg(regs.joinToString(prefix = "(", postfix = ")"),regs)
+            } else {
+                val ret = newTemp()
+                add(InstrMov(ret, regResult))
+                return ret
+            }
         } else
             return regZero
     }
 
     fun instrVirtCall(instance:Reg, target: TcFunction) : Reg {
         add(InstrVirtCall(instance, target))
-        val ret = newTemp()
-        add(InstrMov(ret, regResult))
+
+        val ret : Reg
+        if (target.returnType is TupleType) {
+            val regs = mutableListOf<Reg>()
+            check(target.returnType.elementTypes.size <= 4)
+            for(index in target.returnType.elementTypes.indices) {
+                val reg = newTemp()
+                instrMove(reg, allMachineRegs[8-index])
+                regs += reg
+            }
+            ret = TupleReg(regs.joinToString(prefix = "(", postfix = ")"),regs)
+        } else {
+            ret = newTemp()
+            add(InstrMov(ret, regResult))
+        }
+
         makesCalls = true
         return ret
     }

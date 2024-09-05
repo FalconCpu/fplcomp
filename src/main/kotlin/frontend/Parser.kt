@@ -77,12 +77,18 @@ class Parser(private val lexer: Lexer) {
     }
 
     private fun parseBracketExpression() : AstExpr {
-        expect(OPENB)
+        val location = expect(OPENB)
         val expr = parseExpression()
         if (canTake(COLON)) {
             val astType = parseType()
             expect(CLOSEB)
             return AstCast(expr.location, expr, astType)
+        } else if (lookahead.kind == COMMA) {
+            val exprs = mutableListOf<AstExpr>(expr)
+            while (canTake(COMMA))
+                exprs.add(parseExpression())
+            expect(CLOSEB)
+            return AstTuple(location.location, exprs)
         } else {
             expect(CLOSEB)
             return expr
@@ -269,6 +275,19 @@ class Parser(private val lexer: Lexer) {
         }
     }
 
+    private fun parseExpressionAllowTuple(): AstExpr {
+        val location = lookahead.location
+        val expr = parseExpression()
+        if (lookahead.kind != COMMA)
+            return expr
+
+        val ret = mutableListOf<AstExpr>(expr)
+        while (canTake(COMMA)){
+            ret.add(parseExpression())
+        }
+        return AstTuple(location, ret)
+    }
+
     private fun parseTypeId(): AstType {
         val id = expect(ID)
         return AstTypeId(id.location, id.text)
@@ -283,15 +302,15 @@ class Parser(private val lexer: Lexer) {
                 args.add(parseType())
             } while (canTake(COMMA))
         expect(CLOSEB)
+
         if (canTake(ARROW)) {
             val retType = parseType()
             return AstTypeFunction(loc.location, args, retType)
         } else if (args.size==1)
             return args[0]
-        else if (args.size>1) {
-            Log.error(loc.location, "Cannot have multiple types")
-            return args[0]
-        } else {
+        else if (args.size>1)
+            return AstTypeTuple(loc.location, args)
+        else {
             Log.error(loc.location, "Missing type")
             return AstTypeId(loc.location, "int")
         }
@@ -318,13 +337,25 @@ class Parser(private val lexer: Lexer) {
         return ret
     }
 
+    private fun parseIdOrList() : List<AstIdentifier> {
+        if (lookahead.kind==ID)
+            return listOf(parseIdentifier())
+        val ret = mutableListOf<AstIdentifier>()
+        expect(OPENB)
+        do {
+            ret += parseIdentifier()
+        } while (canTake(COMMA))
+        expect(CLOSEB)
+        return ret
+    }
+
     private fun parseDeclaration(block: AstBlock) {
         val op = nextToken()
-        val id = expect(ID)
+        val ids = parseIdOrList()
         val type = if (canTake(COLON)) parseType() else null
         val value = if (canTake(EQ)) parseExpression() else null
         expectEol()
-        block.add(AstDeclaration(id.location, op.kind, id.text, type, value))
+        block.add(AstDeclaration(ids[0].location, op.kind, ids, type, value))
     }
 
     private fun parseBody(block: AstBlock) {
@@ -382,16 +413,19 @@ class Parser(private val lexer: Lexer) {
         if (methodOf==null && methodKind!= MethodKind.NONE)
             Log.error(lookahead.location, "Cannot have method outside class")
 
+        val external = canTake(EXTERNAL)
         val tok = expect(FUN)
         val id = expect(ID, PRINT)
         val args = parseParamList(false)
         val retType = if (canTake(ARROW)) parseType() else null
         expectEol()
 
-        val ret = AstFunction(id.location, block, id.text, args, retType, methodKind, methodOf)
+        val ret = AstFunction(id.location, block, id.text, args, retType, methodKind, methodOf, external)
         block.add(ret)
 
-        if (methodKind==MethodKind.ABSTRACT_METHOD) {
+        if (external) {
+
+        } else if (methodKind==MethodKind.ABSTRACT_METHOD) {
             if (methodOf!=null && !methodOf.isAbstract)
                 Log.error(tok.location, "Cannot have abstract method outside abstract class")
             // Abstract methods are not allowed to have a body
@@ -437,7 +471,7 @@ class Parser(private val lexer: Lexer) {
 
     private fun parseReturn(block: AstBlock) {
         val op = expect(RETURN)
-        val expr = if (lookahead.kind==EOL) null else parseExpression()
+        val expr = if (lookahead.kind==EOL) null else parseExpressionAllowTuple()
         expectEol()
         block.add(AstReturn(op.location, expr))
     }
@@ -592,7 +626,7 @@ class Parser(private val lexer: Lexer) {
             when (lookahead.kind) {
                 VAR, VAL -> parseDeclaration(block)
                 OPEN, OVERRIDE, ABSTRACT -> parseMethodKind(block)
-                FUN -> parseFunction(block, MethodKind.NONE)
+                EXTERNAL, FUN -> parseFunction(block, MethodKind.NONE)
                 RETURN -> parseReturn(block)
                 WHILE -> parseWhile(block)
                 ID, OPENB -> parseAssign(block)

@@ -1,5 +1,8 @@
 package frontend
 
+import backend.TupleReg
+import backend.allMachineRegs
+
 class AstReturn(
     location: Location,
     private val value: AstExpr?
@@ -41,9 +44,15 @@ class TcReturn(
     override fun codeGen() {
         if (value!= null  && value.type != UnitType) {
             val value = value.codeGenRvalue()
-            currentFunction.instrMove(backend.regResult, value)
+            if (value is TupleReg) {
+                // Pass tuples in registers %8, %7, %6 and so on. Tuples are limited to 4 elements.
+                check(value.regs.size <= 4)
+                for (index in value.regs.indices)
+                    currentFunction.instrMove(allMachineRegs[8 - index], value.regs[index])
+            } else
+                // For other types, pass the value in %8
+                currentFunction.instrMove(backend.regResult, value)
         }
         currentFunction.instrJump(currentFunction.endLabel)
     }
-
 }

@@ -46,7 +46,7 @@ class Lexer (val fineName:String, val reader: Reader) {
 
     private fun readWord() : String {
         val sb = StringBuilder()
-        while (lookahead.isJavaIdentifierPart() || lookahead == '_')
+        while (lookahead.isJavaIdentifierPart() || lookahead == '_' || lookahead=='@')
             sb.append(nextChar())
         return sb.toString()
     }
@@ -138,7 +138,7 @@ class Lexer (val fineName:String, val reader: Reader) {
             text = kind.text
             nextChar()
 
-        } else if (lookahead.isLetter() || lookahead == '_') {
+        } else if (lookahead.isLetter() || lookahead == '_' || lookahead=='@') {
             text = readWord()
             kind = TokenKind.map.getOrDefault(text, ID)
 

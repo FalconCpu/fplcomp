@@ -9,6 +9,8 @@ class LineEditor()
         initialCursorX = cursorX
         initialCursorY = cursorY
         buffer.clear()
+        currentPos = 0
+        screenHasBeenScrolled = false
 
     fun setColorForPosition(pos:Int)
         if pos = currentPos
@@ -19,6 +21,9 @@ class LineEditor()
             setBgColor(0)
 
     fun display()
+        if screenHasBeenScrolled
+            initialCursorY = initialCursorY -1
+            screenHasBeenScrolled = false
         moveTo(initialCursorX, initialCursorY)
         for i in 0 to <buffer.length
             setColorForPosition(i)
@@ -28,13 +33,17 @@ class LineEditor()
         setColorForPosition(buffer.length+1)
         print ' '
 
-    fun handleKey(key:Char)
+    fun handleKey(key:Char, qualifier:Int)
         if key = KEY_LEFT
             if currentPos>0
                 currentPos = currentPos - 1
+            while qualifier&KEY_QUALIFIER_ANY_CTRL != 0 and currentPos>0 and buffer.buffer[currentPos]!=' '
+                    currentPos = currentPos - 1
         else if key = KEY_RIGHT
             if currentPos<buffer.length
                 currentPos = currentPos + 1
+            while qualifier&KEY_QUALIFIER_ANY_CTRL != 0 and currentPos<buffer.length and buffer.buffer[currentPos]!=' '
+                    currentPos = currentPos + 1
         else if key = KEY_BACKSPACE
             if currentPos>0
                 buffer.delete(currentPos-1)
@@ -57,14 +66,15 @@ class LineEditor()
             currentPos = currentPos + 1
         display()
 
-    fun run()
+    fun getLine() -> String
         initialize()
         display()
         while true
-            val key = readKeyboard()
+            val (key,qualifier) = readKeyboard()
             if key = '\n'
-                return
+                currentPos = -1
+                display()
+                return buffer.toString()
             else if key != 0
-                handleKey(key)
-
-
+                handleKey(key, qualifier)
+        return ""

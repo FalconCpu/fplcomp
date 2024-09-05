@@ -69,6 +69,20 @@ class TcIfExpr(
     }
 
     override fun codeGenRvalue(): Reg {
-        TODO("Not yet implemented")
+        val ret = currentFunction.newTemp()
+        val trueLabel = currentFunction.newLabel()
+        val falseLabel = currentFunction.newLabel()
+        val endLabel = currentFunction.newLabel()
+        condition.codeGenBool(trueLabel, falseLabel)
+        currentFunction.instrLabel(trueLabel)
+        val vt = thenBranch.codeGenRvalue()
+        currentFunction.instrMove(ret, vt)
+        currentFunction.instrJump(endLabel)
+        currentFunction.instrLabel(falseLabel)
+        val ve = elseBranch.codeGenRvalue()
+        currentFunction.instrMove(ret, ve)
+        currentFunction.instrLabel(endLabel)
+        return ret
+
     }
 }

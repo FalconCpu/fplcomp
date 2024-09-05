@@ -104,8 +104,7 @@ class AstClass(
         for ((index, field) in fields.withIndex()) {
             field.offset = index
         }
-
-        println("Class $name symbol table ${symbolTable.values}")
+//        println("Class $name symbol table ${symbolTable.values}")
     }
 
     private fun resolveSuperClass(context: AstBlock) : ClassType? {
@@ -158,7 +157,7 @@ class TcClass(
 
     override fun codeGen() {
         val oldCurrentFunction = currentFunction
-        type.constructor = Function(name)
+        type.constructor = Function(name, type)
         currentFunction = type.constructor
 
         currentFunction.add(InstrStart())

@@ -10,6 +10,7 @@ const CHAR_LF = 10
 
 var cursorX = 0
 var cursorY = 0
+var screenHasBeenScrolled = false  # set to true if the screen has scrolled
 
 fun uart_transmit(char: Int)
     val hwregs = HWREGS_BASE
@@ -35,12 +36,19 @@ fun screenPrint(c:Char)
     if cursorY>=SCREEN_HEIGHT_CHAR
         scrollScreenVertical(FONT_HEIGHT)
         cursorY = SCREEN_HEIGHT_CHAR-1
+        screenHasBeenScrolled = true
 
 fun print(c:Char)
     if outputChannel=PrintChannel.UART
         uart_transmit((c : Int))
     else
         screenPrint(c)
+
+fun print(c:Bool)
+    if c
+        print "true"
+    else
+        print "false"
 
 fun printHex(in_value: Int)
     var value = in_value

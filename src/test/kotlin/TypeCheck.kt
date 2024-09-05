@@ -1130,5 +1130,40 @@ class TypeCheck {
         runTest(prog, expected)
     }
 
+    @Test
+    fun tupleTest() {
+        val prog = """
+            fun foo(a:Int,b:Int)->(Int,Int)
+                return b,a
+        """.trimIndent()
+
+        val expected = """
+            TOP
+            . FUNCTION foo(Int,Int)->(Int, Int)
+            . . RETURN
+            . . . TUPLE
+            . . . . IDENTIFIER LOCALVAR b Int
+            . . . . IDENTIFIER LOCALVAR a Int
+
+        """.trimIndent()
+
+        runTest(prog, expected)
+    }
+
+
+    @Test
+    fun badMultipleTypes() {
+        val prog = """
+            fun main(a:(Int,Int))->Int
+                return 1
+        """.trimIndent()
+
+        val expected = """ 
+             test.txt 1.10:- Tuple parameters not supported
+        """.trimIndent()
+
+        runTest(prog, expected)
+    }
+
 
 }

@@ -857,6 +857,100 @@ class IrgenTest {
         runTest(prog, expected)
     }
 
+    @Test
+    fun tupleTest() {
+        val prog = """
+            fun foo(a:Int,b:Int)->(Int,Int)
+                return b,a
+                
+            fun main()
+                val x : Int
+                val y : Int
+                (x,y) = foo(1,2)
+        """.trimIndent()
+
+        val expected = """
+            Function <top>
+            start
+            call main()
+            end
+
+            Function foo(Int,Int)
+            start
+            mov a, %1
+            mov b, %2
+            mov %8, b
+            mov %7, a
+            jmp @0
+            @0:
+            end
+
+            Function main()
+            start
+            mov t0, 1
+            mov t1, 2
+            mov %1, t0
+            mov %2, t1
+            call foo(Int,Int)
+            mov t2, %8
+            mov t3, %7
+            mov x, t2
+            mov y, t3
+            @0:
+            end
+
+
+        """.trimIndent()
+
+        runTest(prog, expected)
+    }
+
+
+    @Test
+    fun tupleDeclTest() {
+        val prog = """
+            fun foo(a:Int,b:Int)->(Int,Int)
+                return b,a
+                
+            fun main()
+                val (x,y) = foo(1,2)
+        """.trimIndent()
+
+        val expected = """
+            Function <top>
+            start
+            call main()
+            end
+
+            Function foo(Int,Int)
+            start
+            mov a, %1
+            mov b, %2
+            mov %8, b
+            mov %7, a
+            jmp @0
+            @0:
+            end
+
+            Function main()
+            start
+            mov t0, 1
+            mov t1, 2
+            mov %1, t0
+            mov %2, t1
+            call foo(Int,Int)
+            mov t2, %8
+            mov t3, %7
+            mov x, t2
+            mov y, t3
+            @0:
+            end
+
+
+        """.trimIndent()
+
+        runTest(prog, expected)
+    }
 
 
 }

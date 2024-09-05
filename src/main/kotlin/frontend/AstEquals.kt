@@ -3,6 +3,11 @@ package frontend
 import backend.AluOp
 import backend.Label
 import backend.Reg
+import backend.StdlibStrcat
+import backend.StdlibStrequals
+import backend.regArg1
+import backend.regArg2
+import backend.regZero
 
 class AstEquals(
     location: Location,
@@ -97,19 +102,50 @@ class TcEquals(
     }
 
     override fun codeGenRvalue(): Reg {
-        val lhs = lhs.codeGenRvalue()
-        val rhs = rhs.codeGenRvalue()
-        val op = if (eq) AluOp.EQ_I else AluOp.NE_I
-        return currentFunction.instrAlu(op, lhs, rhs)
+        val lhsReg = lhs.codeGenRvalue()
+        val rhsReg = rhs.codeGenRvalue()
+        val opx = if (eq) AluOp.EQ_I else AluOp.NE_I
+        return when (lhs.type) {
+
+            is StringType -> {
+                currentFunction.instrMove(regArg1, lhsReg)
+                currentFunction.instrMove(regArg2, rhsReg)
+                val tmp = currentFunction.instrCall(StdlibStrequals)
+                if (eq)
+                    tmp
+                else
+                    currentFunction.instrAlu(AluOp.XOR_I, tmp, 1)
+            }
+
+            is RealType -> error("Real equality not yet implemented")
+
+            else -> currentFunction.instrAlu(opx, lhsReg, rhsReg)
+        }
     }
 
     override fun codeGenBool(trueLabel: Label, falseLabel: Label) {
-        check(lhs.type != RealType && lhs.type != StringType){"TODO REAL AND STRING EQUALS"}
-        val lhs = lhs.codeGenRvalue()
-        val rhs = rhs.codeGenRvalue()
+        val lhsReg = lhs.codeGenRvalue()
+        val rhsReg = rhs.codeGenRvalue()
         val op = if (eq) AluOp.EQ_I else AluOp.NE_I
-        currentFunction.instrBranch(op, lhs, rhs, trueLabel)
-        currentFunction.instrJump(falseLabel)
+
+        when(lhs.type) {
+
+            is StringType -> {
+                currentFunction.instrMove(regArg1, lhsReg)
+                currentFunction.instrMove(regArg2, rhsReg)
+                val tmp = currentFunction.instrCall(StdlibStrequals)
+                currentFunction.instrBranch(op, tmp, regZero, falseLabel)
+                currentFunction.instrJump(trueLabel)
+            }
+
+            is RealType -> error("Real equality not yet implemented")
+
+            else -> {
+                currentFunction.instrBranch(op, lhsReg, rhsReg, trueLabel)
+                currentFunction.instrJump(falseLabel)
+            }
+        }
+
     }
 
 }

@@ -71,7 +71,16 @@ fun Instr.asmGen() {
             dest.checkIsReg()
             lhs.checkIsReg()
             rhs.checkIsReg()
-            sb.append("$op $dest, $lhs, $rhs\n")
+            when(op) {
+                AluOp.EQ_I -> sb.append("xor $dest, $lhs, $rhs\ncltu $dest, $dest, 1\n")
+                AluOp.NE_I -> sb.append("xor $dest, $lhs, $rhs\ncltu $dest, 0, $dest\n")
+                AluOp.LT_I -> sb.append("clt $dest, $lhs, $rhs\n")
+                AluOp.GT_I -> sb.append("clt $dest, $rhs, $lhs\n")
+                AluOp.LE_I -> sb.append("clt $dest, $rhs, $lhs\nxor $dest, $dest, 1\n")
+                AluOp.GE_I -> sb.append("clt $dest, $lhs, $rhs\nxor $dest, $dest, 1\n")
+                else -> sb.append("$op $dest, $lhs, $rhs\n")
+            }
+
         }
 
         is InstrAluLit -> {
@@ -182,6 +191,9 @@ fun Instr.asmGen() {
 }
 
 private fun Function.asmGen() {
+    if (isExternal)
+        return      // Don't generate code for external functions
+
     currentFunction = this
     for(instr in prog)
         instr.asmGen()

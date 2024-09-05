@@ -1,0 +1,55 @@
+
+fun memcpy(dest:Int, src:Int, size:Int)
+    if (dest|src|size) & 3 = 0
+        # everything is a multiple of 4 - we can use word copies
+        val dc = (dest:MutableArray<Int>)
+        val sc  = (src:MutableArray<Int>)
+        for i in 0 to <size/4
+            dc[i] = sc[i]
+    else
+        # not a multiple of 4 - we have to use byte copies
+        val dc = (dest:MutableArray<Char>)
+        val sc = (src:MutableArray<Char>)
+        for i in 0 to <size
+            dc[i] = sc[i]
+
+
+fun strcat(s1:String, s2:String) -> String
+    if s1.length=0
+        return s2
+    if s2.length=0
+        return s1
+    val length = s1.length + s2.length
+    val result = mallocString(length)
+    memcpy(result, (s1:Int), s1.length)
+    memcpy(result+s1.length, (s2:Int), s2.length)
+    return (result:String)
+
+fun substr(s1:String, start:Int, length:Int) -> String
+    val len = if length<s1.length-start then length else s1.length-start
+    val result = mallocString(len)
+    memcpy(result, (s1:Int)+start, len)
+    return (result:String)
+
+fun strequals(s1:String, s2:String) -> Bool
+    if (s1:Int) = (s2:Int)
+        return true
+    if s1.length != s2.length
+        return false
+    for i in 0 to <s1.length
+        if s1[i] != s2[i]
+            return false
+    return true
+
+fun strcmp(s1:String, s2:String) -> Int
+    val len = if s1.length<s2.length then s1.length else s2.length
+    for i in 0 to <len
+        val ret = s1[i] - s2[i]
+        if ret != 0
+            return ret
+    return s1.length - s2.length
+
+fun makeString(addr:Int, length:Int) -> String
+    val result = mallocString(length)
+    memcpy(result, addr, length)
+    return (result:String)

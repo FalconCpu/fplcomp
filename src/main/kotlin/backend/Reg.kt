@@ -19,6 +19,8 @@ class UserReg(name:String) : Reg(name)
 
 class TempReg(name:String) : Reg(name)
 
+class TupleReg(name: String, val regs:List<Reg>) : Reg(name)
+
 val allMachineRegs = listOf(
     MachineReg("0", 0),
     MachineReg("%1", 1),

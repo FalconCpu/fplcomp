@@ -124,6 +124,7 @@ private fun Reg.getValue() : Value {
         is MachineReg -> allRegisters.getValue(this)
         is TempReg -> localVariables.getValue(this)
         is UserReg -> localVariables.getValue(this)
+        is TupleReg -> error("Tuples not supported in interpreter")
     }
 }
 
@@ -144,6 +145,7 @@ private fun Reg.setValue(value:Value) {
         is MachineReg -> allRegisters[this] = value
         is TempReg,
         is UserReg -> localVariables[this] = value
+        is TupleReg -> error("Tuples not supported in interpreter")
     }
 }
 
@@ -159,8 +161,10 @@ private fun executeStdlibCall(target: StdLibFunction) {
         is StdlibNewline -> target.execute(programOutput)
         is StdlibMallocArray -> regResult.setValue( target.execute(arg1) )
         is StdlibMallocObject -> regResult.setValue( target.execute(arg1) )
-        is StdlibStrcat -> regResult.setValue( target.execute(arg1, allRegisters.getValue(allMachineRegs[2])) )
+        is StdlibStrcat -> TODO()
         StdlibPremain -> TODO()
+        StdlibStrcmp -> TODO()
+        StdlibStrequals -> TODO()
     }
 }
 

@@ -3,6 +3,10 @@ package frontend
 import backend.AluOp
 import backend.Label
 import backend.Reg
+import backend.StdlibStrcmp
+import backend.regArg1
+import backend.regArg2
+import backend.regZero
 
 class AstCompare(
     location: Location,
@@ -60,15 +64,36 @@ class TcCompare(
     }
 
     override fun codeGenRvalue(): Reg {
-        if (lhs.type == StringType)  TODO("String comparison not implemented")
-        if (lhs.type == RealType) TODO("Real comparison not implemented")
+        val lhsReg = lhs.codeGenRvalue()
+        val rhsReg = rhs.codeGenRvalue()
 
-        val lhs = lhs.codeGenRvalue()
-        val rhs = rhs.codeGenRvalue()
-        return currentFunction.instrAlu(op, lhs, rhs)
+        return when (lhs.type) {
+            is IntType -> currentFunction.instrAlu(op, lhsReg, rhsReg)
+
+            is StringType -> {
+                currentFunction.instrMove(regArg1, lhsReg)
+                currentFunction.instrMove(regArg2, rhsReg)
+                val tmp = currentFunction.instrCall(StdlibStrcmp)
+                currentFunction.instrAlu(op, regZero, tmp)
+            }
+
+            is RealType -> TODO("Real comparison not yet implemented")
+
+            else -> error("Invalid type to compare")
+        }
     }
 
-    override fun codeGenBool(trueLabel: Label, falseLabel: Label) {
+    fun codeGenStringBool(trueLabel: Label, falseLabel: Label) {
+        val lhs = lhs.codeGenRvalue()
+        val rhs = rhs.codeGenRvalue()
+        currentFunction.instrMove(regArg1, lhs)
+        currentFunction.instrMove(regArg2, rhs)
+        val tmp = currentFunction.instrCall(StdlibStrcmp)
+        currentFunction.instrBranch(op, tmp, regZero, trueLabel)
+        currentFunction.instrJump(falseLabel)
+    }
+
+    fun codeGenIntBool(trueLabel: Label, falseLabel: Label) {
         check( (lhs.type==IntType && rhs.type == IntType)
             || (lhs.type == CharType && rhs.type == CharType) )
         {"TODO: String and Real compare"}
@@ -79,4 +104,13 @@ class TcCompare(
         currentFunction.instrJump(falseLabel)
     }
 
+    override fun codeGenBool(trueLabel: Label, falseLabel: Label) {
+        when(lhs.type) {
+            IntType -> codeGenIntBool(trueLabel, falseLabel)
+            CharType -> codeGenIntBool(trueLabel, falseLabel)
+            RealType -> TODO("Real comparison not implemented")
+            StringType -> codeGenStringBool(trueLabel, falseLabel)
+            else -> error("Unknown type")
+        }
+    }
 }

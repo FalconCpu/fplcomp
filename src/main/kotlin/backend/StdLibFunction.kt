@@ -1,8 +1,10 @@
 package backend
 
+import frontend.UnitType
+
 sealed class StdLibFunction (
     text : String,
-) : Function(text, true) {
+) : Function(text, UnitType,true) {
 }
 
 object StdlibPrintInt    : StdLibFunction("print(Int)") {
@@ -54,11 +56,9 @@ object StdlibMallocObject: StdLibFunction("mallocObject(ClassDescriptor)") {
     }
 }
 
-object StdlibStrcat      : StdLibFunction("strcat") {
-    fun execute(arg1: Value, arg2: Value): Value {
-        return StringValue(arg1.getStringValue() + arg2.getStringValue())
-    }
-}
+object StdlibStrcat      : StdLibFunction("strcat(String,String)")
+object StdlibStrcmp      : StdLibFunction("strcmp(String,String)")
+object StdlibStrequals      : StdLibFunction("strequals(String,String)")
 
 object StdlibPremain      : StdLibFunction("premain()") {
     fun execute(arg1: Value, arg2: Value): Value {
