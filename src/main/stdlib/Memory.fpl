@@ -78,6 +78,7 @@ fun malloc(size: Int, purpose:Int ) -> Int
         addToFreeList(remainderChunk, remainder)
 
     chunk.size = roundedSize | purpose
+#    printhexln "malloc: addr=" , (chunk:Int) , " size=" , chunk.size
     return (chunk:Int) + 4
 
 fun addToFreeList(chunk: MemChunk, size:Int)
@@ -98,10 +99,12 @@ fun addToFreeList(chunk: MemChunk, size:Int)
 
 fun free(addr:Int)
     # Find the chunk
-    val chunk = (addr-4 : MemChunk)
+    val chunk = (addr-8 : MemChunk)
     val sizeField = chunk.size
     val kind = sizeField & 0x7           # Get allocation status
     val size = sizeField & 0xfffffff8    # Strip off allocation status
+
+#    printhexln "free ", (chunk:Int), " ", size, " ", kind
 
     if kind=MEM_CHUNK_OBJECT or kind=MEM_CHUNK_ARRAY or kind=MEM_CHUNK_GENERIC
         addToFreeList(chunk, size)

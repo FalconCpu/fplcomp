@@ -1,0 +1,89 @@
+
+# Blitter commands
+const BLIT_CMD_IDLE         = 0
+const BLIT_CMD_SOLID_RECT   = 1
+const BLIT_CMD_PATTERN_RECT = 2
+
+var fgColor = 1
+var bgColor = 0
+
+fun clearScreen()
+    val hwregs = HWREGS_BASE
+    hwregs.blit_x = 0
+    hwregs.blit_y = 0
+    hwregs.blit_width = 640
+    hwregs.blit_height = 480
+    hwregs.blit_color1 = 0
+
+    # wait until the blitter is idle
+    while hwregs.blit_command!=BLIT_CMD_IDLE
+        val dummy = 1
+    hwregs.blit_command = BLIT_CMD_SOLID_RECT
+
+fun drawRectangle(x1: Int, y1: Int, x2: Int, y2: Int, color: Int)
+    val hwregs = HWREGS_BASE
+    if x1<x2
+        hwregs.blit_x = x1
+        hwregs.blit_width = x2-x1
+    else
+        hwregs.blit_x = x2
+        hwregs.blit_width = x1-x2
+    if y1<y2
+        hwregs.blit_y = y1
+        hwregs.blit_height = y2-y1
+    else
+        hwregs.blit_y = y2
+        hwregs.blit_height = y1-y2
+    hwregs.blit_color1 = color
+
+    # wait until the blitter is idle
+    while hwregs.blit_command!=BLIT_CMD_IDLE
+        val dummy = 1
+    hwregs.blit_command = BLIT_CMD_SOLID_RECT
+
+fun drawCharacter(x: Int, y: Int, c: Char, color: Int)
+    val hwregs = HWREGS_BASE
+    hwregs.blit_x = x
+    hwregs.blit_y = y
+    hwregs.blit_width = 8
+    hwregs.blit_height = 12
+    hwregs.blit_color1 = color
+    hwregs.blit_color0 = bgColor
+    hwregs.blit_pattern_offset = ((c : Int) -32 )* 12
+    hwregs.blit_pattern_width = 1
+    hwregs.blit_pattern_depth = 0
+
+    # wait until the blitter is idle
+    while hwregs.blit_command!=BLIT_CMD_IDLE
+        val dummy = 1
+    hwregs.blit_command = BLIT_CMD_PATTERN_RECT
+
+fun drawCharacter(x: Int, y: Int, c: Char)
+    drawCharacter(x, y, c, fgColor)
+
+fun drawString(x: Int, y: Int, str: String, color: Int)
+    var xpos = x
+    for i in 0 to <str.length
+        drawCharacter(xpos, y, str[i], color)
+        xpos = xpos + 8
+
+fun scrollScreenVertical(dy:Int)
+    # Unfortunately, the blitter currently has a bug where it can't blit from the screen buffer to itself
+    # So for now we need to do the scroll in software
+    if dy<0
+        return
+    if dy>480
+        clearScreen()
+        return
+
+    val screenBuffer = (0x3F80000 : MutableArray<Int>)
+    val offset = dy * 640 / 4   # Adjusting for 32-bit words
+    for i in 0 to< 640 * (480-dy) / 4
+        screenBuffer[i] = screenBuffer[i + offset]
+    drawRectangle(0, 480-12, 640, 480, 0)
+
+fun setFgColor(color: Int)
+    fgColor = color
+
+fun setBgColor(color: Int)
+    bgColor = color

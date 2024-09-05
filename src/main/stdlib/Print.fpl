@@ -1,29 +1,69 @@
 
+enum PrintChannel(UART,SCREEN)
+var outputChannel = PrintChannel.UART
+
+const FONT_WIDTH = 8
+const FONT_HEIGHT = 12
+const SCREEN_WIDTH_CHAR = 80
+const SCREEN_HEIGHT_CHAR = 40
+const CHAR_LF = 10
+
+var cursorX = 0
+var cursorY = 0
+
+fun uart_transmit(char: Int)
+    val hwregs = HWREGS_BASE
+    # Wait until there is space in the fifo
+    while hwregs.uart_tx=0
+        val dummy = 1
+    hwregs.uart_tx = char
+
+fun moveTo(x: Int, y: Int)
+    cursorX = x
+    cursorY = y
+
+fun screenPrint(c:Char)
+    if c=CHAR_LF
+        cursorX = 0
+        cursorY = cursorY + 1
+    else if c>=' '
+        drawCharacter(cursorX * FONT_WIDTH, cursorY * FONT_HEIGHT, c)
+        cursorX = cursorX + 1
+        if cursorX>=SCREEN_WIDTH_CHAR
+            cursorX = 0
+            cursorY = cursorY + 1
+    if cursorY>=SCREEN_HEIGHT_CHAR
+        scrollScreenVertical(FONT_HEIGHT)
+        cursorY = SCREEN_HEIGHT_CHAR-1
+
+fun print(c:Char)
+    if outputChannel=PrintChannel.UART
+        uart_transmit((c : Int))
+    else
+        screenPrint(c)
+
 fun printHex(in_value: Int)
     var value = in_value
     for i in 0 to 7
         val digit = value ushr 28
         if digit<10
-            uart_transmit(digit+('0' : Int))
+            print (digit+'0' : Char)
         else
-            uart_transmit(digit+('A' : Int)-10)
+            print (digit+'A'-10 : Char)
         value = value shl 4
 
 fun print(str:String)
     for i in 0 to <str.length
-        uart_transmit((str[i] : Int))
-
-fun print(c:Char)
-    uart_transmit((c : Int))
+        print str[i]
 
 fun printNewline()
-    uart_transmit(10)
+    print '\n'
 
 fun print(value: Int)
     var v = value
 
     if v<0
-        uart_transmit(('-' : Int))
+        print '-'
         v = -v
 
     # allocate a buffer on the stack to hold the digits
@@ -41,5 +81,24 @@ fun print(value: Int)
     # print the digits in correct order
     while i>0
         i = i - 1
-        uart_transmit((buffer[i]:Int))
+        print(buffer[i])
 end fun
+
+fun kprint(c:Char)
+    uart_transmit((c : Int))
+
+fun kprint(str:String)
+    for i in 0 to <str.length
+        kprint(str[i])
+
+fun kprint(in_value: Int)
+    var value = in_value
+    for i in 0 to 7
+        val digit = value ushr 28
+        if digit<10
+            kprint ((digit+'0' : Char))
+        else
+            kprint ((digit+'A'-10 : Char))
+        value = value shl 4
+
+

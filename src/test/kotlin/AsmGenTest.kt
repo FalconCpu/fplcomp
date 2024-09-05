@@ -25,11 +25,13 @@ class AsmGenTest {
 
 
         val expected = """
-            ld %sp, 04000000H 
-            jmp boot()
-            premain():
+            org 0FFFF0000H
+            ld %sp, 4000000H
+            jsr initializeMemory()
             jsr main()
-            ret
+            ld %1, 0
+            ld %2, 0
+            jsr fatal(Int,Int)
 
             main():
             sub %sp, %sp, 4
@@ -69,11 +71,13 @@ class AsmGenTest {
         """.trimIndent()
 
         val expected = """
-            ld %sp, 04000000H 
-            jmp boot()
-            premain():
+            org 0FFFF0000H
+            ld %sp, 4000000H
+            jsr initializeMemory()
             jsr main()
-            ret
+            ld %1, 0
+            ld %2, 0
+            jsr fatal(Int,Int)
 
             sum(Array<Int>):
             ld %8, 0

@@ -18,7 +18,8 @@ private fun Int.checkIsSmall() {
 
 private fun genPreamble(function: Function) {
     if (function.name == "<top>") {
-        sb.append("org 0FFFF8000H\n")
+        sb.append("org 0FFFF0000H\n")      // Value for emulator
+//        sb.append("org 0FFFF8000H\n")    // Value for fpga
         sb.append("ld %sp, 4000000H\n")
         sb.append("jsr initializeMemory()\n")
         return

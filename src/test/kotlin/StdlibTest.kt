@@ -7,7 +7,8 @@ import java.io.StringReader
 
 class StdlibTest {
 
-    val stdLibFiles = listOf("hwregs.fpl", "Fatal.fpl", "Memory.fpl", "Print.fpl", "Keyboard.fpl")
+    val stdLibFiles = listOf("hwregs.fpl", "Fatal.fpl", "Memory.fpl", "Print.fpl", "Keyboard.fpl", "Graphics.fpl",
+        "StringBuffer.fpl", "LineEditor.fpl")
 
     private fun runTest(prog: String, expected: String) {
         val lexers = stdLibFiles.map { Lexer(it , FileReader("src/main/stdlib/$it")) }
@@ -202,9 +203,128 @@ class StdlibTest {
             zL(9k
         """.trimIndent()
 
+        runTest(prog, expected)
+    }
+
+    @Test
+    fun graphicsTest() {
+        val prog = """
+            fun main()
+                clearScreen()
+                for x in 0 to 15
+                    for y in 0 to 15
+                        drawRectangle( x*40, y*30, x*40+38, y*30+28, x + 16*y)
+                drawString(10, 10, "Hello world", 1)
+            """.trimIndent()
+
+
+        val expected = """
+        """.trimIndent()
 
         runTest(prog, expected)
     }
+
+    @Test
+    fun printScreenTest() {
+        // Currently only works on the FPGA
+        val prog = """
+            fun main()
+                outputChannel = PrintChannel.SCREEN
+                clearScreen()
+                print "Hello world\n"
+                for i in 0 to 10
+                    println i
+            """.trimIndent()
+
+
+        val expected = """
+        """.trimIndent()
+
+        runTest(prog, expected)
+
+    }
+
+    @Test
+    fun osTest() {
+        // FPGA only
+        val prog = """
+            fun main()
+                outputChannel = PrintChannel.SCREEN
+                clearScreen()
+                setFgColor(10)
+                println "Falcon Computer System"
+                setFgColor(8)
+                println systemVars.freeMemory, " bytes free\n"
+                setFgColor(11)
+                print "> "
+                setFgColor(15)
+                while true
+                    val key = readKeyboard()
+                    if key != 0
+                        print key
+            """.trimIndent()
+
+
+        val expected = """
+            Timeout
+            
+        """.trimIndent()
+
+        runTest(prog, expected)
+
+    }
+
+    @Test
+    fun stringBufferTest() {
+        val prog = """
+            fun main()
+                val sb = StringBuffer()
+                sb.append("Hello ")
+                sb.append("world")
+                sb.insert('!', 5)
+                sb.delete(2)
+                prnt(sb)
+                println ""
+                dumpMemory()
+            """.trimIndent()
+
+
+        val expected = """
+            Helo! world
+            ADDRESS  SIZE     STATUS
+            00001000 00000010 StringBuffer
+            00001010 00000010 free
+            00001020 00000018 Array[00000010]
+            00001038 03F7EFC8 free
+            
+        """.trimIndent()
+
+        runTest(prog, expected)
+
+    }
+
+    @Test
+    fun lineEditorTest() {
+        val prog = """
+            fun main()
+                outputChannel = PrintChannel.SCREEN
+                clearScreen()
+                val le = LineEditor()
+                le.run()
+            """.trimIndent()
+
+
+        val expected = """
+            Timeout
+            
+        """.trimIndent()
+
+        runTest(prog, expected)
+
+    }
+
+
+
 
 
 

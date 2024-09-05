@@ -21,24 +21,17 @@ class Hwregs
     var reserved2 : Int
     var reserved3 : Int
     var reserved4 : Int
-    var gpu_x : Int
-    var gpu_y : Int
-    var gpu_width : Int
-    var gpu_height : Int
-    var gpu_pattern_offset : Int
-    var gpu_pattern_width : Int
-    var gpu_pattern_depth : Int
-    var gpu_color0 : Int
-    var gpu_color1 : Int
-    var gpu_busy : Int
-    var gpu_clip_x1 : Int
-    var gpu_clip_y1 : Int
-    var gpu_clip_x2 : Int
-    var gpu_clip_y2 : Int
-
-fun uart_transmit(char: Int)
-    val hwregs = HWREGS_BASE
-    # Wait until there is space in the fifo
-    while hwregs.uart_tx=0
-        val dummy = 1
-    hwregs.uart_tx = char
+    var blit_x : Int
+    var blit_y : Int
+    var blit_width : Int
+    var blit_height : Int
+    var blit_pattern_offset : Int
+    var blit_pattern_width : Int
+    var blit_pattern_depth : Int
+    var blit_color0 : Int
+    var blit_color1 : Int
+    var blit_command : Int        
+    var blit_clip_x1 : Int
+    var blit_clip_y1 : Int
+    var blit_clip_x2 : Int
+    var blit_clip_y2 : Int

@@ -1,0 +1,48 @@
+
+class StringBuffer
+    var buffer = MutableArray<Char>(8)
+    var length = 0
+
+    fun resize(newSize:Int)
+        val newBuffer = MutableArray<Char>(newSize)
+        for i in 0 to<buffer.size
+            newBuffer[i] = buffer[i]
+        free((buffer:Int))
+        buffer = newBuffer
+
+    fun append(c:Char)
+        if length>=buffer.size
+            resize(buffer.size*2)
+        buffer[length] = c
+        length = length + 1
+
+    fun append(str:String)
+        for i in 0 to<str.length
+            append(str[i])
+
+    fun insert(c:Char, pos:Int)
+        if length>=buffer.size
+            resize(buffer.size*2)
+        var i = length
+        while i>pos
+            buffer[i] = buffer[i-1]
+            i = i - 1
+        buffer[pos]=c
+        length = length + 1
+
+    fun delete(pos:Int)
+        if pos>=length or pos<0
+            return
+        var i = pos
+        while i<length-1
+            buffer[i] = buffer[i+1]
+            i = i + 1
+        length = length - 1
+
+    fun clear()
+        length = 0
+
+
+fun prnt(sb:StringBuffer)
+    for i in 0 to<sb.length
+        print sb.buffer[i]

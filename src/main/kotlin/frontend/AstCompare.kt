@@ -28,6 +28,7 @@ class AstCompare(
         if (rhs.type == ErrorType) return rhs
 
         if (!( (lhs.type == IntType  && rhs.type == IntType) ||
+               (lhs.type == CharType && rhs.type == CharType) ||
                (lhs.type == RealType && rhs.type == RealType) ||
                (lhs.type == StringType && rhs.type == StringType) ) )
             return TcError(location,"No operation defined for ${lhs.type} $op ${rhs.type}")
@@ -68,7 +69,9 @@ class TcCompare(
     }
 
     override fun codeGenBool(trueLabel: Label, falseLabel: Label) {
-        check(lhs.type==IntType && rhs.type == IntType) {"TODO: String and Real compare"}
+        check( (lhs.type==IntType && rhs.type == IntType)
+            || (lhs.type == CharType && rhs.type == CharType) )
+        {"TODO: String and Real compare"}
 
         val lhs = lhs.codeGenRvalue()
         val rhs = rhs.codeGenRvalue()

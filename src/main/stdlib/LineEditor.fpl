@@ -1,0 +1,70 @@
+
+class LineEditor()
+    var initialCursorX = 0
+    var initialCursorY = 0
+    val buffer = StringBuffer()
+    var currentPos = 0
+
+    fun initialize()
+        initialCursorX = cursorX
+        initialCursorY = cursorY
+        buffer.clear()
+
+    fun setColorForPosition(pos:Int)
+        if pos = currentPos
+            setFgColor(0)
+            setBgColor(255)
+        else
+            setFgColor(255)
+            setBgColor(0)
+
+    fun display()
+        moveTo(initialCursorX, initialCursorY)
+        for i in 0 to <buffer.length
+            setColorForPosition(i)
+            print buffer.buffer[i]
+        setColorForPosition(buffer.length)
+        print ' '
+        setColorForPosition(buffer.length+1)
+        print ' '
+
+    fun handleKey(key:Char)
+        if key = KEY_LEFT
+            if currentPos>0
+                currentPos = currentPos - 1
+        else if key = KEY_RIGHT
+            if currentPos<buffer.length
+                currentPos = currentPos + 1
+        else if key = KEY_BACKSPACE
+            if currentPos>0
+                buffer.delete(currentPos-1)
+                currentPos = currentPos - 1
+        else if key = KEY_DELETE
+            if currentPos<buffer.length
+                buffer.delete(currentPos)
+        else if key = KEY_HOME
+            currentPos = 0
+        else if key = KEY_END
+            currentPos = buffer.length
+        else if key = KEY_UP
+            if currentPos>=80
+                currentPos = currentPos - 80
+        else if key = KEY_DOWN
+            if currentPos<=buffer.length-80
+                currentPos = currentPos + 80
+        else if key>=' ' and key<='~'
+            buffer.insert(key, currentPos)
+            currentPos = currentPos + 1
+        display()
+
+    fun run()
+        initialize()
+        display()
+        while true
+            val key = readKeyboard()
+            if key = '\n'
+                return
+            else if key != 0
+                handleKey(key)
+
+

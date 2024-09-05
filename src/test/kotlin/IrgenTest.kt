@@ -848,7 +848,7 @@ class IrgenTest {
             call printArray(Array<Int>)
             mov t1, %8
             @0:
-            end            
+            end
 
 
         """.trimIndent()
