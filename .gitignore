@@ -48,3 +48,4 @@ labels.txt
 rom.hex
 sim_regs.log
 sim_uart.log
+/diskImage.bin

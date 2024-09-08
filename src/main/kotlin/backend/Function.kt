@@ -1,6 +1,5 @@
 package backend
 
-import frontend.ArrayImage
 import frontend.SymbolField
 import frontend.SymbolGlobalVar
 import frontend.TcFunction
@@ -23,6 +22,7 @@ open class Function(val name:String, val retType:Type, isStdLib:Boolean=false, v
     val endLabel = newLabel()
     var thisReg : Reg? = null
     var makesCalls = false
+    var failedNullCheckLabel : Label? = null
 
     // Values to be filled in by the backend
     var maxRegister = 0    // The highest register number used

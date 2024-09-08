@@ -16,7 +16,6 @@ class AstReturn(
 
     override fun typeCheck(context: AstBlock) : TcStmt {
         val value = value?.typeCheck(context)
-        val valueType = value?.type ?: UnitType
         currentPathContext = currentPathContext.setUnreachable()
 
         if (value==null) {

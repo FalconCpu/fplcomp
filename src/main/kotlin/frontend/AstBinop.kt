@@ -27,8 +27,12 @@ class AstBinop(
         val lhsType = if (lhs.type == CharType) IntType else lhs.type
         val rhsType = if (rhs.type == CharType) IntType else rhs.type
 
-        if (lhs.type==StringType && rhs.type==StringType && op==TokenKind.PLUS)
+        if (lhsType==StringType && rhsType==StringType && op==TokenKind.PLUS)
             return TcStringCat(location, lhs, rhs)
+        if (lhsType is PointerType && rhsType == IntType && op == TokenKind.PLUS)
+            return TcBinop(location, lhsType, AluOp.ADD_I, lhs, rhs)
+        if (lhsType is PointerType && rhsType == IntType && op == TokenKind.MINUS)
+            return TcBinop(location, lhsType, AluOp.SUB_I, lhs, rhs)
 
         val match = operatorTable.find { it.kind == op && it.lhsType == lhsType && it.rhsType == rhsType }
         if (match == null)

@@ -1,6 +1,9 @@
 package frontend
 
+import backend.InstrEnd
+import backend.StdlibFatal
 import backend.allFunctions
+import backend.regArg1
 
 var currentFunction = backend.Function("<dummy>", UnitType)
 
@@ -71,6 +74,15 @@ class TcTop : TcBlock(nullLocation) {
             currentFunction.add(backend.InstrCall(main))
 
         currentFunction.add(backend.InstrEnd())
+        val nullCheckLabel = currentFunction.failedNullCheckLabel
+        if (nullCheckLabel!=null) {
+            currentFunction.instrLabel(nullCheckLabel)
+            currentFunction.instrMove(regArg1, 4)  // ERROR_NULL_POINTER defined in Fatal.fpl
+            currentFunction.instrMove(regArg1, 0)
+            currentFunction.instrCall(StdlibFatal)
+            currentFunction.add(InstrEnd())
+        }
+
     }
 
 }

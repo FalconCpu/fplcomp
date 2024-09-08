@@ -352,6 +352,14 @@ class IrgenTest {
             call main()
             end
 
+            Function Cat
+            start
+            mov this, %1
+            stw %2, this->name
+            stw %3, this->age
+            @0:
+            end
+
             Function Cat/greet()
             start
             mov this, %1
@@ -384,14 +392,6 @@ class IrgenTest {
             @0:
             end
 
-            Function Cat
-            start
-            mov this, %1
-            stw %2, this->name
-            stw %3, this->age
-            @0:
-            end
-
 
         """.trimIndent()
 
@@ -420,6 +420,13 @@ class IrgenTest {
             call main()
             end
 
+            Function Animal
+            start
+            mov this, %1
+            stw %2, this->name
+            @0:
+            end
+
             Function Animal/greet()
             start
             mov this, %1
@@ -430,6 +437,17 @@ class IrgenTest {
             mov %1, t1
             call print(String)
             call printNewline()
+            @0:
+            end
+
+            Function Cat
+            start
+            mov this, %1
+            mov name, %2
+            mov %1, this
+            mov %2, name
+            call Animal
+            mov t0, %8
             @0:
             end
 
@@ -460,24 +478,6 @@ class IrgenTest {
             mov %1, cat
             virtcall cat, Cat/greet()
             mov t3, %8
-            @0:
-            end
-
-            Function Animal
-            start
-            mov this, %1
-            stw %2, this->name
-            @0:
-            end
-
-            Function Cat
-            start
-            mov this, %1
-            mov name, %2
-            mov %1, this
-            mov %2, name
-            call Animal
-            mov t0, %8
             @0:
             end
 
@@ -944,6 +944,46 @@ class IrgenTest {
             mov x, t2
             mov y, t3
             @0:
+            end
+
+
+        """.trimIndent()
+
+        runTest(prog, expected)
+    }
+
+
+    @Test
+    fun nullCheckTest() {
+        val prog = """
+            fun foo(a:Pointer<Int>?)->Int
+                val b = a!!
+                return a[2]
+        """.trimIndent()
+
+        val expected = """
+            Function <top>
+            start
+            end
+
+            Function foo(Pointer<Int>?)
+            start
+            mov a, %1
+            beq, a, 0, @1
+            mov b, a
+            mov t0, 2
+            lsl t1, t0, 2
+            add t2, a, t1
+            ldw t3, t2[0]
+            mov %8, t3
+            jmp @0
+            @0:
+            end
+            @1:
+            mov %1, 4
+            mov %1, 0
+            call fatal(Int,Int)
+            mov t4, %8
             end
 
 

@@ -26,6 +26,7 @@ class AsmGenTest {
 
         val expected = """
             org 0FFFF0000H
+            premain:
             ld %sp, 4000000H
             jsr initializeMemory()
             jsr main()
@@ -72,6 +73,7 @@ class AsmGenTest {
 
         val expected = """
             org 0FFFF0000H
+            premain:
             ld %sp, 4000000H
             jsr initializeMemory()
             jsr main()
@@ -129,6 +131,50 @@ class AsmGenTest {
             dcw 3
             dcw 4
             dcw 5
+
+
+        """.trimIndent()
+
+        runTest(prog, expected)
+    }
+
+
+    @Test
+    fun nullCheckTest() {
+        val prog = """
+            fun foo(a:Pointer<Int>?)->Int
+                val b = a!!
+                return a[2]
+        """.trimIndent()
+
+        val expected = """
+            org 0FFFF0000H
+            premain:
+            ld %sp, 4000000H
+            jsr initializeMemory()
+            ld %1, 0
+            ld %2, 0
+            jsr fatal(Int,Int)
+
+            foo(Pointer<Int>?):
+            sub %sp, %sp, 4
+            stw %30, %sp[0]
+            beq %1, 0, @1
+            ld %2, 2
+            lsl %2, %2, 2
+            add %1, %1, %2
+            ldw %8, %1[0]
+            ldw %30, %sp[0]
+            add %sp, %sp, 4
+            ret
+
+            @1:
+            ld %1, 4
+            ld %1, 0
+            jsr fatal(Int,Int)
+            ldw %30, %sp[0]
+            add %sp, %sp, 4
+            ret
 
 
         """.trimIndent()

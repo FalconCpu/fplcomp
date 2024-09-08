@@ -52,7 +52,7 @@ fun initializeMemory()
 # Allocate a chunk of memory.
 # size = size of allocation in bytes
 
-fun malloc(size: Int, purpose:Int ) -> Int
+fun malloc(size: Int, purpose:Int ) -> Pointer
     val roundedSize = (size+11) & 0xfffffff8     # Add 4 bytes for the size field and round up to nearest multiple of 8
 
     # find the first free chunk that is big enough
@@ -64,7 +64,7 @@ fun malloc(size: Int, purpose:Int ) -> Int
 
     if chunk=null
         fatal(FATAL_ERROR_OUT_OF_MEMORY, 0)
-        return 0 # Should never get here
+        return (0:Pointer) # Should never get here
 
     # remove the chunk from the free list
     if prevChunk=null
@@ -75,12 +75,12 @@ fun malloc(size: Int, purpose:Int ) -> Int
     # See if the chunk is big enough to split
     val remainder = chunk.size - roundedSize
     if remainder>=8
-        val remainderChunk = ((chunk:Int)+roundedSize : MemChunk)
+        val remainderChunk = ((chunk:Pointer)+roundedSize : MemChunk)
         addToFreeList(remainderChunk, remainder)
 
     chunk.size = roundedSize | purpose
 #    printhexln "malloc: addr=" , (chunk:Int) , " size=" , chunk.size
-    return (chunk:Int) + 4
+    return (chunk:Pointer) + 4
 
 fun addToFreeList(chunk: MemChunk, size:Int)
     # Insert the chunk into the free list in order of increasing size
@@ -98,7 +98,7 @@ fun addToFreeList(chunk: MemChunk, size:Int)
         prevChunk.next = chunk
     chunk.next = currChunk
 
-fun free(addr:Int)
+fun free(addr:Pointer)
     # Find the chunk
     val chunk = (addr-8 : MemChunk)
     val sizeField = chunk.size
@@ -114,7 +114,7 @@ fun free(addr:Int)
     else
         fatal(FATAL_ERROR_INVALID_ADDRESS, (chunk:Int))
 
-fun mallocObject(classDescriptor: ClassDescriptor) -> Int
+fun mallocObject(classDescriptor: ClassDescriptor) -> Pointer
     val size = classDescriptor.size  + 4 # Size of user data + 4 bytes for the class descriptor
     val addr = malloc(size, MEM_CHUNK_OBJECT)
 
@@ -123,14 +123,14 @@ fun mallocObject(classDescriptor: ClassDescriptor) -> Int
 
     return addr + 4    # Add 4 to get address of user data
 
-fun mallocArray(numElements:Int, elementSize:Int ) -> Int
+fun mallocArray(numElements:Int, elementSize:Int ) -> Pointer
     val size = numElements * elementSize + 4 # Size of user data + 4 bytes for storing length
     val addr = malloc(size, MEM_CHUNK_ARRAY)
     val array = (addr : ArrayObject)
     array.numElements = numElements
     return addr + 4    # Add 4 to get address of user data
 
-fun mallocString(size:Int) -> Int
+fun mallocString(size:Int) -> Pointer
     val addr = malloc(size+4, MEM_CHUNK_STRING)
     val array = (addr : ArrayObject)
     array.numElements = size

@@ -147,6 +147,9 @@ class TcClass(
     private val superClass: ClassType?,
     private val superClassConstructorArgs: List<TcExpr>,
 ) : TcBlock(location) {
+    init {
+        type.constructor = Function(name, type)
+    }
 
     override fun dump(sb: StringBuilder, indent: Int) {
         sb.append(". ".repeat(indent))
@@ -157,7 +160,7 @@ class TcClass(
 
     override fun codeGen() {
         val oldCurrentFunction = currentFunction
-        type.constructor = Function(name, type)
+
         currentFunction = type.constructor
 
         currentFunction.add(InstrStart())

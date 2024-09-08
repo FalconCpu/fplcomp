@@ -1,6 +1,13 @@
 
-fun memcpy(dest:Int, src:Int, size:Int)
-    if (dest|src|size) & 3 = 0
+fun min(a:Int, b:Int) -> Int
+    return if a<b then a else b
+
+fun max(a:Int, b:Int) -> Int
+    return if a>b then a else b
+
+
+fun memcpy(dest:Pointer, src:Pointer, size:Int)
+    if ((dest:Int)|(src:Int)|size) & 3 = 0
         # everything is a multiple of 4 - we can use word copies
         val dc = (dest:MutableArray<Int>)
         val sc  = (src:MutableArray<Int>)
@@ -13,7 +20,6 @@ fun memcpy(dest:Int, src:Int, size:Int)
         for i in 0 to <size
             dc[i] = sc[i]
 
-
 fun strcat(s1:String, s2:String) -> String
     if s1.length=0
         return s2
@@ -21,14 +27,14 @@ fun strcat(s1:String, s2:String) -> String
         return s1
     val length = s1.length + s2.length
     val result = mallocString(length)
-    memcpy(result, (s1:Int), s1.length)
-    memcpy(result+s1.length, (s2:Int), s2.length)
+    memcpy((result:Pointer), (s1:Pointer), s1.length)
+    memcpy((result+s1.length:Pointer), (s2:Pointer), s2.length)
     return (result:String)
 
 fun substr(s1:String, start:Int, length:Int) -> String
     val len = if length<s1.length-start then length else s1.length-start
     val result = mallocString(len)
-    memcpy(result, (s1:Int)+start, len)
+    memcpy((result:Pointer), ((s1:Int)+start:Pointer), len)
     return (result:String)
 
 fun strequals(s1:String, s2:String) -> Bool
@@ -49,7 +55,35 @@ fun strcmp(s1:String, s2:String) -> Int
             return ret
     return s1.length - s2.length
 
-fun makeString(addr:Int, length:Int) -> String
+# create an empty string with a given allocation size
+fun makeString(alloc:Int) -> String
+    val result = mallocString(alloc)
+    (result:Pointer<Int>)[-1]=0
+    return (result:String)
+
+# Create a string from a char array and a length
+fun makeString(addr:Pointer<Char>, length:Int) -> String
     val result = mallocString(length)
     memcpy(result, addr, length)
     return (result:String)
+
+fun setString(dest:String, data:Pointer<Char>, length:Int)
+    # TODO - add some bounds checking
+    memcpy((dest:Pointer<Char>), data, length)
+    (dest:Pointer<Int>)[-1]=length
+
+fun c_strlen(p:Pointer) -> Int
+    var len = 0
+    val pc = (p:Array<Char>)
+    while pc[len] != 0
+        len = len + 1
+    return len
+
+# compare an fpl String with a C string
+fun c_strcmp(s1:String, s2:Pointer<Char>) -> Bool
+    for i in 0 to <s1.length
+        if s1[i] != s2[i]
+            return false
+    return s2[s1.length] = 0
+
+

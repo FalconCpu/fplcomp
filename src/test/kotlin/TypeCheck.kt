@@ -1166,4 +1166,49 @@ class TypeCheck {
     }
 
 
+    @Test
+    fun pointerTest() {
+        val prog = """
+            fun foo(a:Pointer<Int>, b:Pointer)->Int
+                return a[2]
+        """.trimIndent()
+
+        val expected = """
+            TOP
+            . FUNCTION foo(Pointer<Int>,Pointer)->Int
+            . . RETURN
+            . . . ARRAYACCESS Int
+            . . . . IDENTIFIER LOCALVAR a Pointer<Int>
+            . . . . INTLIT 2 Int
+
+        """.trimIndent()
+
+        runTest(prog, expected)
+    }
+
+    @Test
+    fun nullCheckTest() {
+        val prog = """
+            fun foo(a:Pointer<Int>?)->Int
+                val b = a!!
+                return a[2]
+        """.trimIndent()
+
+        val expected = """
+            TOP
+            . FUNCTION foo(Pointer<Int>?)->Int
+            . . DECL LOCALVAR b Pointer<Int>
+            . . . NULLCHECK Pointer<Int>
+            . . . . IDENTIFIER LOCALVAR a Pointer<Int>?
+            . . RETURN
+            . . . ARRAYACCESS Int
+            . . . . IDENTIFIER LOCALVAR a Pointer<Int>
+            . . . . INTLIT 2 Int
+
+        """.trimIndent()
+
+        runTest(prog, expected)
+    }
+
+
 }

@@ -3,7 +3,6 @@ package frontend
 import backend.AluOp
 import backend.Label
 import backend.Reg
-import backend.StdlibStrcat
 import backend.StdlibStrequals
 import backend.regArg1
 import backend.regArg2

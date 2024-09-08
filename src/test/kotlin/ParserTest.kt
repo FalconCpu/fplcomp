@@ -872,6 +872,62 @@ class ParserTest {
         runTest(prog, expected)
     }
 
+    @Test
+    fun pointerTest() {
+        val prog = """
+            fun foo(a:Pointer<Int>, b:Pointer)->Int
+                return a[2]
+        """.trimIndent()
+
+        val expected = """
+            TOP
+            . FUNCTION foo
+            . . PARAMETER a
+            . . . POINTER
+            . . . . TYPEID Int
+            . . PARAMETER b
+            . . . POINTER
+            . . TYPEID Int
+            . . RETURN
+            . . . ARRAYACCESS
+            . . . . IDENTIFIER a
+            . . . . INTLIT 2
+
+        """.trimIndent()
+
+        runTest(prog, expected)
+    }
+
+    @Test
+    fun nullCheckTest() {
+        val prog = """
+            fun foo(a:Pointer<Int>?)->Int
+                val b = a!!
+                return b[2]
+        """.trimIndent()
+
+        val expected = """
+            TOP
+            . FUNCTION foo
+            . . PARAMETER a
+            . . . TYPENULLABLE
+            . . . . POINTER
+            . . . . . TYPEID Int
+            . . TYPEID Int
+            . . val b
+            . . . NULLCHECK
+            . . . . IDENTIFIER a
+            . . RETURN
+            . . . ARRAYACCESS
+            . . . . IDENTIFIER b
+            . . . . INTLIT 2
+
+        """.trimIndent()
+
+        runTest(prog, expected)
+    }
+
+
 
 
 }

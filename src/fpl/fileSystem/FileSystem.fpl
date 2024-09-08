@@ -1,0 +1,55 @@
+
+class FileSystem(val blockDevice:BlockDevice)
+
+    val buffers = MutableArray<DiskBuffer>(16)
+
+    fun allocateBuffers()
+        for i in 0 to <buffers.size
+            buffers[i] = DiskBuffer(blockDevice)
+
+    # Keep the buffers sorted in order of most recently used
+    # when we use a buffer move it to the top of the list
+    fun moveToTop(bufNo: Int)
+        if bufNo = 0
+            return
+        val t = buffers[bufNo]
+        var i = bufNo-1
+        while i>0
+            buffers[i+1] = buffers[i]
+            i = i - 1
+        buffers[0] = t
+
+    # Get a buffer for a given sector number. If the sector is already in a buffer
+    # then return that buffer. Otherwise allocate a new buffer and load the sector into it
+    fun openSector(sectorNumber: Int) -> DiskBuffer?
+        var availableBuffer = -1
+        for i in 0 to <buffers.size
+            val buffer = buffers[i]
+            if buffer.sectorNumber = sectorNumber
+                if buffer.inUse
+                    kprint("Attempt to open a buffer that is in use")
+                    return null
+                moveToTop(i)
+                buffer.inUse = true
+                return buffer
+            if not buffer.inUse
+                availableBuffer = i
+
+        if availableBuffer = -1
+            kprint("No free buffers")
+            return null
+
+        val ret = buffers[availableBuffer]
+        moveToTop(availableBuffer)
+        ret.loadSector(sectorNumber)
+        return ret
+    end fun
+
+    fun openInode(sectorNumber:Int) -> Inode?
+        val diskBuffer = openSector(sectorNumber)
+        if diskBuffer = null
+            return null
+        return Inode(this, diskBuffer)
+
+    fun getRootDirectory() -> DirectoryHandle?
+        return DirectoryHandle(this, 7)

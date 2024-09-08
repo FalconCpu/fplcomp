@@ -20,6 +20,7 @@ private fun genPreamble(function: Function) {
     if (function.name == "<top>") {
         sb.append("org 0FFFF0000H\n")      // Value for emulator
 //        sb.append("org 0FFFF8000H\n")    // Value for fpga
+        sb.append("premain:\n")
         sb.append("ld %sp, 4000000H\n")
         sb.append("jsr initializeMemory()\n")
         return
@@ -80,14 +81,21 @@ fun Instr.asmGen() {
                 AluOp.GE_I -> sb.append("clt $dest, $lhs, $rhs\nxor $dest, $dest, 1\n")
                 else -> sb.append("$op $dest, $lhs, $rhs\n")
             }
-
         }
 
         is InstrAluLit -> {
             dest.checkIsReg()
             lhs.checkIsReg()
             rhs.checkIsSmall()
-            sb.append("$op $dest, $lhs, $rhs\n")
+            when(op) {
+                AluOp.EQ_I -> sb.append("xor $dest, $lhs, $rhs\ncltu $dest, $dest, 1\n")
+                AluOp.NE_I -> sb.append("xor $dest, $lhs, $rhs\ncltu $dest, 0, $dest\n")
+                AluOp.LT_I -> sb.append("clt $dest, $lhs, $rhs\n")
+                AluOp.GT_I -> sb.append("clt $dest, $lhs, ${rhs+1}\nxor $dest, $dest, 1\n")
+                AluOp.LE_I -> sb.append("clt $dest, $lhs, ${rhs+1}\n")
+                AluOp.GE_I -> sb.append("clt $dest, $lhs, $rhs\nxor $dest, $dest, 1\n")
+                else -> sb.append("$op $dest, $lhs, $rhs\n")
+            }
         }
 
         is InstrBranch -> {

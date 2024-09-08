@@ -165,6 +165,7 @@ private fun executeStdlibCall(target: StdLibFunction) {
         StdlibPremain -> TODO()
         StdlibStrcmp -> TODO()
         StdlibStrequals -> TODO()
+        StdlibFatal -> TODO()
     }
 }
 

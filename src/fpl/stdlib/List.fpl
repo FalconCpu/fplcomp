@@ -1,0 +1,27 @@
+
+class List
+    var size = 0
+    var data = MutableArray<String>(8)
+
+    fun add(str:String)
+        if size>=data.size
+            println("resize")
+            val newData = MutableArray<String>(data.size*2)
+            for i in 0 to<data.size
+                newData[i] = data[i]
+            free((data:Pointer))
+            data = newData
+        data[size] = str
+        size = size + 1
+
+    fun get(index:Int) -> String
+        if index>=size or index<0
+            fatal(FATAL_ERROR_INDEX_OUT_OF_BOUNDS, index)
+        return data[index]
+
+    fun free()
+        for i in 0 to<size
+            free(data[i])
+        free(this)
+
+

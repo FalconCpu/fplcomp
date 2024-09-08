@@ -2,7 +2,6 @@
 abstract class File
     abstract fun putchar(char: Int)
 
-
 class UartFile() : File()
 
     override fun putchar(char: Int)

@@ -1,0 +1,93 @@
+const INODE_FILE_SIZE = 1
+const INODE_CREATION_DATE = 2
+const INODE_MODIFICATION_DATE = 3
+const INODE_DIRECT_POINTERS = 4
+const INODE_INDIRECT_POINTER = 12
+const INODE_DOUBLE_INDIRECT_POINTER = 13
+const INODE_TRIPLE_INDIRECT_POINTER = 14
+
+const SECTOR_SIZE = 512
+const BYTES_OF_DATA_IN_INODE = 384
+
+class Inode(val fileSystem:FileSystem, val diskBuffer: DiskBuffer)
+    # We keep the diskBuffer open for the lifetime of the inode to act as a lock to prevent other processes
+    # from modifying the inode while we are reading it
+
+    # Get a diskBuffer for the sector at offset bytes into the file
+    fun getSectorAtOffset(offset:Int) -> DiskBuffer?
+        if offset<BYTES_OF_DATA_IN_INODE
+            kprint("Attempt to read from the inode itself")
+            return diskBuffer
+
+        val sectorNumber = (offset - BYTES_OF_DATA_IN_INODE) / SECTOR_SIZE
+        if sectorNumber < 8
+            # In the range of the direct pointers
+            val sn = diskBuffer.data[INODE_DIRECT_POINTERS+sectorNumber]
+            return fileSystem.openSector(sn)
+
+        else if sectorNumber < 128 + 8
+            # In the range of the indirect pointers
+            val index = sectorNumber - 8
+            val ipSector = diskBuffer.data[INODE_INDIRECT_POINTER]
+            val ipBuffer = fileSystem.openSector(ipSector)
+            if ipBuffer = null
+                return null
+            ipBuffer.dump()
+            val sn = ipBuffer.data[index]
+            ipBuffer.release()
+            return fileSystem.openSector(sn)
+
+        else if sectorNumber < 8 + 128 + 128 * 128
+            # In the range of the double indirect pointers
+            # TODO
+            return diskBuffer
+
+        else
+            # In the range of the triple indirect pointers
+            # TODO
+            return diskBuffer
+
+
+
+
+    # Read a chunk of data from the file represented by this iNode - up to the boundary of a sector.
+    # Starting at offset bytes into the file, read numBytes bytes and store into the destBuffer.
+    fun readChunk(offset:Int, numBytes:Int, destBuffer:Pointer) -> Int
+        if offset < BYTES_OF_DATA_IN_INODE
+            val nb = min(numBytes, BYTES_OF_DATA_IN_INODE - offset)
+            memcpy(destBuffer, (diskBuffer.data:Pointer)+128+offset, nb)
+            return nb
+
+        val sectorOffset = (offset - BYTES_OF_DATA_IN_INODE) % SECTOR_SIZE
+        val nb = min(numBytes, SECTOR_SIZE - sectorOffset)
+        val diskBuffer = getSectorAtOffset(offset)
+        if diskBuffer = null
+            return 0
+        memcpy(destBuffer, (diskBuffer.data:Pointer)+sectorOffset, nb)
+        diskBuffer.release()
+        return nb
+
+    # Read data from the file represented by this iNode.
+    fun read(offset:Int, numBytes:Int, destBuffer:Pointer) -> Int
+        kprint("Reading from inode\n")
+        var bytesToGo = min(numBytes, diskBuffer.data[INODE_FILE_SIZE]-offset)
+        var vOffset = offset
+        var vDestBuffer = destBuffer
+        var bytesRead = 0
+        while bytesToGo > 0
+            val nb = readChunk(vOffset, bytesToGo, vDestBuffer)
+            if nb = 0
+                return bytesRead
+            bytesRead = bytesRead + nb
+            vOffset = vOffset + nb
+            vDestBuffer = vDestBuffer + nb
+            bytesToGo = bytesToGo - nb
+        kprint("Read ")
+        kprint(bytesRead)
+        kprint(" bytes\n")
+        return bytesRead
+
+    fun close()
+        kprint("Closing inode\n")
+        diskBuffer.release()
+        free((this:Pointer))

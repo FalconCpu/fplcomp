@@ -1,0 +1,144 @@
+
+# Simulate a block device that can be read and written to.
+# This is used to simulate a disk image. By means of a serial port.
+
+# This is the protocol we shall use to communicate with the host.
+# Commands begin with 0xB0 07 - then followed by 2 more bytes to make up a command word
+# By making the words reasonably long - we reduce the risk of synchronisation errors leading
+# to mistakenly seeing data as a command.
+#
+# 0xB007 3EAD   READ_BLOCK
+# 0xB007 417E   WRITE_BLOCK
+# 0xB007 FACE   Read boot block
+#
+# To write a block, we first send the command word, then the block number (32 bits), then the 512 bytes of data
+# followed by a CRC. The host responds by sending a code 0xB007AC70 if all is OK, of 0xB007E001 for an error.
+#
+# To read a block, we first send the command word, then the block number (32 bits)
+# The host responds by sending a code code 0xB007DA7A followed by 512 bytes of data and finally the CRC.
+#
+# The CRC is calculated based on words. Starting immediately after the command word.
+# crc = crc * 31 + data
+#
+# Data is sent little endian.
+# Hence the constants are written backwards
+
+# Data blocks are 512 bytes long - and are represented as an MutableArray<Int>
+
+const COMMAND_READ_BLOCK = 0xAD3E07B0
+const COMMAND_WRITE_BLOCK = 0x7E4107B0
+const COMMAND_ACK_OK = 0x70AC07B0
+const COMMAND_ACK_ERROR = 0x01E007B0
+const COMMAND_DATA_BLOCK = 0x7ADA07B0
+
+
+class BlockDevice (val name:String)
+
+    # Transmit a 32 bit word over the UART
+    fun sendWord(data:Int)
+        uart_transmit(data & 0xff)
+        uart_transmit((data ushr 8) & 0xff)
+        uart_transmit((data ushr 16) & 0xff)
+        uart_transmit((data ushr 24) & 0xff)
+
+    # receive a byte over the UART, return -1 if no byte available within a timeout
+    fun receiveByte() -> Int
+        var timeout = 1000000
+        while timeout > 0
+            val byte = uart_receive()
+            if byte != -1
+                return byte
+            timeout = timeout - 1
+        return -1
+
+    # receive a 32 bit word over the UART. Returns the data and a Boolean indicating success
+    fun receiveWord()->(Int,Bool)
+        val byte0 = receiveByte()
+        if byte0 = -1
+            return 0,false
+
+        val byte1 = receiveByte()
+        if byte1 = -1
+            return 0,false
+
+        val byte2 = receiveByte()
+        if byte2 = -1
+            return 0,false
+
+        val byte3 = receiveByte()
+        if byte3 = -1
+            return 0,false
+
+        return (byte0 & 0xff) | ((byte1 & 0xff) shl 8) | ((byte2 & 0xff) shl 16) | ((byte3 & 0xff) shl 24),true
+
+    fun receiveCommand() -> Int
+        val byte0 = receiveByte()
+        if byte0 != 0xB0
+            return 0
+
+        val byte1 = receiveByte()
+        if byte1 != 0x07
+            return 0
+
+        val byte2 = receiveByte()
+        if byte2 = -1
+            return 0
+
+        val byte3 = receiveByte()
+        if byte3 = -1
+            return 0
+        return (byte0 & 0xff) | ((byte1 & 0xff) shl 8) | ((byte2 & 0xff) shl 16) | ((byte3 & 0xff) shl 24)
+
+    # Send a 512 byte block of data over the UART
+    fun writeBlock(blockNumber:Int, data:Array<Int>) -> Bool
+        sendWord(COMMAND_WRITE_BLOCK)
+        sendWord(blockNumber)
+        var crc = blockNumber
+        for i in 0 to<128
+            sendWord(data[i])
+            crc = crc * 31 + data[i]
+        sendWord(crc)
+
+        # make 10 attempts at getting an ACK before we abort
+        for i in 0 to<10
+            val ack = receiveCommand()
+            if ack = COMMAND_ACK_OK
+                return true
+            if ack = COMMAND_ACK_ERROR
+                return false
+        return false
+
+
+    # Read a 512 byte block of data over the UART.
+    # Returns true if successful, false if there was a timeout
+    fun readBlock(blockNumber:Int, data:MutableArray<Int>) -> Bool
+        sendWord(COMMAND_READ_BLOCK)
+        sendWord(blockNumber)
+
+        # make 10 attempts at getting an ACK before we abort
+        var count = 0
+        var ack = 0
+        repeat
+            ack = receiveCommand()
+            count = count + 1
+            if count=10
+                print "Timeout waiting for data"
+                return false
+        until ack = COMMAND_DATA_BLOCK
+
+        var crc = 0
+        for i in 0 to<128
+            val (word,ok) = receiveWord()
+            if not ok
+                println "error reading data"
+                return false
+            data[i] = word
+            crc = crc * 31 + word
+        val (rxcrc,ok) = receiveWord()
+        if not ok
+            println "error reading crc"
+            return false
+        if crc != rxcrc
+            println "crc error"
+            return false
+        return true

@@ -157,6 +157,11 @@ class Parser(private val lexer: Lexer) {
         return AstFuncCall(lhs.location, lhs, args)
     }
 
+    private fun parseNullCheck(lhs:AstExpr) : AstExpr {
+        val loc = expect(BANGBANG)
+        return AstNullCheck(loc.location, lhs)
+    }
+
     private fun parseArrayAccess(lhs: AstExpr): AstExpr {
         expect(OPENSQ)
         val index = parseExpression()
@@ -171,6 +176,7 @@ class Parser(private val lexer: Lexer) {
                 DOT -> parseMemberAccess(ret)
                 OPENB -> parseFuncCall(ret)
                 OPENSQ -> parseArrayAccess(ret)
+                BANGBANG -> parseNullCheck(ret)
                 else -> return ret
             }
     }
@@ -324,11 +330,22 @@ class Parser(private val lexer: Lexer) {
         return AstTypeArray(type.location, type, tok.kind == MUTABLEARRAY)
     }
 
+    private fun parseTypePointer(): AstType {
+        val tok = expect(POINTER)
+        if (canTake(LT)) {
+            val type = parseType()
+            expect(GT)
+            return AstTypePointer(tok.location, type)
+        } else
+            return AstTypePointer(tok.location, null)
+    }
+
     private fun parseType() : AstType {
         val ret = when(lookahead.kind) {
             ID -> parseTypeId()
             OPENB -> parseTypeBracket()
             ARRAY, MUTABLEARRAY -> parseTypeArray()
+            POINTER -> parseTypePointer()
             else -> throw ParseError(lookahead.location, "Expected type, got ${lookahead.kind}")
         }
 
@@ -423,9 +440,7 @@ class Parser(private val lexer: Lexer) {
         val ret = AstFunction(id.location, block, id.text, args, retType, methodKind, methodOf, external)
         block.add(ret)
 
-        if (external) {
-
-        } else if (methodKind==MethodKind.ABSTRACT_METHOD) {
+        if (methodKind==MethodKind.ABSTRACT_METHOD) {
             if (methodOf!=null && !methodOf.isAbstract)
                 Log.error(tok.location, "Cannot have abstract method outside abstract class")
             // Abstract methods are not allowed to have a body

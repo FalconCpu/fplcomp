@@ -7,7 +7,7 @@ class StringBuffer
         val newBuffer = MutableArray<Char>(newSize)
         for i in 0 to<buffer.size
             newBuffer[i] = buffer[i]
-        free((buffer:Int))
+        free((buffer:Pointer))
         buffer = newBuffer
 
     fun append(c:Char)
@@ -43,7 +43,7 @@ class StringBuffer
         length = 0
 
     fun toString() -> String
-        return makeString((buffer:Int), length)
+        return makeString((buffer:Pointer<Char>), length)
 
 fun prnt(sb:StringBuffer)
     for i in 0 to<sb.length

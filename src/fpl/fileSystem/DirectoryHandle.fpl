@@ -1,0 +1,85 @@
+
+
+class DirectoryHandle(val fileSystem : FileSystem, val currentDirectory:Int)
+    # these next few parameters are visible to the user - used for walking a directory
+    var inodeIndex = -1
+    var inodeNumber = -1
+    var isDirectory = false
+    var fileLength = -1
+    val name = makeString(48)
+
+    fun beginDirectoryScan()
+        inodeIndex = -1
+
+    var fileInodeIndex = -1
+
+    # get the Inode for a given function name - or 0
+    fun scanForFileName(fileName:String) -> Int
+        # Read the next directory entry
+        val inode = fileSystem.openInode(currentDirectory)
+        if inode=null
+            return 0
+
+        val buffer = local Array<Char>(64)
+        fileInodeIndex = -1
+        while true
+            val length = inode.read(fileInodeIndex*64, 64, (buffer:Pointer))
+            if c_strcmp(fileName, (buffer:Pointer<Char>)+16)
+                inode.close()
+                return (buffer:Pointer<Int>)[0]
+            fileInodeIndex = fileInodeIndex + 1
+        inode.close()
+        return 0
+
+    # open a file and return a file handle
+    fun openFile(fileName:String) -> FileHandle?
+        val inodeIndex = scanForFileName(fileName)
+        if inodeIndex=0
+            return null
+        val inode = fileSystem.openInode(inodeIndex)
+        if inode=null
+            return null
+        kprint("Opening file ")
+        kprint(fileName)
+        kprint(" at inode ")
+        kprint(inodeIndex)
+        kprint("\n")
+        return FileHandle(inode)
+
+
+    # Read the next directory entry from the directory - storing the details in 'outDir'
+    # Returns false when there are no more entries
+    fun nextDirectorScan() -> Bool
+        # Read the next directory entry
+        val buffer = local Array<Int>(16)
+        val inode = fileSystem.openInode(currentDirectory)
+        if inode=null
+            return false
+        inodeIndex = inodeIndex + 1
+        val length = inode.read(inodeIndex*64, 64, (buffer:Pointer))
+        kprint("ZZZ1\n")
+        inode.close()
+        kprint("ZZZ2\n")
+        if length=0
+            return false
+        if length!=64
+            kprint("Incomplete entry in read directory")
+            return false
+
+        inodeNumber = buffer[0]
+        isDirectory = (buffer[1] & 1) = 1
+        setString(name, (buffer:Pointer<Char>)+16, c_strlen((buffer:Pointer)+16))
+
+        # open the inode for the directory entry
+        kprint("ZZZ3\n")
+        val dirInode = fileSystem.openSector(inodeNumber)
+        if dirInode=null
+            return false
+        fileLength = dirInode.data[1]
+        kprint("ZZZ4\n")
+        dirInode.release()
+        kprint("ZZZ5\n")
+
+
+
+        return true

@@ -2,7 +2,6 @@ package frontend
 
 import backend.Reg
 import backend.TupleReg
-import kotlin.math.exp
 
 class AstTuple(
     location: Location,

@@ -56,6 +56,7 @@ object StdlibMallocObject: StdLibFunction("mallocObject(ClassDescriptor)") {
     }
 }
 
+object StdlibFatal       : StdLibFunction("fatal(Int,Int)")
 object StdlibStrcat      : StdLibFunction("strcat(String,String)")
 object StdlibStrcmp      : StdLibFunction("strcmp(String,String)")
 object StdlibStrequals      : StdLibFunction("strequals(String,String)")

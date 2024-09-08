@@ -8,10 +8,10 @@ import java.io.StringReader
 class StdlibTest {
 
     val stdLibFiles = listOf("hwregs.fpl", "Fatal.fpl", "Memory.fpl", "String.fpl", "Print.fpl",
-        "Keyboard.fpl", "Graphics.fpl", "StringBuffer.fpl", "LineEditor.fpl")
+        "Keyboard.fpl", "Graphics.fpl", "StringBuffer.fpl", "LineEditor.fpl", "List.fpl")
 
     private fun runTest(prog: String, expected: String) {
-        val lexers = stdLibFiles.map { Lexer(it , FileReader("src/main/stdlib/$it")) }
+        val lexers = stdLibFiles.map { Lexer(it , FileReader("src/fpl/stdlib/$it")) }
         val lexer2 = Lexer("test.txt", StringReader(prog))
         val prog = compile(lexers + lexer2, StopAt.ASMGEN)
 
@@ -337,6 +337,42 @@ class StdlibTest {
 
     }
 
+
+    @Test
+    fun listTest() {
+        val prog = """                    
+            fun main()
+                val list = List()
+                list.add("hello")
+                list.add("world")
+                list.add("!")
+                
+                for i in 0 to <list.size
+                    println list.get(i)
+                    
+                list.add("one")
+                list.add("two")
+                list.add("three")
+                list.add("four")
+                list.add("five")
+                list.add("six")
+                list.add("seven")
+                list.add("eight")
+                list.add("nine")
+
+                for i in 0 to <list.size
+                    println list.get(i)
+
+               
+            """.trimIndent()
+
+
+        val expected = """
+
+        """.trimIndent()
+
+        runTest(prog, expected)
+    }
 
 
 

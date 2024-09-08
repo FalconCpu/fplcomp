@@ -1,0 +1,40 @@
+
+class DiskBuffer(val disk:BlockDevice)
+    var sectorNumber = -1
+    var dirty = false
+    var inUse = false
+    var data = MutableArray<Int>(128)
+
+    # Load a DiskBuffer from disk
+    fun loadSector(sectorNumber: Int)
+        flush()
+        disk.readBlock(sectorNumber, data)
+        this.sectorNumber = sectorNumber
+        dirty = false
+        inUse = true
+        kprint("Loaded buffer ")
+        kprint(sectorNumber)
+        kprint("\n")
+
+    # Save the block to the disk if dirty
+    fun flush()
+        if dirty
+            disk.writeBlock(sectorNumber, data)
+        dirty = false
+
+    fun release()
+        if not inUse
+            kprint("Attempt to release a buffer that is not in use")
+        kprint("Released buffer ")
+        kprint(sectorNumber)
+        kprint("\n")
+        inUse = false
+
+    fun dump()
+        kprint("DUMP BUFFER ")
+        kprint(sectorNumber)
+        kprint("\n")
+        for i in 0 to <128
+            kprint(data[i])
+            kprint("\n")
+        kprint("\n")

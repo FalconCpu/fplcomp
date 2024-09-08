@@ -19,6 +19,10 @@ fun uart_transmit(char: Int)
         val dummy = 1
     hwregs.uart_tx = char
 
+fun uart_receive() -> Int
+    val hwregs = HWREGS_BASE
+    return hwregs.uart_rx
+
 fun moveTo(x: Int, y: Int)
     cursorX = x
     cursorY = y
@@ -64,6 +68,14 @@ fun print(str:String)
     for i in 0 to <str.length
         print str[i]
 
+fun fwprint(str:String, width:Int)
+    val len = min(str.length, width)
+    for i in 0 to <len
+        print str[i]
+    for i in len to <width
+        print ' '
+
+
 fun printNewline()
     print '\n'
 
@@ -92,6 +104,36 @@ fun print(value: Int)
         print(buffer[i])
 end fun
 
+fun fwprint(value: Int, width:Int)
+    # allocate a buffer on the stack to hold the digits
+    val buffer = local MutableArray<Char>(10)
+    for i in 0 to <10
+        buffer[i] = ' '
+
+    var v = value
+    var index = 9
+    var negative = false
+    if v<0
+        print '-'
+        negative = true
+
+    # generate the digits in reverse order
+    repeat
+        val digit = v % 10
+        buffer[index] = (digit + '0' : Char)
+        v = v / 10
+        index = index - 1
+    until v = 0
+
+    index = min(10-width, index)
+
+    # print the digits in correct order
+    while index<10
+        print(buffer[index])
+        index = index + 1
+end fun
+
+
 fun kprint(c:Char)
     uart_transmit((c : Int))
 
@@ -108,5 +150,4 @@ fun kprint(in_value: Int)
         else
             kprint ((digit+'A'-10 : Char))
         value = value shl 4
-
 

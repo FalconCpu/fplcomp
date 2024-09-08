@@ -79,6 +79,8 @@ class AstFunction (
                 SymbolLocalVar(location,"this",methodOf.type, false)
             else
                 null
+        if (thisSymbol != null)
+            add(thisSymbol)
 
         val nameWithTypes = name+paramTypes.joinToString(separator = ",", prefix = "(", postfix = ")")
         val funcName = if (methodOf!=null) "$methodOf/$nameWithTypes" else nameWithTypes
@@ -172,6 +174,17 @@ class TcFunction (
 
         currentFunction.instrLabel(currentFunction.endLabel)
         currentFunction.add(InstrEnd())
+
+        val nullCheckLabel = currentFunction.failedNullCheckLabel
+        if (nullCheckLabel!=null) {
+            currentFunction.instrLabel(nullCheckLabel)
+            currentFunction.instrMove(regArg1, 4)  // ERROR_NULL_POINTER defined in Fatal.fpl
+            currentFunction.instrMove(regArg1, 0)
+            currentFunction.instrCall(StdlibFatal)
+            currentFunction.add(InstrEnd())
+        }
+
+
 
         currentFunction = oldCurrentFunction
     }

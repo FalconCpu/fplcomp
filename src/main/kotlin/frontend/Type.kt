@@ -18,6 +18,13 @@ sealed class Type (val name:String) {
 
         if (this is ClassType && rhsType is ClassType) return rhsType.isSubTypeOf(this)
 
+        // Allow any reference type to be assigned to a Pointer
+        if (this is PointerType && base==null &&
+            (rhsType is PointerType || rhsType is ClassType || rhsType is StringType || rhsType is NullableType) )
+            return true
+
+        //
+
         if (this is ArrayType && rhsType is ArrayType) {
             if (this.mutable && !rhsType.mutable) return false
             return elementType == rhsType.elementType
@@ -63,6 +70,7 @@ sealed class Type (val name:String) {
         RealType -> 4
         StringType -> 4
         is EnumType -> 4
+        is PointerType -> 4
         is TupleType -> elementTypes.sumOf { it.getSize() }
     }
 }
@@ -190,6 +198,25 @@ fun makeNullableType(base: Type): Type {
         new
     }
 }
+
+// ---------------------------------------------------------------------
+//                           Pointer Types
+// ---------------------------------------------------------------------
+
+class PointerType(val base: Type?) : Type(if (base==null) "Pointer" else "Pointer<$base>")
+
+val allPointerTypes = mutableListOf<PointerType>()
+
+fun makePointerType(base: Type?): Type {
+    if (base is ErrorType) return base
+
+    return allPointerTypes.find { it.base == base } ?: run {
+        val new = PointerType(base)
+        allPointerTypes.add(new)
+        new
+    }
+}
+
 
 // ---------------------------------------------------------------------
 //                           Error

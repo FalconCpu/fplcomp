@@ -1,0 +1,13 @@
+
+class FileHandle(val inode:Inode)
+    # We keep the inode open for the lifetime of the file handle to act as a lock to prevent other processes
+    var pos = 0
+
+    fun read(buffer:Pointer, size:Int) -> Int
+        val bytesRead = inode.read(pos, size, buffer)
+        pos = pos + bytesRead
+        return bytesRead
+
+    fun close()
+        inode.close()
+        free(this)

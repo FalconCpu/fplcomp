@@ -28,6 +28,11 @@ class AstArrayAccess(
         return when(lhs.type) {
             is ArrayType -> TcArrayAccess(location, lhs.type.elementType, lhs, index)
             is StringType -> TcArrayAccess(location, CharType, lhs, index)
+            is PointerType ->
+                if (lhs.type.base==null)
+                    TcError(location, "Cannot index into untyped Pointer")
+                else
+                    TcArrayAccess(location, lhs.type.base, lhs, index)
             else -> TcError(location, "Cannot index into type '${lhs.type}'")
         }
     }
