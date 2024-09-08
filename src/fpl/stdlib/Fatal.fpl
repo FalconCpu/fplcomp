@@ -6,6 +6,7 @@ const FATAL_ERROR_OUT_OF_MEMORY       = 0x0002
 const FATAL_ERROR_INVALID_ADDRESS     = 0x0003
 const FATAL_ERROR_NULL_POINTER        = 0x0004
 const FATAL_ERROR_INDEX_OUT_OF_BOUNDS = 0x0005
+const FATAL_ERROR_MEMORY_CORRUPT      = 0x0006
 
 fun fatal(kind:Int, data:Int)
     val hwregs = HWREGS_BASE

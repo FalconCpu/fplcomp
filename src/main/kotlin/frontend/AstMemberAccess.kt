@@ -59,6 +59,12 @@ class AstMemberAccess (
             TcError(location, "Cannot access field $name of string type ${lhs.type}")
     }
 
+    private fun accessTypeDescriptor(lhs: TcExpr): TcExpr {
+        return if (lhs.isTypeName())
+            TcTypeDescriptor(location, lhs.type)
+        else
+            TcError(location, "Not a type to get a type descriptor")
+    }
 
     private fun accessClass(lhs: TcExpr) : TcExpr {
         require(lhs.type is ClassType)
@@ -77,6 +83,9 @@ class AstMemberAccess (
 
     override fun typeCheck(context:AstBlock) : TcExpr {
         val lhs = lhs.typeCheckAllowType(context)
+
+        if (name=="TypeDescriptor")
+            return accessTypeDescriptor(lhs)
 
         return if (lhs.isTypeName()) {
             when (lhs.type) {
@@ -132,4 +141,20 @@ class TcMemberAccess (
         currentFunction.instrStore(rhs, addr, sym)
     }
 
+}
+
+
+class TcTypeDescriptor (
+    location: Location,
+    val exprType : Type
+) : TcExpr(location, makePointerType(null)) {
+
+    override fun codeGenRvalue(): Reg {
+        return currentFunction.instrLea(exprType)
+    }
+
+    override fun dump(sb: StringBuilder, indent: Int) {
+        sb.append(". ".repeat(indent))
+        sb.append("TYPEDESCRIPTOR $type\n")
+    }
 }

@@ -1,12 +1,19 @@
 package backend
 
+import com.sun.org.apache.xpath.internal.operations.Bool
+import frontend.ArrayType
 import frontend.ClassType
+import frontend.PointerType
 import frontend.Symbol.Companion.UNDEFINED_OFFSET
+import frontend.allArrayTypes
 import frontend.allClassTypes
 import frontend.allConstantArrays
+import frontend.allPointerTypes
 
 private val sb = StringBuilder()
 lateinit var currentFunction : Function
+
+private var org = "0FFFF0000H"
 
 private fun Reg.checkIsReg() {
     check(index <= 31) { "Register $name is not a machine register" }
@@ -18,8 +25,7 @@ private fun Int.checkIsSmall() {
 
 private fun genPreamble(function: Function) {
     if (function.name == "<top>") {
-        sb.append("org 0FFFF0000H\n")      // Value for emulator
-//        sb.append("org 0FFFF8000H\n")    // Value for fpga
+        sb.append("org $org\n")      // Value for emulator
         sb.append("premain:\n")
         sb.append("ld %sp, 4000000H\n")
         sb.append("jsr initializeMemory()\n")
@@ -130,12 +136,19 @@ fun Instr.asmGen() {
             sb.append("$label:\n")
         }
 
-        is InstrLea -> {
+        is InstrLeaType -> {
             dest.checkIsReg()
-            if (src is ClassRefValue)
-                sb.append("ld $dest, $src|class\n")
-            else
-                sb.append("ld $dest, $src\n")
+            sb.append("ld $dest, $src|class\n")
+        }
+
+        is InstrLeaArrayImage -> {
+            dest.checkIsReg()
+            sb.append("ld $dest, $src\n")
+        }
+
+        is InstrLeaString -> {
+            dest.checkIsReg()
+            sb.append("ld $dest, ${src.escape()}\n")
         }
 
         is InstrLit -> {
@@ -195,6 +208,7 @@ fun Instr.asmGen() {
             sb.append("ldw %30, %30[${methodId*4}]\n") // Get the function's address
             sb.append("jmp %30, %30[0]\n")
         }
+
     }
 }
 
@@ -216,14 +230,43 @@ private fun ClassType.asmGen() {
     sb.append("\n")
 }
 
-fun asmGen(): String {
+private fun ArrayType.asmGen() {
+    sb.append("$name|class:\n")
+    sb.append("dcw \"$name\"\n")             // Class name
+    sb.append("dcw 0\n")                     // Size of the class's fields
+    sb.append("\n")
+}
+
+private fun PointerType.asmGen() {
+    sb.append("$name|class:\n")
+    sb.append("dcw \"$name\"\n")             // Class name
+    sb.append("dcw 0\n")                     // Size of the class's fields
+    sb.append("\n")
+}
+
+
+
+
+fun asmGen(forFpga: Boolean): String {
     sb.clear()
+    org = if (forFpga) "0FFFF8000H" else "0FFFF0000H"
 
     for(func in allFunctions)
         func.asmGen()
 
     for (cls in allClassTypes)
         cls.asmGen()
+
+    for (cls in allArrayTypes)
+        cls.asmGen()
+
+    for (cls in allPointerTypes)
+        cls.asmGen()
+
+    sb.append("String|class:\n")
+    sb.append("dcw \"String\"\n")
+    sb.append("dcw 0\n")
+
 
     for (ary in allConstantArrays)
         ary.asmGen(sb)

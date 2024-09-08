@@ -4,6 +4,7 @@ import frontend.ArrayImage
 import frontend.SymbolField
 import frontend.SymbolGlobalVar
 import frontend.TcFunction
+import frontend.Type
 
 sealed class Instr {
     var index = 0
@@ -17,7 +18,7 @@ sealed class Instr {
         is InstrEnd -> null
         is InstrJump -> null
         is InstrLabel -> null
-        is InstrLea -> dest
+        is InstrLeaType -> dest
         is InstrLit -> dest
         is InstrLoadArray -> dest
         is InstrLoadField -> dest
@@ -28,6 +29,8 @@ sealed class Instr {
         is InstrStoreField -> null
         is InstrStoreGlobal -> null
         is InstrVirtCall -> null
+        is InstrLeaArrayImage -> dest
+        is InstrLeaString -> dest
     }
 
     fun getUses() = when (this) {
@@ -39,7 +42,7 @@ sealed class Instr {
         is InstrEnd -> listOf(regResult)
         is InstrJump -> emptyList()
         is InstrLabel -> emptyList()
-        is InstrLea -> emptyList()
+        is InstrLeaType -> emptyList()
         is InstrLit -> emptyList()
         is InstrLoadArray -> listOf(addr)
         is InstrLoadField -> listOf(addr)
@@ -50,6 +53,8 @@ sealed class Instr {
         is InstrStoreField -> listOf(addr, data)
         is InstrStoreGlobal -> listOf(data)
         is InstrVirtCall -> emptyList()
+        is InstrLeaArrayImage -> emptyList()
+        is InstrLeaString -> emptyList()
     }
 }
 
@@ -140,9 +145,19 @@ class InstrStoreGlobal(val  size: MemSize, val data: Reg, val globalVar: SymbolG
     override fun toString() = "${size.store} $data, GLOBAL->$globalVar"
 }
 
-class InstrLea(val dest:Reg, val src:Value) : Instr() {
+class InstrLeaType(val dest:Reg, val src:Type) : Instr() {
     override fun toString() = "lea $dest, $src"
 }
+
+class InstrLeaString(val dest:Reg, val src:String) : Instr() {
+    override fun toString() = "lea $dest, ${src.escape()}"
+}
+
+class InstrLeaArrayImage(val dest:Reg, val src: ArrayImage) : Instr() {
+    override fun toString() = "lea $dest, $src"
+}
+
+
 
 enum class AluOp(val text:String) {
     ADD_I ("add"),

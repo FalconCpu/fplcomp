@@ -141,6 +141,13 @@ fun kprint(str:String)
     for i in 0 to <str.length
         kprint(str[i])
 
+fun kprint(str:String, width:Int)
+    val len = min(str.length, width)
+    for i in 0 to <len
+        kprint(str[i])
+    for i in len to <width
+        kprint(' ')
+
 fun kprint(in_value: Int)
     var value = in_value
     for i in 0 to 7

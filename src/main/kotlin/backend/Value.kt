@@ -1,14 +1,13 @@
 package backend
 
 import frontend.ArrayImage
-import frontend.ClassType
-import frontend.SymbolField
+import frontend.Type
 
 sealed class Value() {
     fun getIntValue() = (this as IntValue).value
     fun getStringValue() = (this as StringValue).value
     fun getArrayValue() = (this as ArrayValue).value
-    fun getClassValue() = (this as ClassValue)
+
 }
 
 class IntValue(val value: Int) : Value()  {
@@ -38,11 +37,7 @@ class StringValue(val value: String) : Value() {
 
 class ArrayValue(val value: Array<Value>) : Value()
 
-class ClassValue(val classRef: ClassType, val fields: Array<Value>) : Value()
 
-class ClassRefValue(val classRef: ClassType) : Value() {
-    override fun toString() = classRef.name
-}
 
 class ArrayRefValue(val arrayRef: ArrayImage) : Value() {
     override fun toString() = "Array|${arrayRef.id}"
@@ -86,4 +81,23 @@ fun compare(op: AluOp, lhs: Int, rhs: Int): Boolean {
         AluOp.GE_I -> lhs >= rhs
         else -> error("Invalid branch op $op")
     }
+}
+
+fun String.escape() : String {
+    val stringBuilder = StringBuilder()
+    stringBuilder.append("\"")
+    for (c in this) {
+        when (c) {
+            '\n' -> stringBuilder.append("\\n")
+            '\t' -> stringBuilder.append("\\t")
+            '\r' -> stringBuilder.append("\\r")
+            '\b' -> stringBuilder.append("\\b")
+            '\'' -> stringBuilder.append("\\'")
+            '\"' -> stringBuilder.append("\\\"")
+            '\\' -> stringBuilder.append("\\\\")
+            else -> stringBuilder.append(c)
+        }
+    }
+    stringBuilder.append("\"")
+    return stringBuilder.toString()
 }

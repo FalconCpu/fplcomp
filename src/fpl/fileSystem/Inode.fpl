@@ -32,7 +32,6 @@ class Inode(val fileSystem:FileSystem, val diskBuffer: DiskBuffer)
             val ipBuffer = fileSystem.openSector(ipSector)
             if ipBuffer = null
                 return null
-            ipBuffer.dump()
             val sn = ipBuffer.data[index]
             ipBuffer.release()
             return fileSystem.openSector(sn)
@@ -69,7 +68,6 @@ class Inode(val fileSystem:FileSystem, val diskBuffer: DiskBuffer)
 
     # Read data from the file represented by this iNode.
     fun read(offset:Int, numBytes:Int, destBuffer:Pointer) -> Int
-        kprint("Reading from inode\n")
         var bytesToGo = min(numBytes, diskBuffer.data[INODE_FILE_SIZE]-offset)
         var vOffset = offset
         var vDestBuffer = destBuffer
@@ -82,12 +80,8 @@ class Inode(val fileSystem:FileSystem, val diskBuffer: DiskBuffer)
             vOffset = vOffset + nb
             vDestBuffer = vDestBuffer + nb
             bytesToGo = bytesToGo - nb
-        kprint("Read ")
-        kprint(bytesRead)
-        kprint(" bytes\n")
         return bytesRead
 
     fun close()
-        kprint("Closing inode\n")
         diskBuffer.release()
         free((this:Pointer))

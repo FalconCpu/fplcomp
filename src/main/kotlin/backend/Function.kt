@@ -1,12 +1,16 @@
 package backend
 
+import frontend.ArrayImage
 import frontend.SymbolField
 import frontend.SymbolGlobalVar
 import frontend.TcFunction
 import frontend.TupleType
 import frontend.Type
+import frontend.allArrayTypes
 import frontend.allClassTypes
 import frontend.allConstantArrays
+import frontend.allNullableTypes
+import frontend.allPointerTypes
 import frontend.currentFunction
 
 open class Function(val name:String, val retType:Type, isStdLib:Boolean=false, val isExternal: Boolean=false) {
@@ -100,14 +104,26 @@ open class Function(val name:String, val retType:Type, isStdLib:Boolean=false, v
         return ret
     }
 
-    fun instrLea(value: Value): Reg {
+    fun instrLea(value: Type): Reg {
         val ret = newTemp()
-        add(InstrLea(ret, value))
+        add(InstrLeaType(ret, value))
         return ret
     }
 
-    fun instrLea(dest:Reg, value: Value) {
-        add(InstrLea(dest, value))
+    fun instrLea(value: String): Reg {
+        val ret = newTemp()
+        add(InstrLeaString(ret, value))
+        return ret
+    }
+
+    fun instrLea(value: ArrayImage): Reg {
+        val ret = newTemp()
+        add(InstrLeaArrayImage(ret, value))
+        return ret
+    }
+
+    fun instrLea(dest:Reg, value: Type) {
+        add(InstrLeaType(dest, value))
     }
 
     fun instrJump(target: Label) {
@@ -254,5 +270,8 @@ fun initialize() {
     allGlobalVars.clear()
     allClassTypes.clear()
     allConstantArrays.clear()
+    allArrayTypes.clear()
+    allPointerTypes.clear()
+    allNullableTypes.clear()
 }
 

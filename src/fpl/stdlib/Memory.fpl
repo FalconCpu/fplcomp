@@ -6,7 +6,7 @@ const systemVars = (0x100 : SystemVars)     # Allocate a block of memory at 0x10
 
 # Pre-allocate a chunk of memory for system variables
 class SystemVars
-    var freeList : MemChunk?        # Pointer to the first free chunk
+    var freeList   : FreeChunk?        # Pointer to the first free chunk
     var freeMemory : Int            # Total amount of free memory
 
 # The compiler will generate this structure for each class
@@ -15,35 +15,30 @@ class ClassDescriptor
     val size : Int                  # This is the size of the user data, in bytes
     # vtable goes here
 
-# We generate an instance of this class for every memory allocation
-class ClassObject
-    var classDescriptor : ClassDescriptor
-    # class fields go here
+const MEM_MAGIC_NUMBER = 0xFBEEDA7A
+const MEM_HEADER_SIZE = 16
 
-class ArrayObject
-    var numElements : Int
-    # class fields go here
+class AllocatedChunk
+    var classDescriptor  : ClassDescriptor
+    var size             : Int     # Size of user data portion of this chunk
+    var refCount         : Int     # Number of references to this object
+    var numElements      : Int     # For an array/String holds the number of elements in an array
+                                   # For other classes this is user defined
 
-# Memory chunks are always allocated in multiples of 8 bytes. Thus the lower 3 bits of the size would always
-# be zero. We can use this to store allocation status.
-const MEM_CHUNK_FREE    = 0
-const MEM_CHUNK_GENERIC = 1
-const MEM_CHUNK_OBJECT  = 2
-const MEM_CHUNK_ARRAY   = 3
-const MEM_CHUNK_STRING  = 4
-
-class MemChunk
-    var size : Int         # Size of this chunk in bytes(including header) | allocation status.
-    var next : MemChunk?   # For a free chunk, this is the next free chunk.
-                           # For an allocated chunk, this is the user data
+class FreeChunk
+    var magicNumber : Int          # Magic number to check for corruption
+    var size : Int                 # Size of user data portion of this chunk
+    var next : FreeChunk?          # Pointer to the next free chunk
+    var spare : Int                # Spare bytes to match the size of the allocated chunk
 
 fun initializeMemory()
     # Initialise the free list
-    val freeChunk = (HEAP_START : MemChunk)
-    freeChunk.size = HEAP_END - HEAP_START
+    val freeChunk = (HEAP_START : FreeChunk)
+    freeChunk.magicNumber = MEM_MAGIC_NUMBER
+    freeChunk.size = HEAP_END - HEAP_START - MEM_HEADER_SIZE
     freeChunk.next = null
     systemVars.freeList = freeChunk
-    systemVars.freeMemory = HEAP_END - HEAP_START
+    systemVars.freeMemory = HEAP_END - HEAP_START - 16
 
 # ###########################################################################################
 #                          malloc
@@ -52,12 +47,12 @@ fun initializeMemory()
 # Allocate a chunk of memory.
 # size = size of allocation in bytes
 
-fun malloc(size: Int, purpose:Int ) -> Pointer
-    val roundedSize = (size+11) & 0xfffffff8     # Add 4 bytes for the size field and round up to nearest multiple of 8
+fun malloc(size: Int, classDescriptor:Pointer ) -> Pointer
+    val roundedSize = (size+15) & 0xfffffff0     # Round up to the next 16 byte boundary
 
     # find the first free chunk that is big enough
     var chunk = systemVars.freeList
-    var prevChunk : MemChunk? = null
+    var prevChunk : FreeChunk? = null
     while chunk!=null and chunk.size<roundedSize
         prevChunk = chunk
         chunk = chunk.next
@@ -65,28 +60,39 @@ fun malloc(size: Int, purpose:Int ) -> Pointer
     if chunk=null
         fatal(FATAL_ERROR_OUT_OF_MEMORY, 0)
         return (0:Pointer) # Should never get here
+    if chunk.magicNumber!=MEM_MAGIC_NUMBER
+        fatal(FATAL_ERROR_MEMORY_CORRUPT, (chunk:Int))
 
     # remove the chunk from the free list
     if prevChunk=null
         systemVars.freeList = chunk.next
     else
         prevChunk.next = chunk.next
+    systemVars.freeMemory = systemVars.freeMemory - chunk.size - MEM_HEADER_SIZE
 
     # See if the chunk is big enough to split
     val remainder = chunk.size - roundedSize
-    if remainder>=8
-        val remainderChunk = ((chunk:Pointer)+roundedSize : MemChunk)
-        addToFreeList(remainderChunk, remainder)
+    if remainder>=MEM_HEADER_SIZE
+        val remainderChunk = ((chunk:Pointer)+MEM_HEADER_SIZE+roundedSize : FreeChunk)
+        remainderChunk.size = remainder-MEM_HEADER_SIZE
+        addToFreeList(remainderChunk)
 
-    chunk.size = roundedSize | purpose
-#    printhexln "malloc: addr=" , (chunk:Int) , " size=" , chunk.size
-    return (chunk:Pointer) + 4
+    # fill in the header for the newly allocated chunk
+    val allocatedChunk = (chunk:AllocatedChunk)
+    allocatedChunk.classDescriptor = (classDescriptor:ClassDescriptor)
+    allocatedChunk.size = roundedSize
+    allocatedChunk.refCount = 1
+    allocatedChunk.numElements = 0
 
-fun addToFreeList(chunk: MemChunk, size:Int)
+    return (chunk:Pointer) + MEM_HEADER_SIZE
+
+fun addToFreeList(chunk: FreeChunk)
     # Insert the chunk into the free list in order of increasing size
-    var prevChunk : MemChunk? = null
+    val size = chunk.size
+    chunk.magicNumber = MEM_MAGIC_NUMBER
+
+    var prevChunk : FreeChunk? = null
     var currChunk = systemVars.freeList
-    chunk.size =  size
     while currChunk!=null and currChunk.size<size
         prevChunk = currChunk
         currChunk = currChunk.next
@@ -98,77 +104,52 @@ fun addToFreeList(chunk: MemChunk, size:Int)
         prevChunk.next = chunk
     chunk.next = currChunk
 
+    systemVars.freeMemory = systemVars.freeMemory + size + MEM_HEADER_SIZE
+
+fun getFreeMemory() -> Int
+    return systemVars.freeMemory
+
+fun free2(addr:Pointer)
+    free(addr)
+
 fun free(addr:Pointer)
     # Find the chunk
-    val chunk = (addr-8 : MemChunk)
-    val sizeField = chunk.size
-    val kind = sizeField & 0x7           # Get allocation status
-    val size = sizeField & 0xfffffff8    # Strip off allocation status
+    if addr=null
+        return
 
-#    printhexln "free ", (chunk:Int), " ", size, " ", kind
-
-    if kind=MEM_CHUNK_OBJECT or kind=MEM_CHUNK_ARRAY or kind=MEM_CHUNK_GENERIC
-        addToFreeList(chunk, size)
-    else if kind=0
+    val chunk = (addr-MEM_HEADER_SIZE : FreeChunk)
+    if chunk.magicNumber=MEM_MAGIC_NUMBER
         fatal(FATAL_ERROR_DOUBLE_FREE, (chunk:Int))
-    else
-        fatal(FATAL_ERROR_INVALID_ADDRESS, (chunk:Int))
-
-fun mallocObject(classDescriptor: ClassDescriptor) -> Pointer
-    val size = classDescriptor.size  + 4 # Size of user data + 4 bytes for the class descriptor
-    val addr = malloc(size, MEM_CHUNK_OBJECT)
-
-    val object = (addr : ClassObject)
-    object.classDescriptor = classDescriptor
-
-    return addr + 4    # Add 4 to get address of user data
-
-fun mallocArray(numElements:Int, elementSize:Int ) -> Pointer
-    val size = numElements * elementSize + 4 # Size of user data + 4 bytes for storing length
-    val addr = malloc(size, MEM_CHUNK_ARRAY)
-    val array = (addr : ArrayObject)
-    array.numElements = numElements
-    return addr + 4    # Add 4 to get address of user data
-
-fun mallocString(size:Int) -> Pointer
-    val addr = malloc(size+4, MEM_CHUNK_STRING)
-    val array = (addr : ArrayObject)
-    array.numElements = size
-    return addr + 4    # Add 4 to get address of user data
-
+    addToFreeList(chunk)
 
 fun dumpMemoryString(s1:String)
     val len = if s1.length<20 then s1.length else 20
     for i in 0 to <len
-        print s1[i]
-    println ""
+        val c = s1[i]
+        if (c:Int)>=32 and (c:Int)<=126
+            kprint(s1[i])
 
 fun dumpMemory()
-    println "ADDRESS  SIZE     STATUS"
+    kprint("ADDRESS  SIZE     STATUS\n")
     var addr = HEAP_START
     while addr<HEAP_END
-        val chunk = (addr : MemChunk)
-        val sizeField = chunk.size
-        val kind = sizeField & 0x7           # Get allocation status
-        val size = sizeField & 0xfffffff8    # Strip off allocation status
-        printhex addr," ",size," "
-        if kind=0
-            printhexln "free"
-        else if kind=MEM_CHUNK_GENERIC
-            printhexln "generic"
-        else if kind=MEM_CHUNK_OBJECT
-            val object = (addr+4 : ClassObject)
-            printhexln object.classDescriptor.name
-        else if kind=MEM_CHUNK_ARRAY
-            val array = (addr+4 : ArrayObject)
-            println "Array[", array.numElements,"]"
-        else if kind=MEM_CHUNK_STRING
-            val string = (addr+4 : ArrayObject)
-            print "String  "
-            dumpMemoryString((addr+8:String))
+        val chunk = (addr : FreeChunk)
+        kprint(addr)
+        kprint(" ")
+        kprint(chunk.size)
+        kprint(" ")
+        if chunk.magicNumber=MEM_MAGIC_NUMBER
+            kprint("free\n")
         else
-            printhexln addr," ",size," invalid"
-        addr = addr + size
+            val allocatedChunk = (chunk : AllocatedChunk)
+            kprint(allocatedChunk.classDescriptor.name, 20)
+            kprint(" ")
+            if ((allocatedChunk.classDescriptor:Pointer) = String.TypeDescriptor)
+                dumpMemoryString((addr+16:String))
+            else
+                kprint(allocatedChunk.numElements)
+            kprint("\n")
+        addr = addr + MEM_HEADER_SIZE + chunk.size
 
 
 

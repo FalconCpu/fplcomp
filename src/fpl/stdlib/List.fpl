@@ -5,11 +5,10 @@ class List
 
     fun add(str:String)
         if size>=data.size
-            println("resize")
             val newData = MutableArray<String>(data.size*2)
             for i in 0 to<data.size
                 newData[i] = data[i]
-            free((data:Pointer))
+            free2((data:Pointer))   # FIXME - name resolve issue
             data = newData
         data[size] = str
         size = size + 1
@@ -21,7 +20,8 @@ class List
 
     fun free()
         for i in 0 to<size
-            free(data[i])
-        free(this)
+            free2(data[i])
+        free2(data)
+        free2(this)
 
 

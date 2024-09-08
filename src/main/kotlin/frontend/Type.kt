@@ -20,8 +20,9 @@ sealed class Type (val name:String) {
 
         // Allow any reference type to be assigned to a Pointer
         if (this is PointerType && base==null &&
-            (rhsType is PointerType || rhsType is ClassType || rhsType is StringType || rhsType is NullableType) )
+            (rhsType is PointerType || rhsType is ClassType || rhsType is StringType || rhsType is NullableType || rhsType is ArrayType) )
             return true
+        if (this is PointerType && rhsType is NullType) return true
 
         //
 

@@ -3,7 +3,7 @@ package frontend
 import backend.ArrayRefValue
 import backend.InstrLit
 import backend.Reg
-import backend.StdlibMallocArray
+import backend.StdlibMalloc
 import sun.net.www.content.text.PlainTextInputStream
 
 val allConstantArrays = mutableListOf<ArrayImage>()
@@ -66,19 +66,19 @@ class TcArrayOf(
             val values = elements.map { it.getConstantValue() }
             val image = ArrayImage(allConstantArrays.size, elementType, values)
             allConstantArrays.add(image)
-            return currentFunction.instrLea(ArrayRefValue(image))
+            return currentFunction.instrLea(image)
         }
 
         val ret : Reg
         if (localAlloc) {
             ret = currentFunction.alloca(4, numElements * elementSize)   // 4 for the length field
-            val numEl = currentFunction.instrInt(numElements)
-            currentFunction.instrStore(numEl, ret, sizeSymbol)
         } else {
-            currentFunction.add(InstrLit(backend.regArg1, numElements))
-            currentFunction.add(InstrLit(backend.regArg2, elementSize))
-            ret = currentFunction.instrCall(StdlibMallocArray)
+            currentFunction.instrMove(backend.regArg1, numElements * elementSize)
+            currentFunction.instrLea(backend.regArg2, type)
+            ret = currentFunction.instrCall(StdlibMalloc)
         }
+        val numEl = currentFunction.instrInt(numElements)
+        currentFunction.instrStore(numEl, ret, sizeSymbol)
 
         for ((index, element) in elements.withIndex()) {
             val value = element.codeGenRvalue()
@@ -93,6 +93,8 @@ class ArrayImage(
     val elementType: Type,
     val elements: List<Int>
 ) {
+    override fun toString() = "Array|$id"
+
     fun asmGen(sb: StringBuilder) {
         sb.append("dcw ${elements.size}\n")
         sb.append("Array|$id:\n")

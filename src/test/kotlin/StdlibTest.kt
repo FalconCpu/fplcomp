@@ -69,8 +69,8 @@ class StdlibTest {
         val expected = """
             Point x=0000000A y=00000014
             ADDRESS  SIZE     STATUS
-            00001000 00000010 Point
-            00001010 03F7EFF0 free
+            00001000 00000010 Point                00000000
+            00001020 03F7EFD0 free
 
         """.trimIndent()
 
@@ -99,9 +99,9 @@ class StdlibTest {
             00000004
             00000001
             ADDRESS  SIZE     STATUS
-            00001000 00000018 Array[4]
-            00001018 03F7EFE8 free
-            
+            00001000 00000010 MutableArray<Int>    00000004
+            00001020 03F7EFD0 free
+
         """.trimIndent()
 
 
@@ -128,7 +128,7 @@ class StdlibTest {
             00000004
             00000001
             ADDRESS  SIZE     STATUS
-            00001000 03F7F000 free
+            00001000 03F7EFF0 free
 
         """.trimIndent()
 
@@ -261,11 +261,11 @@ class StdlibTest {
         val expected = """
             Helo! world
             ADDRESS  SIZE     STATUS
-            00001000 00000010 StringBuffer
-            00001010 00000010 free
-            00001020 00000018 Array[16]
-            00001038 03F7EFC8 free
-            
+            00001000 00000010 StringBuffer         00000000
+            00001020 00000010 free
+            00001040 00000010 MutableArray<Char>   00000010
+            00001060 03F7EF90 free
+
         """.trimIndent()
 
         runTest(prog, expected)
@@ -295,9 +295,9 @@ class StdlibTest {
             false
             true
             ADDRESS  SIZE     STATUS
-            00001000 00000020 String  Hello worldGoodbye
-            00001020 03F7EFE0 free
-
+            00001000 00000020 String               Hello worldGoodbye
+            00001030 03F7EFC0 free
+            
         """.trimIndent()
 
         runTest(prog, expected)
@@ -362,12 +362,25 @@ class StdlibTest {
 
                 for i in 0 to <list.size
                     println list.get(i)
-
-               
             """.trimIndent()
 
 
         val expected = """
+            hello
+            world
+            !
+            hello
+            world
+            !
+            one
+            two
+            three
+            four
+            five
+            six
+            seven
+            eight
+            nine
 
         """.trimIndent()
 

@@ -30,7 +30,7 @@ class TcStringLiteral(
     }
 
     override fun codeGenRvalue(): Reg {
-        return currentFunction.instrLea(backend.StringValue(value))
+        return currentFunction.instrLea(value)
     }
 
 }

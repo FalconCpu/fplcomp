@@ -13,9 +13,9 @@ class FileSystem(val blockDevice:BlockDevice)
         if bufNo = 0
             return
         val t = buffers[bufNo]
-        var i = bufNo-1
+        var i = bufNo
         while i>0
-            buffers[i+1] = buffers[i]
+            buffers[i] = buffers[i-1]
             i = i - 1
         buffers[0] = t
 

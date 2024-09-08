@@ -24,11 +24,14 @@ class DirectoryHandle(val fileSystem : FileSystem, val currentDirectory:Int)
         fileInodeIndex = -1
         while true
             val length = inode.read(fileInodeIndex*64, 64, (buffer:Pointer))
+            if length=0
+                inode.close()
+                return 0
+
             if c_strcmp(fileName, (buffer:Pointer<Char>)+16)
                 inode.close()
                 return (buffer:Pointer<Int>)[0]
             fileInodeIndex = fileInodeIndex + 1
-        inode.close()
         return 0
 
     # open a file and return a file handle
@@ -36,14 +39,10 @@ class DirectoryHandle(val fileSystem : FileSystem, val currentDirectory:Int)
         val inodeIndex = scanForFileName(fileName)
         if inodeIndex=0
             return null
+
         val inode = fileSystem.openInode(inodeIndex)
         if inode=null
             return null
-        kprint("Opening file ")
-        kprint(fileName)
-        kprint(" at inode ")
-        kprint(inodeIndex)
-        kprint("\n")
         return FileHandle(inode)
 
 
@@ -57,9 +56,7 @@ class DirectoryHandle(val fileSystem : FileSystem, val currentDirectory:Int)
             return false
         inodeIndex = inodeIndex + 1
         val length = inode.read(inodeIndex*64, 64, (buffer:Pointer))
-        kprint("ZZZ1\n")
         inode.close()
-        kprint("ZZZ2\n")
         if length=0
             return false
         if length!=64
@@ -71,14 +68,11 @@ class DirectoryHandle(val fileSystem : FileSystem, val currentDirectory:Int)
         setString(name, (buffer:Pointer<Char>)+16, c_strlen((buffer:Pointer)+16))
 
         # open the inode for the directory entry
-        kprint("ZZZ3\n")
         val dirInode = fileSystem.openSector(inodeNumber)
         if dirInode=null
             return false
         fileLength = dirInode.data[1]
-        kprint("ZZZ4\n")
         dirInode.release()
-        kprint("ZZZ5\n")
 
 
 

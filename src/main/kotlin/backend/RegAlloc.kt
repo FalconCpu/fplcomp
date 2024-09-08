@@ -122,7 +122,9 @@ class RegisterAllocator(private val cf: Function, private val livemap: Livemap) 
             is InstrEnd -> this
             is InstrJump -> this
             is InstrLabel -> this
-            is InstrLea -> InstrLea(replace(dest), src)
+            is InstrLeaType -> InstrLeaType(replace(dest), src)
+            is InstrLeaArrayImage -> InstrLeaArrayImage(replace(dest), src)
+            is InstrLeaString -> InstrLeaString(replace(dest), src)
             is InstrLoadArray -> InstrLoadArray(size, replace(dest), replace(addr), offset)
             is InstrLoadGlobal -> InstrLoadGlobal(size, replace(dest), globalVar)
             is InstrLoadField -> InstrLoadField(size, replace(dest), replace(addr), field)

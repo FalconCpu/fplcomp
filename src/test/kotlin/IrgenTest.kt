@@ -189,25 +189,27 @@ class IrgenTest {
             start
             lea t0, Array|0
             mov arr, t0
-            mov %1, 5
-            mov %2, 4
-            call mallocArray(Int,Int)
+            mov %1, 20
+            lea %2, MutableArray<Int>
+            call malloc(Int,Pointer)
             mov t1, %8
-            mov t2, 1
-            stw t2, t1[0]
-            mov t3, 2
-            stw t3, t1[4]
-            mov t4, 3
-            stw t4, t1[8]
-            mov t5, 4
-            stw t5, t1[12]
-            mov t6, 5
-            stw t6, t1[16]
+            mov t2, 5
+            stw t2, t1->size
+            mov t3, 1
+            stw t3, t1[0]
+            mov t4, 2
+            stw t4, t1[4]
+            mov t5, 3
+            stw t5, t1[8]
+            mov t6, 4
+            stw t6, t1[12]
+            mov t7, 5
+            stw t7, t1[16]
             mov arr2, t1
             mov %1, arr
             call sum(Array<Int>)
-            mov t7, %8
-            mov %1, t7
+            mov t8, %8
+            mov %1, t8
             call print(Int)
             call printNewline()
             @0:
@@ -375,8 +377,9 @@ class IrgenTest {
 
             Function main()
             start
-            lea %1, Cat
-            call mallocObject(ClassDescriptor)
+            mov %1, 8
+            lea %2, Cat
+            call malloc(Int,Pointer)
             mov t0, %8
             lea t1, "Whiskers"
             mov t2, 4
@@ -466,8 +469,9 @@ class IrgenTest {
 
             Function main()
             start
-            lea %1, Cat
-            call mallocObject(ClassDescriptor)
+            mov %1, 4
+            lea %2, Cat
+            call malloc(Int,Pointer)
             mov t0, %8
             lea t1, "Whiskers"
             mov %1, t0
@@ -607,11 +611,13 @@ class IrgenTest {
             Function main(Int)
             start
             mov size, %1
-            mov %1, size
-            mov %2, 4
-            call mallocArray(Int,Int)
-            mov t0, %8
-            mov %8, t0
+            mul t0, size, 4
+            mov %1, t0
+            lea %2, Array<Int>
+            call malloc(Int,Pointer)
+            mov t1, %8
+            stw size, t1->size
+            mov %8, t1
             jmp @0
             @0:
             end

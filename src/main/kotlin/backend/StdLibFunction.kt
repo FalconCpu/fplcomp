@@ -43,18 +43,7 @@ object StdlibNewline     : StdLibFunction("printNewline()") {
     }
 }
 
-object StdlibMallocArray : StdLibFunction("mallocArray(Int,Int)") {
-    fun execute(arg: Value) : Value {
-        return ArrayValue(Array(arg.getIntValue()) { UndefinedValue })
-    }
-}
-
-object StdlibMallocObject: StdLibFunction("mallocObject(ClassDescriptor)") {
-    fun execute(arg: Value) : Value {
-        val type = (arg as ClassRefValue).classRef
-        return ClassValue(arg.classRef, Array(type.numFields){ UndefinedValue})
-    }
-}
+object StdlibMalloc : StdLibFunction("malloc(Int,Pointer)")
 
 object StdlibFatal       : StdLibFunction("fatal(Int,Int)")
 object StdlibStrcat      : StdLibFunction("strcat(String,String)")

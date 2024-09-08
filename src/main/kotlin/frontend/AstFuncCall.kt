@@ -120,14 +120,16 @@ class TcConstructor(
         require(type is ClassType)
 
         val ret : Reg
-        currentFunction.instrLea(regArg1, ClassRefValue(type))
         if (localAlloc) {
             // Allocate memory for the object on the stack
             ret = currentFunction.alloca(4, type.getStructSize())
+            currentFunction.instrLea(regArg1,type)
             currentFunction.instrStore(4, regArg1, ret, -4)
         } else {
             // Malloc the memory
-            ret = currentFunction.instrCall(StdlibMallocObject)
+            currentFunction.instrMove(regArg1, type.getStructSize())
+            currentFunction.instrLea(regArg2, type)
+            ret = currentFunction.instrCall(StdlibMalloc)
         }
 
         // Call the constructor

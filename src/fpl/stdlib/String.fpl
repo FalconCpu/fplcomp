@@ -26,14 +26,15 @@ fun strcat(s1:String, s2:String) -> String
     if s2.length=0
         return s1
     val length = s1.length + s2.length
-    val result = mallocString(length)
+    val result = malloc(length, String.TypeDescriptor)
     memcpy((result:Pointer), (s1:Pointer), s1.length)
     memcpy((result+s1.length:Pointer), (s2:Pointer), s2.length)
+    (result:Pointer<Int>)[-1]=length
     return (result:String)
 
 fun substr(s1:String, start:Int, length:Int) -> String
     val len = if length<s1.length-start then length else s1.length-start
-    val result = mallocString(len)
+    val result = malloc(len,String.TypeDescriptor)
     memcpy((result:Pointer), ((s1:Int)+start:Pointer), len)
     return (result:String)
 
@@ -57,14 +58,15 @@ fun strcmp(s1:String, s2:String) -> Int
 
 # create an empty string with a given allocation size
 fun makeString(alloc:Int) -> String
-    val result = mallocString(alloc)
+    val result = malloc(alloc,String.TypeDescriptor)
     (result:Pointer<Int>)[-1]=0
     return (result:String)
 
 # Create a string from a char array and a length
 fun makeString(addr:Pointer<Char>, length:Int) -> String
-    val result = mallocString(length)
+    val result = malloc(length,String.TypeDescriptor)
     memcpy(result, addr, length)
+    (result:Pointer<Int>)[-1]=length
     return (result:String)
 
 fun setString(dest:String, data:Pointer<Char>, length:Int)

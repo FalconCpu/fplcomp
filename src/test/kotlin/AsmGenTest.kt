@@ -46,6 +46,9 @@ class AsmGenTest {
             add %sp, %sp, 4
             ret
 
+            String|class:
+            dcw "String"
+            dcw 0
 
         """.trimIndent()
 
@@ -101,9 +104,11 @@ class AsmGenTest {
             stw %9, %sp[0]
             stw %30, %sp[4]
             ld %9, Array|0
+            ld %1, 20
+            ld %2, MutableArray<Int>|class
+            jsr malloc(Int,Pointer)
             ld %1, 5
-            ld %2, 4
-            jsr mallocArray(Int,Int)
+            stw %1, %8[-4]
             ld %1, 1
             stw %1, %8[0]
             ld %1, 2
@@ -124,6 +129,17 @@ class AsmGenTest {
             add %sp, %sp, 8
             ret
 
+            Array<Int>|class:
+            dcw "Array<Int>"
+            dcw 0
+
+            MutableArray<Int>|class:
+            dcw "MutableArray<Int>"
+            dcw 0
+
+            String|class:
+            dcw "String"
+            dcw 0
             dcw 5
             Array|0:
             dcw 1
@@ -176,6 +192,13 @@ class AsmGenTest {
             add %sp, %sp, 4
             ret
 
+            Pointer<Int>|class:
+            dcw "Pointer<Int>"
+            dcw 0
+
+            String|class:
+            dcw "String"
+            dcw 0
 
         """.trimIndent()
 

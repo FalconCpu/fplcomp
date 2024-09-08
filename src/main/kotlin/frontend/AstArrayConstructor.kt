@@ -1,7 +1,8 @@
 package frontend
 
+import backend.AluOp
 import backend.Reg
-import backend.StdlibMallocArray
+import backend.StdlibMalloc
 import backend.regArg1
 import backend.regArg2
 
@@ -54,9 +55,13 @@ class TcArrayConstructor (
             currentFunction.instrStore(ne, ret, sizeSymbol)
             return ret
         } else {
-            currentFunction.instrMove(regArg1, size.codeGenRvalue())
-            currentFunction.instrMove(regArg2, elementType.getSize())
-            return currentFunction.instrCall(StdlibMallocArray)
+            val numElements = size.codeGenRvalue()
+            val sizeInBytes = currentFunction.instrAlu(AluOp.MUL_I, numElements, elementType.getSize())
+            currentFunction.instrMove(regArg1, sizeInBytes)
+            currentFunction.instrLea(regArg2, type)
+            val ret = currentFunction.instrCall(StdlibMalloc)
+            currentFunction.instrStore(numElements, ret, sizeSymbol)
+            return ret
         }
     }
 

@@ -56,6 +56,10 @@ class AstEquals(
         if (aType is IntType && bType is CharType && a.hasConstantValue() && a.getConstantValue() in -128..127)
             return true
 
+        // comparing a pointer and null
+        if (aType is PointerType && bType is NullType)
+            return true
+
         return false
     }
 

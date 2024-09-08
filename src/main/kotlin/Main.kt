@@ -17,7 +17,7 @@ enum class StopAt {
     ASMGEN
 }
 
-fun compile(files:List<Lexer>, stopAt: StopAt) : String {
+fun compile(files:List<Lexer>, stopAt: StopAt, forFPGA: Boolean = false) : String {
     Log.initialize()
     backend.initialize()
 
@@ -53,7 +53,7 @@ fun compile(files:List<Lexer>, stopAt: StopAt) : String {
         return backend.dumpAllFunctions()
 
     // AsmGen
-    val asm = backend.asmGen()
+    val asm = backend.asmGen(forFPGA)
     if (Log.anyError())
         return Log.dump()
     return asm
